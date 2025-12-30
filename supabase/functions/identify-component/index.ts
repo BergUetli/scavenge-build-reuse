@@ -30,21 +30,14 @@ For EACH salvageable component inside the object, provide:
 1. component_name: Specific name with quantity if applicable (e.g., "Mechanical Key Switches (~87 pcs)", "USB Controller IC")
 2. category: One of: ICs/Chips, Passive Components, Electromechanical, Connectors, Display/LEDs, Sensors, Power, PCB, Other
 3. specifications: Key specs as object (e.g., {"type": "Cherry MX Brown", "actuation": "45g"} or {"capacity": "1000μF", "voltage": "16V"})
-4. technical_specs: DETAILED technical data (CRITICAL - be specific, use "Unknown" if not identifiable):
-   - ic_number: The EXACT IC/chip part number if visible (e.g., "STM32F103C8T6", "ATmega328P", "TPS54531"). Say "Unknown" if not readable.
-   - manufacturer: Chip/component manufacturer (e.g., "Texas Instruments", "STMicroelectronics", "Analog Devices")
-   - package_type: IC package (e.g., "LQFP-48", "QFN-32", "DIP-8", "SOT-23")
-   - pin_count: Number of pins (integer)
-   - voltage_range: Operating voltage (e.g., "3.3V-5V", "1.8V-3.6V")
-   - current_rating: Current specs if applicable (e.g., "500mA max", "3A continuous")
-   - frequency: Clock/operating frequency if applicable (e.g., "72MHz", "16MHz")
-   - datasheet_url: URL to official datasheet if known (prefer manufacturer sites like ti.com, st.com, analog.com)
-   - notes: Any technical notes about the component
-5. source_info: Official sources for this component (IMPORTANT - use real, official URLs when known):
-   - manufacturer_url: Official manufacturer product page (e.g., "https://www.ti.com/product/LM7805")
-   - datasheet_url: Direct link to official PDF datasheet
-   - purchase_url: Where to buy (Digi-Key, Mouser, LCSC, etc.)
-   - source_name: Name of primary source (e.g., "Texas Instruments", "STMicroelectronics")
+4. technical_specs: KEY INFO FOR REBUILDING ONLY (keep it minimal):
+   - voltage: Operating voltage (e.g., "5V", "3.3V", "12V") - CRITICAL for rebuilding
+   - power_rating: Power/current specs (e.g., "500mA", "10W", "2A") - CRITICAL for rebuilding  
+   - part_number: IC/chip part number if visible and useful (e.g., "LM7805", "NE555") - for lookup
+   - notes: One-line tip for reuse (e.g., "Standard USB voltage", "Needs heatsink above 1A")
+5. source_info: For user lookup (keep brief, only include if confident):
+   - datasheet_url: Direct datasheet link if known
+   - purchase_url: Where to buy (Digi-Key, Mouser, etc.)
 6. reusability_score: 1-10 based on how useful for DIY projects (10 = Arduino, ESP32, OLED displays; 1 = proprietary chips)
 7. market_value_low: Estimated low value in USD for the quantity
 8. market_value_high: Estimated high value in USD for the quantity
@@ -55,10 +48,9 @@ For EACH salvageable component inside the object, provide:
 13. quantity: Estimated count (number, use 1 if single item)
 
 CRITICAL FOR TECHNICAL SPECS:
-- If you can see text on a chip/IC, include the EXACT part number in ic_number
-- If you cannot read it, say "Unknown" - NEVER make up part numbers
-- DSPs, microcontrollers, and ICs should ALWAYS have technical_specs filled out as much as possible
-- For generic components (resistors, capacitors), focus on electrical specs
+- ONLY include voltage and power specs - the stuff needed to safely reuse the component
+- Part numbers are optional - only include if clearly visible and useful for lookup
+- Keep notes to ONE practical tip for makers
 - For source_info, only include URLs you are confident are correct - leave null if unsure
 
 ALSO PROVIDE DISASSEMBLY INSTRUCTIONS for the parent object:
@@ -80,21 +72,14 @@ ALWAYS respond with valid JSON:
       "category": "string",
       "specifications": {},
       "technical_specs": {
-        "ic_number": "string or null",
-        "manufacturer": "string or null",
-        "package_type": "string or null",
-        "pin_count": "number or null",
-        "voltage_range": "string or null",
-        "current_rating": "string or null",
-        "frequency": "string or null",
-        "datasheet_url": "string or null",
+        "voltage": "string or null",
+        "power_rating": "string or null",
+        "part_number": "string or null",
         "notes": "string or null"
       },
       "source_info": {
-        "manufacturer_url": "string or null",
         "datasheet_url": "string or null", 
-        "purchase_url": "string or null",
-        "source_name": "string or null"
+        "purchase_url": "string or null"
       },
       "reusability_score": number,
       "market_value_low": number,
