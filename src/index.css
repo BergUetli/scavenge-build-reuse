@@ -3,132 +3,132 @@
 @tailwind utilities;
 
 /* =============================================
-   SCAVENGER - PREMIUM iOS DESIGN SYSTEM
-   Apple-inspired aesthetic with refined details
+   DUNG BEETLE - NATURE'S ULTIMATE RECYCLER
+   Earthy, bold, nerdy, and unapologetically cool
    ============================================= */
 
 @layer base {
   :root {
-    /* iOS-inspired color palette */
-    --background: 0 0% 98%;
-    --foreground: 0 0% 9%;
+    /* Earthy palette - warm amber & forest tones */
+    --background: 45 20% 97%;
+    --foreground: 30 10% 12%;
 
-    /* Card surfaces with subtle warmth */
-    --card: 0 0% 100%;
-    --card-foreground: 0 0% 9%;
+    /* Card surfaces with warm undertone */
+    --card: 45 30% 99%;
+    --card-foreground: 30 10% 12%;
 
     /* Elevated surfaces */
-    --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 9%;
+    --popover: 45 30% 99%;
+    --popover-foreground: 30 10% 12%;
 
-    /* iOS Blue - Primary */
-    --primary: 211 100% 50%;
-    --primary-foreground: 0 0% 100%;
+    /* Primary - Amber/Gold (beetle shell) */
+    --primary: 38 92% 40%;
+    --primary-foreground: 45 30% 98%;
 
-    /* iOS Gray - Secondary */
-    --secondary: 240 5% 96%;
-    --secondary-foreground: 0 0% 9%;
+    /* Secondary - Warm gray */
+    --secondary: 40 15% 93%;
+    --secondary-foreground: 30 10% 12%;
 
-    /* Teal accent for eco-friendly */
-    --accent: 162 63% 41%;
+    /* Accent - Forest green (nature) */
+    --accent: 152 55% 35%;
     --accent-foreground: 0 0% 100%;
 
     /* Muted surfaces */
-    --muted: 240 5% 96%;
-    --muted-foreground: 0 0% 45%;
+    --muted: 40 15% 94%;
+    --muted-foreground: 30 10% 45%;
 
-    /* iOS Red */
-    --destructive: 0 84% 60%;
+    /* Destructive */
+    --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
 
-    /* iOS Green */
-    --success: 142 71% 45%;
+    /* Success - Deep forest green */
+    --success: 152 55% 38%;
     --success-foreground: 0 0% 100%;
 
-    /* iOS Orange */
-    --warning: 32 95% 54%;
-    --warning-foreground: 0 0% 100%;
+    /* Warning - Rich amber */
+    --warning: 38 92% 50%;
+    --warning-foreground: 30 10% 12%;
 
-    /* Borders - subtle and refined */
-    --border: 0 0% 90%;
-    --input: 0 0% 90%;
-    --ring: 211 100% 50%;
+    /* Borders */
+    --border: 40 15% 88%;
+    --input: 40 15% 88%;
+    --ring: 38 92% 40%;
 
-    /* Generous radius for iOS feel */
-    --radius: 1rem;
+    /* Radius */
+    --radius: 0.875rem;
 
-    /* Premium shadows */
-    --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.04);
-    --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.06);
-    --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.06), 0 2px 4px rgba(0, 0, 0, 0.04);
-    --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.08), 0 4px 8px rgba(0, 0, 0, 0.04);
-    --shadow-xl: 0 16px 48px rgba(0, 0, 0, 0.12), 0 8px 16px rgba(0, 0, 0, 0.06);
+    /* Premium shadows with warm tint */
+    --shadow-xs: 0 1px 2px rgba(133, 77, 14, 0.05);
+    --shadow-sm: 0 2px 8px rgba(133, 77, 14, 0.06), 0 1px 2px rgba(133, 77, 14, 0.08);
+    --shadow-md: 0 4px 16px rgba(133, 77, 14, 0.08), 0 2px 4px rgba(133, 77, 14, 0.05);
+    --shadow-lg: 0 8px 32px rgba(133, 77, 14, 0.10), 0 4px 8px rgba(133, 77, 14, 0.06);
+    --shadow-xl: 0 16px 48px rgba(133, 77, 14, 0.14), 0 8px 16px rgba(133, 77, 14, 0.08);
 
     /* Glass effect */
-    --glass-bg: rgba(255, 255, 255, 0.72);
-    --glass-border: rgba(255, 255, 255, 0.5);
+    --glass-bg: rgba(255, 252, 245, 0.80);
+    --glass-border: rgba(255, 255, 255, 0.6);
 
     /* Sidebar */
-    --sidebar-background: 0 0% 98%;
-    --sidebar-foreground: 0 0% 20%;
-    --sidebar-primary: 211 100% 50%;
+    --sidebar-background: 45 20% 97%;
+    --sidebar-foreground: 30 10% 20%;
+    --sidebar-primary: 38 92% 40%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 5% 96%;
-    --sidebar-accent-foreground: 0 0% 9%;
-    --sidebar-border: 0 0% 90%;
-    --sidebar-ring: 211 100% 50%;
+    --sidebar-accent: 40 15% 93%;
+    --sidebar-accent-foreground: 30 10% 12%;
+    --sidebar-border: 40 15% 88%;
+    --sidebar-ring: 38 92% 40%;
   }
 
   .dark {
-    /* Dark mode - iOS dark aesthetic */
-    --background: 0 0% 0%;
-    --foreground: 0 0% 98%;
+    /* Dark mode - rich earth tones */
+    --background: 30 15% 6%;
+    --foreground: 45 20% 95%;
 
-    --card: 0 0% 11%;
-    --card-foreground: 0 0% 98%;
+    --card: 30 15% 10%;
+    --card-foreground: 45 20% 95%;
 
-    --popover: 0 0% 11%;
-    --popover-foreground: 0 0% 98%;
+    --popover: 30 15% 10%;
+    --popover-foreground: 45 20% 95%;
 
-    /* Brighter blue for dark mode */
-    --primary: 211 100% 55%;
-    --primary-foreground: 0 0% 100%;
+    /* Bright amber for dark mode */
+    --primary: 38 92% 50%;
+    --primary-foreground: 30 15% 6%;
 
-    --secondary: 0 0% 15%;
-    --secondary-foreground: 0 0% 98%;
+    --secondary: 30 15% 15%;
+    --secondary-foreground: 45 20% 95%;
 
-    --accent: 162 63% 48%;
+    --accent: 152 55% 45%;
     --accent-foreground: 0 0% 100%;
 
-    --muted: 0 0% 15%;
-    --muted-foreground: 0 0% 55%;
+    --muted: 30 15% 15%;
+    --muted-foreground: 45 15% 55%;
 
     --destructive: 0 72% 55%;
     --destructive-foreground: 0 0% 100%;
 
-    --success: 142 71% 50%;
+    --success: 152 55% 45%;
     --success-foreground: 0 0% 100%;
 
-    --warning: 32 95% 58%;
-    --warning-foreground: 0 0% 100%;
+    --warning: 38 92% 55%;
+    --warning-foreground: 30 15% 6%;
 
-    --border: 0 0% 18%;
-    --input: 0 0% 18%;
-    --ring: 211 100% 55%;
+    --border: 30 15% 18%;
+    --input: 30 15% 18%;
+    --ring: 38 92% 50%;
 
     /* Dark glass */
-    --glass-bg: rgba(28, 28, 30, 0.72);
+    --glass-bg: rgba(20, 16, 12, 0.85);
     --glass-border: rgba(255, 255, 255, 0.08);
 
     /* Dark sidebar */
-    --sidebar-background: 0 0% 7%;
-    --sidebar-foreground: 0 0% 90%;
-    --sidebar-primary: 211 100% 55%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 0 0% 15%;
-    --sidebar-accent-foreground: 0 0% 98%;
-    --sidebar-border: 0 0% 18%;
-    --sidebar-ring: 211 100% 55%;
+    --sidebar-background: 30 15% 7%;
+    --sidebar-foreground: 45 20% 90%;
+    --sidebar-primary: 38 92% 50%;
+    --sidebar-primary-foreground: 30 15% 6%;
+    --sidebar-accent: 30 15% 15%;
+    --sidebar-accent-foreground: 45 20% 95%;
+    --sidebar-border: 30 15% 18%;
+    --sidebar-ring: 38 92% 50%;
   }
 }
 
@@ -145,9 +145,8 @@
 
   body {
     @apply bg-background text-foreground;
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', system-ui, sans-serif;
-    font-feature-settings: 'cv11', 'ss01', 'ss03';
-    letter-spacing: -0.011em;
+    font-family: 'Outfit', system-ui, sans-serif;
+    letter-spacing: -0.01em;
   }
 
   /* iOS-style safe areas */
@@ -177,14 +176,14 @@
     @apply bg-muted-foreground/30;
   }
 
-  /* Selection color */
+  /* Selection color - amber */
   ::selection {
-    @apply bg-primary/20 text-foreground;
+    @apply bg-primary/25 text-foreground;
   }
 }
 
 @layer utilities {
-  /* Premium glass effect */
+  /* Glass effect */
   .glass {
     background: var(--glass-bg);
     backdrop-filter: saturate(180%) blur(20px);
@@ -193,7 +192,7 @@
   }
 
   .glass-subtle {
-    background: rgba(255, 255, 255, 0.5);
+    background: rgba(255, 252, 245, 0.5);
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
   }
@@ -215,39 +214,45 @@
     box-shadow: var(--shadow-xl);
   }
 
-  /* iOS-style gradient */
-  .bg-gradient-ios {
-    background: linear-gradient(180deg, hsl(var(--background)) 0%, hsl(0 0% 96%) 100%);
+  /* Earthy gradients */
+  .bg-gradient-earth {
+    background: linear-gradient(180deg, hsl(var(--background)) 0%, hsl(40 20% 94%) 100%);
   }
 
   .bg-gradient-primary {
-    background: linear-gradient(135deg, hsl(211 100% 50%) 0%, hsl(211 100% 40%) 100%);
+    background: linear-gradient(135deg, hsl(38 92% 45%) 0%, hsl(28 85% 38%) 100%);
   }
 
   .bg-gradient-accent {
-    background: linear-gradient(135deg, hsl(162 63% 41%) 0%, hsl(162 63% 35%) 100%);
+    background: linear-gradient(135deg, hsl(152 55% 38%) 0%, hsl(152 55% 28%) 100%);
   }
 
   .bg-gradient-hero {
-    background: linear-gradient(160deg, hsl(211 100% 50%) 0%, hsl(200 100% 45%) 50%, hsl(162 63% 41%) 100%);
+    background: linear-gradient(160deg, hsl(30 20% 18%) 0%, hsl(28 30% 22%) 40%, hsl(38 50% 20%) 100%);
   }
 
-  /* Subtle glow effects */
+  .bg-gradient-beetle {
+    background: linear-gradient(135deg, hsl(38 92% 35%) 0%, hsl(28 75% 28%) 50%, hsl(20 60% 20%) 100%);
+  }
+
+  /* Glow effects */
   .glow-primary {
-    box-shadow: 0 0 20px hsl(211 100% 50% / 0.25), 0 0 40px hsl(211 100% 50% / 0.1);
+    box-shadow: 0 0 24px hsl(38 92% 40% / 0.35), 0 0 48px hsl(38 92% 40% / 0.15);
   }
 
   .glow-accent {
-    box-shadow: 0 0 20px hsl(162 63% 41% / 0.25), 0 0 40px hsl(162 63% 41% / 0.1);
+    box-shadow: 0 0 20px hsl(152 55% 35% / 0.3), 0 0 40px hsl(152 55% 35% / 0.1);
   }
 
-  /* iOS-style text hierarchy */
+  /* Text hierarchy */
   .text-headline {
     @apply text-[28px] font-bold tracking-tight leading-tight;
+    font-family: 'Outfit', system-ui, sans-serif;
   }
 
   .text-title-1 {
-    @apply text-[22px] font-semibold tracking-tight leading-snug;
+    @apply text-[22px] font-bold tracking-tight leading-snug;
+    font-family: 'Outfit', system-ui, sans-serif;
   }
 
   .text-title-2 {
@@ -274,13 +279,18 @@
     @apply text-xs text-muted-foreground;
   }
 
-  /* Premium animations */
+  /* Mono text for nerdy details */
+  .font-mono-display {
+    font-family: 'Space Mono', monospace;
+  }
+
+  /* Animations */
   .animate-fade-in {
     animation: fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1);
   }
 
   .animate-fade-up {
-    animation: fadeUp 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+    animation: fadeUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
   }
 
   .animate-scale-in {
@@ -299,6 +309,10 @@
     animation: pulseSoft 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
   }
 
+  .animate-roll {
+    animation: roll 3s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  }
+
   @keyframes fadeIn {
     from { opacity: 0; }
     to { opacity: 1; }
@@ -307,7 +321,7 @@
   @keyframes fadeUp {
     from { 
       opacity: 0; 
-      transform: translateY(16px);
+      transform: translateY(20px);
     }
     to { 
       opacity: 1; 
@@ -353,17 +367,29 @@
     }
   }
 
-  /* Scan button pulse */
+  @keyframes roll {
+    0%, 100% {
+      transform: rotate(0deg);
+    }
+    25% {
+      transform: rotate(-8deg);
+    }
+    75% {
+      transform: rotate(8deg);
+    }
+  }
+
+  /* Scan button pulse - amber */
   .pulse-scan {
     animation: scanPulse 2.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
   }
 
   @keyframes scanPulse {
     0%, 100% {
-      box-shadow: 0 0 0 0 hsl(211 100% 50% / 0.4), 0 8px 32px hsl(211 100% 50% / 0.25);
+      box-shadow: 0 0 0 0 hsl(38 92% 40% / 0.5), 0 8px 32px hsl(38 92% 40% / 0.3);
     }
     50% {
-      box-shadow: 0 0 0 16px hsl(211 100% 50% / 0), 0 8px 32px hsl(211 100% 50% / 0.25);
+      box-shadow: 0 0 0 18px hsl(38 92% 40% / 0), 0 8px 32px hsl(38 92% 40% / 0.3);
     }
   }
 
@@ -384,37 +410,60 @@
     @apply active:bg-foreground/5 transition-colors duration-150;
   }
 
-  /* iOS card style */
-  .card-ios {
-    @apply bg-card rounded-2xl shadow-premium border border-border/50;
+  /* Card styles */
+  .card-earth {
+    @apply bg-card rounded-2xl shadow-premium border border-border/60;
   }
 
-  .card-ios-inset {
+  .card-inset {
     @apply bg-muted/50 rounded-xl;
   }
 
   /* List item style */
-  .list-item-ios {
+  .list-item {
     @apply flex items-center gap-3 px-4 py-3 bg-card border-b border-border/50 last:border-b-0;
+  }
+
+  /* Beetle shell shimmer */
+  .shimmer-shell {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .shimmer-shell::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      110deg,
+      transparent 25%,
+      rgba(255, 255, 255, 0.15) 50%,
+      transparent 75%
+    );
+    animation: shellShimmer 3s ease-in-out infinite;
+  }
+
+  @keyframes shellShimmer {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
   }
 }
 
-/* Component overrides for iOS feel */
 @layer components {
   /* Button refinements */
-  .btn-ios {
+  .btn-earth {
     @apply font-semibold tracking-tight transition-all duration-200;
-    @apply active:scale-[0.97] active:opacity-80;
+    @apply active:scale-[0.97] active:opacity-90;
   }
 
   /* Input refinements */
-  .input-ios {
-    @apply h-12 px-4 bg-muted/50 border-0 rounded-xl text-base;
-    @apply focus:ring-2 focus:ring-primary/20 focus:bg-muted;
+  .input-earth {
+    @apply h-12 px-4 bg-muted/50 border border-border/50 rounded-xl text-base;
+    @apply focus:ring-2 focus:ring-primary/30 focus:border-primary/50 focus:bg-card;
   }
 
   /* Badge refinements */
-  .badge-ios {
-    @apply px-2.5 py-0.5 rounded-full text-xs font-semibold;
+  .badge-earth {
+    @apply px-2.5 py-1 rounded-lg text-xs font-bold tracking-wide;
   }
 }
