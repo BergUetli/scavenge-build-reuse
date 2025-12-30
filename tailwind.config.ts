@@ -67,16 +67,16 @@ export default {
         },
       },
       borderRadius: {
-        "2xl": "1rem",
-        "3xl": "1.5rem",
-        "4xl": "2rem",
+        "2xl": "0.875rem",
+        "3xl": "1.25rem",
+        "4xl": "1.75rem",
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
       },
       fontFamily: {
-        sans: ["Outfit", "system-ui", "sans-serif"],
-        mono: ["Space Mono", "monospace"],
+        sans: ["Exo 2", "system-ui", "sans-serif"],
+        mono: ["JetBrains Mono", "monospace"],
       },
       fontSize: {
         "2xs": ["0.6875rem", { lineHeight: "1rem" }],
@@ -99,7 +99,7 @@ export default {
           to: { opacity: "1" },
         },
         "fade-up": {
-          from: { opacity: "0", transform: "translateY(20px)" },
+          from: { opacity: "0", transform: "translateY(24px)" },
           to: { opacity: "1", transform: "translateY(0)" },
         },
         "scale-in": {
@@ -113,10 +113,10 @@ export default {
         shimmer: {
           "100%": { transform: "translateX(100%)" },
         },
-        roll: {
-          "0%, 100%": { transform: "rotate(0deg)" },
-          "25%": { transform: "rotate(-8deg)" },
-          "75%": { transform: "rotate(8deg)" },
+        "scan-line": {
+          "0%, 100%": { transform: "translateY(-100%)", opacity: "0" },
+          "10%, 90%": { opacity: "1" },
+          "50%": { transform: "translateY(100%)" },
         },
       },
       animation: {
@@ -127,7 +127,7 @@ export default {
         "scale-in": "scale-in 0.3s cubic-bezier(0.16, 1, 0.3, 1)",
         "slide-up": "slide-up 0.4s cubic-bezier(0.16, 1, 0.3, 1)",
         shimmer: "shimmer 2s infinite",
-        roll: "roll 3s ease-in-out infinite",
+        "scan-line": "scan-line 3s ease-in-out infinite",
       },
       transitionTimingFunction: {
         "out-expo": "cubic-bezier(0.16, 1, 0.3, 1)",

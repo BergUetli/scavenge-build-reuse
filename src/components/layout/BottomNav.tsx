@@ -1,9 +1,9 @@
 /**
- * BOTTOM NAVIGATION - Dung Beetle Style
- * Earthy, bold, clean
+ * BOTTOM NAVIGATION - JunkHauler Style
+ * Industrial, clean, futuristic
  */
 
-import { Home, Package, Lightbulb, User, Bug } from 'lucide-react';
+import { Home, Package, Lightbulb, User } from 'lucide-react';
 import { NavLink } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 
@@ -14,23 +14,23 @@ interface NavItem {
 }
 
 const navItems: NavItem[] = [
-  { to: '/', icon: Home, label: 'Home' },
-  { to: '/inventory', icon: Package, label: 'Stash' },
-  { to: '/projects', icon: Lightbulb, label: 'Build' },
+  { to: '/', icon: Home, label: 'Base' },
+  { to: '/inventory', icon: Package, label: 'Cargo' },
+  { to: '/projects', icon: Lightbulb, label: 'Builds' },
   { to: '/profile', icon: User, label: 'Profile' },
 ];
 
 export function BottomNav() {
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 glass border-t border-border/50 safe-area-pb">
-      <div className="flex items-center justify-around h-[56px] max-w-lg mx-auto">
+    <nav className="fixed bottom-0 left-0 right-0 z-50 glass border-t border-primary/10 safe-area-pb">
+      <div className="flex items-center justify-around h-[58px] max-w-lg mx-auto">
         {navItems.map(({ to, icon: Icon, label }) => (
           <NavLink
             key={to}
             to={to}
             className={({ isActive }) =>
               cn(
-                'flex flex-col items-center justify-center gap-0.5 min-w-[68px] py-1.5',
+                'flex flex-col items-center justify-center gap-1 min-w-[72px] py-2',
                 'transition-all duration-200 ease-out',
                 isActive 
                   ? 'text-primary' 
@@ -41,21 +41,21 @@ export function BottomNav() {
             {({ isActive }) => (
               <>
                 <div className={cn(
-                  'relative flex items-center justify-center w-8 h-8 transition-all duration-200',
-                  isActive && 'scale-110'
+                  'relative flex items-center justify-center w-8 h-8 transition-all duration-200 rounded-lg',
+                  isActive && 'bg-primary/10'
                 )}>
                   <Icon 
                     className={cn(
-                      'w-[22px] h-[22px] transition-all duration-200',
+                      'w-5 h-5 transition-all duration-200',
                       isActive ? 'stroke-[2.5px]' : 'stroke-[1.75px]'
                     )} 
                   />
                   {isActive && (
-                    <div className="absolute inset-0 bg-primary/15 rounded-full blur-lg" />
+                    <div className="absolute inset-0 bg-primary/20 rounded-lg blur-md" />
                   )}
                 </div>
                 <span className={cn(
-                  'text-[10px] transition-all duration-200',
+                  'text-[10px] tracking-wide transition-all duration-200 uppercase',
                   isActive ? 'font-bold' : 'font-medium'
                 )}>
                   {label}
