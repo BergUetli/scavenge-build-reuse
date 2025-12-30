@@ -594,67 +594,56 @@ export function ComponentBreakdown({
 
           {/* Technical Tab */}
           <TabsContent value="technical" className="space-y-4 mt-0">
-            {/* IC/Part Number - Most Important */}
-            <div className="rounded-2xl bg-primary/10 border border-primary/20 p-4">
-              <div className="flex items-center gap-2 mb-2">
-                <Microchip className="w-5 h-5 text-primary" />
-                <p className="text-xs font-medium tracking-widest text-primary uppercase">
-                  IC / Part Number
+            {/* Part Number - Most Important for ICs */}
+            {techSpecs?.part_number && (
+              <div className="rounded-2xl bg-primary/10 border border-primary/20 p-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <Microchip className="w-5 h-5 text-primary" />
+                  <p className="text-xs font-medium tracking-widest text-primary uppercase">
+                    Part Number
+                  </p>
+                </div>
+                <p className="text-xl font-mono font-bold text-foreground">
+                  {techSpecs.part_number}
                 </p>
-              </div>
-              <p className="text-xl font-mono font-bold text-foreground">
-                {displayValue(techSpecs?.ic_number)}
-              </p>
-              {techSpecs?.ic_number && techSpecs.ic_number !== 'Unknown' && (
                 <p className="text-xs text-muted-foreground mt-1">
-                  Search this number for datasheets
+                  Search this for datasheets & pinouts
                 </p>
-              )}
-            </div>
-
-            {/* Manufacturer */}
-            <div className="rounded-2xl bg-muted/50 p-4">
-              <p className="text-xs font-medium tracking-widest text-muted-foreground uppercase mb-2">
-                Manufacturer
-              </p>
-              <p className="text-lg font-semibold">{displayValue(techSpecs?.manufacturer)}</p>
-            </div>
-
-            {/* Technical Specs Grid */}
-            <div className="grid grid-cols-2 gap-3">
-              <div className="rounded-2xl bg-muted/30 p-3">
-                <p className="text-xs text-muted-foreground mb-1">Package Type</p>
-                <p className="font-medium text-sm">{displayValue(techSpecs?.package_type)}</p>
-              </div>
-              <div className="rounded-2xl bg-muted/30 p-3">
-                <p className="text-xs text-muted-foreground mb-1">Pin Count</p>
-                <p className="font-medium text-sm">{displayValue(techSpecs?.pin_count)}</p>
-              </div>
-              <div className="rounded-2xl bg-muted/30 p-3">
-                <p className="text-xs text-muted-foreground mb-1">Voltage Range</p>
-                <p className="font-medium text-sm">{displayValue(techSpecs?.voltage_range)}</p>
-              </div>
-              <div className="rounded-2xl bg-muted/30 p-3">
-                <p className="text-xs text-muted-foreground mb-1">Current Rating</p>
-                <p className="font-medium text-sm">{displayValue(techSpecs?.current_rating)}</p>
-              </div>
-            </div>
-
-            {/* Frequency if available */}
-            {techSpecs?.frequency && (
-              <div className="rounded-2xl bg-muted/50 p-4">
-                <p className="text-xs font-medium tracking-widest text-muted-foreground uppercase mb-2">
-                  Operating Frequency
-                </p>
-                <p className="text-lg font-semibold">{techSpecs.frequency}</p>
               </div>
             )}
+
+            {/* Key Specs Grid */}
+            <div className="grid grid-cols-2 gap-3">
+              <div className="rounded-2xl bg-muted/50 p-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <Zap className="w-4 h-4 text-amber-500" />
+                  <p className="text-xs font-medium tracking-widest text-muted-foreground uppercase">
+                    Voltage
+                  </p>
+                </div>
+                <p className="text-2xl font-bold">
+                  {displayValue(techSpecs?.voltage)}
+                </p>
+              </div>
+              
+              <div className="rounded-2xl bg-muted/50 p-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <Battery className="w-4 h-4 text-eco" />
+                  <p className="text-xs font-medium tracking-widest text-muted-foreground uppercase">
+                    Power
+                  </p>
+                </div>
+                <p className="text-2xl font-bold">
+                  {displayValue(techSpecs?.power_rating)}
+                </p>
+              </div>
+            </div>
 
             {/* General Specifications */}
             {selectedComponent.specifications && Object.keys(selectedComponent.specifications).length > 0 && (
               <div>
                 <p className="text-xs font-medium tracking-widest text-muted-foreground uppercase mb-3">
-                  Additional Specifications
+                  Specifications
                 </p>
                 <div className="rounded-2xl bg-muted/30 divide-y divide-border/50">
                   {Object.entries(selectedComponent.specifications).slice(0, 8).map(([key, value]) => (
@@ -667,102 +656,80 @@ export function ComponentBreakdown({
               </div>
             )}
 
-            {/* Source Info Button */}
+            {/* Source Links */}
             {(() => {
               const sourceInfo = selectedComponent.source_info as SourceInfo | undefined;
-              const hasSourceInfo = sourceInfo?.manufacturer_url || sourceInfo?.datasheet_url || sourceInfo?.purchase_url;
+              const hasSourceInfo = sourceInfo?.datasheet_url || sourceInfo?.purchase_url;
               
               return (
-                <div className="flex items-center gap-2">
-                  {/* Datasheet Link */}
-                  {(techSpecs?.datasheet_url && techSpecs.datasheet_url !== 'Unknown') || sourceInfo?.datasheet_url ? (
-                    <a 
-                      href={sourceInfo?.datasheet_url || techSpecs?.datasheet_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex-1 flex items-center justify-center gap-2 rounded-2xl bg-muted/50 p-4 hover:bg-muted transition-colors"
-                    >
-                      <FileText className="w-5 h-5 text-primary" />
-                      <span className="font-medium">Datasheet</span>
-                      <ExternalLink className="w-4 h-4 text-muted-foreground" />
-                    </a>
-                  ) : (
-                    <div className="flex-1 flex items-center justify-center gap-2 rounded-2xl bg-muted/30 p-4 text-muted-foreground">
-                      <HelpCircle className="w-5 h-5" />
-                      <span className="text-sm">No datasheet</span>
+                <div className="space-y-3">
+                  <p className="text-xs font-medium tracking-widest text-muted-foreground uppercase">
+                    Look Up Details
+                  </p>
+                  
+                  <div className="grid grid-cols-2 gap-3">
+                    {/* Datasheet Link */}
+                    {sourceInfo?.datasheet_url ? (
+                      <a 
+                        href={sourceInfo.datasheet_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center justify-center gap-2 rounded-2xl bg-primary/10 border border-primary/20 p-4 hover:bg-primary/20 transition-colors"
+                      >
+                        <FileText className="w-5 h-5 text-primary" />
+                        <span className="font-medium text-sm">Datasheet</span>
+                        <ExternalLink className="w-4 h-4 text-primary/70" />
+                      </a>
+                    ) : (
+                      <div className="flex items-center justify-center gap-2 rounded-2xl bg-muted/30 p-4 text-muted-foreground">
+                        <FileText className="w-5 h-5" />
+                        <span className="text-sm">No datasheet</span>
+                      </div>
+                    )}
+
+                    {/* Purchase Link */}
+                    {sourceInfo?.purchase_url ? (
+                      <a 
+                        href={sourceInfo.purchase_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center justify-center gap-2 rounded-2xl bg-eco/10 border border-eco/20 p-4 hover:bg-eco/20 transition-colors"
+                      >
+                        <ShoppingCart className="w-5 h-5 text-eco" />
+                        <span className="font-medium text-sm">Buy</span>
+                        <ExternalLink className="w-4 h-4 text-eco/70" />
+                      </a>
+                    ) : (
+                      <div className="flex items-center justify-center gap-2 rounded-2xl bg-muted/30 p-4 text-muted-foreground">
+                        <ShoppingCart className="w-5 h-5" />
+                        <span className="text-sm">No link</span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Quick Search Buttons */}
+                  {techSpecs?.part_number && (
+                    <div className="flex gap-2">
+                      <a
+                        href={`https://www.google.com/search?q=${encodeURIComponent(techSpecs.part_number + ' datasheet')}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex-1 flex items-center justify-center gap-2 rounded-xl bg-muted/50 p-3 hover:bg-muted transition-colors text-sm"
+                      >
+                        <HelpCircle className="w-4 h-4" />
+                        Search Google
+                      </a>
+                      <a
+                        href={`https://www.digikey.com/en/products/result?keywords=${encodeURIComponent(techSpecs.part_number)}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex-1 flex items-center justify-center gap-2 rounded-xl bg-muted/50 p-3 hover:bg-muted transition-colors text-sm"
+                      >
+                        <Link2 className="w-4 h-4" />
+                        Digi-Key
+                      </a>
                     </div>
                   )}
-
-                  {/* Source Info Popover */}
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <button className="w-12 h-12 rounded-2xl bg-muted/50 flex items-center justify-center hover:bg-muted transition-colors">
-                        <Info className="w-5 h-5 text-muted-foreground" />
-                      </button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-72 p-0" align="end">
-                      <div className="p-4 space-y-3">
-                        <h4 className="font-semibold text-sm">Sources & Links</h4>
-                        
-                        {hasSourceInfo ? (
-                          <div className="space-y-2">
-                            {sourceInfo?.source_name && (
-                              <p className="text-xs text-muted-foreground">
-                                Data from: <span className="font-medium text-foreground">{sourceInfo.source_name}</span>
-                              </p>
-                            )}
-                            
-                            {sourceInfo?.manufacturer_url && (
-                              <a 
-                                href={sourceInfo.manufacturer_url}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="flex items-center gap-2 text-sm text-primary hover:underline"
-                              >
-                                <Link2 className="w-4 h-4" />
-                                Official Product Page
-                                <ExternalLink className="w-3 h-3 ml-auto" />
-                              </a>
-                            )}
-                            
-                            {sourceInfo?.datasheet_url && (
-                              <a 
-                                href={sourceInfo.datasheet_url}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="flex items-center gap-2 text-sm text-primary hover:underline"
-                              >
-                                <FileText className="w-4 h-4" />
-                                Official Datasheet
-                                <ExternalLink className="w-3 h-3 ml-auto" />
-                              </a>
-                            )}
-                            
-                            {sourceInfo?.purchase_url && (
-                              <a 
-                                href={sourceInfo.purchase_url}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="flex items-center gap-2 text-sm text-primary hover:underline"
-                              >
-                                <ShoppingCart className="w-4 h-4" />
-                                Where to Buy
-                                <ExternalLink className="w-3 h-3 ml-auto" />
-                              </a>
-                            )}
-                          </div>
-                        ) : (
-                          <p className="text-xs text-muted-foreground">
-                            No verified source links available for this component.
-                          </p>
-                        )}
-                        
-                        <p className="text-[10px] text-muted-foreground/70 pt-2 border-t">
-                          Links to official manufacturer sites when available.
-                        </p>
-                      </div>
-                    </PopoverContent>
-                  </Popover>
                 </div>
               );
             })()}
@@ -770,9 +737,12 @@ export function ComponentBreakdown({
             {/* Technical Notes */}
             {techSpecs?.notes && (
               <div className="rounded-2xl bg-warning/10 border border-warning/20 p-4">
-                <p className="text-xs font-medium tracking-widest text-warning uppercase mb-2">
-                  Technical Notes
-                </p>
+                <div className="flex items-center gap-2 mb-2">
+                  <AlertTriangle className="w-4 h-4 text-warning" />
+                  <p className="text-xs font-medium tracking-widest text-warning uppercase">
+                    Note
+                  </p>
+                </div>
                 <p className="text-sm text-foreground">{techSpecs.notes}</p>
               </div>
             )}
