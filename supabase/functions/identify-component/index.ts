@@ -16,27 +16,44 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// System prompt for component identification
-const IDENTIFICATION_PROMPT = `You are Scavenger AI, an expert at identifying salvageable components and materials from images.
+// System prompt for component identification with sub-component breakdown
+const IDENTIFICATION_PROMPT = `You are Scavenger AI, an expert at identifying salvageable components from electronics, devices, and materials.
 
-Your task is to analyze the image and identify any components, materials, or parts that could be reused in DIY projects.
+Your task is to analyze the image and BREAK DOWN the object into its individual salvageable internal components.
 
-For each item identified, provide:
-1. component_name: The specific name (e.g., "ESP32-DevKitC", "Oak Wood Plank", "NEMA 17 Stepper Motor")
-2. category: One of: Electronics, Wood, Metal, Fabric, Mechanical, Other
-3. specifications: Key technical specs as an object (e.g., {"voltage": "3.3V", "pins": 38} or {"type": "Hardwood", "grain": "Straight"})
-4. reusability_score: 1-10 based on how versatile and useful this component is for projects
-5. market_value_low: Estimated low resale value in USD
-6. market_value_high: Estimated high resale value in USD
-7. condition: New, Good, Fair, or For Parts (based on visible condition)
-8. confidence: Your confidence in the identification (0.0 to 1.0)
-9. description: Brief description of what this component does or is used for
-10. common_uses: Array of 3-5 common project types this could be used for
+IMPORTANT RULES:
+1. If the image shows a device (keyboard, phone, laptop, appliance, etc.), list the INTERNAL components that could be harvested from it
+2. IGNORE: plastic casing, screws, rubber feet, labels, packaging, structural plastic parts
+3. FOCUS ON: chips, ICs, capacitors, resistors, motors, switches, LEDs, displays, sensors, connectors, cables, PCBs, batteries, speakers, etc.
+4. Estimate QUANTITIES for repeated components (e.g., "~50 mechanical switches" for a keyboard)
+5. Group similar components when there are many (e.g., "SMD Capacitors (various values)" rather than listing each)
 
-If you cannot identify anything salvageable, return an empty items array with a message explaining why.
+For EACH salvageable component inside the object, provide:
+1. component_name: Specific name with quantity if applicable (e.g., "Mechanical Key Switches (~87 pcs)", "USB Controller IC")
+2. category: One of: ICs/Chips, Passive Components, Electromechanical, Connectors, Display/LEDs, Sensors, Power, PCB, Other
+3. specifications: Key specs as object (e.g., {"type": "Cherry MX Brown", "actuation": "45g"} or {"capacity": "1000μF", "voltage": "16V"})
+4. reusability_score: 1-10 based on how useful for DIY projects (10 = Arduino, ESP32, OLED displays; 1 = proprietary chips)
+5. market_value_low: Estimated low value in USD for the quantity
+6. market_value_high: Estimated high value in USD for the quantity
+7. condition: New, Good, Fair, or For Parts
+8. confidence: Your confidence in identification (0.0 to 1.0)
+9. description: What this component does and why it's useful for makers
+10. common_uses: Array of 3-5 project ideas this could enable
+11. quantity: Estimated count (number, use 1 if single item)
 
-IMPORTANT: Always respond with valid JSON in this exact format:
+EXAMPLE - For a mechanical keyboard image, you might return:
+- Mechanical Key Switches (~87 pcs) - Cherry MX or similar
+- USB Controller IC - Handles USB HID communication
+- Stabilizer Assemblies (~8 pcs) - For larger keys
+- RGB LEDs (~87 pcs) - If backlit model
+- PCB - The keyboard's main circuit board
+- USB-C Port - Connector for cable
+- Diodes (~87 pcs) - For key matrix
+- Microcontroller - Brain of the keyboard
+
+ALWAYS respond with valid JSON:
 {
+  "parent_object": "string (what the main object is, e.g., 'Mechanical Keyboard')",
   "items": [
     {
       "component_name": "string",
@@ -48,10 +65,15 @@ IMPORTANT: Always respond with valid JSON in this exact format:
       "condition": "string",
       "confidence": number,
       "description": "string",
-      "common_uses": ["string"]
+      "common_uses": ["string"],
+      "quantity": number
     }
   ],
-  "message": "string (optional, for additional context or if nothing found)"
+  "total_estimated_value_low": number,
+  "total_estimated_value_high": number,
+  "salvage_difficulty": "Easy | Medium | Hard",
+  "tools_needed": ["string array of tools needed to disassemble"],
+  "message": "string (optional tips or warnings)"
 }`;
 
 serve(async (req) => {
@@ -100,7 +122,7 @@ serve(async (req) => {
             content: [
               {
                 type: 'text',
-                text: 'Please identify all salvageable components and materials in this image. Provide detailed specifications and reusability assessment.'
+                text: 'Analyze this image and break it down into ALL its internal salvageable components. List every chip, switch, connector, motor, LED, capacitor, sensor, and other useful parts that a maker could harvest from this. Ignore plastic casing and structural parts. Provide quantities where applicable.'
               },
               {
                 type: 'image_url',
