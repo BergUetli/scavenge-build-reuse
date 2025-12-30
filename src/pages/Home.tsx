@@ -13,7 +13,7 @@ import { ComponentCard } from '@/components/cards/ComponentCard';
 import { useAuth } from '@/contexts/AuthContext';
 import { useInventory } from '@/hooks/useInventory';
 import { useScanHistory } from '@/hooks/useScanHistory';
-
+import defaultAvatar from '@/assets/default-avatar.png';
 export default function Home() {
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -43,6 +43,21 @@ export default function Home() {
           
           <div className="relative px-6 pt-12 pb-28 safe-area-pt">
             <div className="max-w-lg mx-auto">
+              {/* User Avatar - Top Right */}
+              <button 
+                onClick={() => navigate('/profile')}
+                className="absolute top-12 right-6 safe-area-pt group"
+              >
+                <div className="w-11 h-11 rounded-xl overflow-hidden border-2 border-primary/50 shadow-lg group-hover:border-primary group-active:scale-95 transition-all">
+                  <img 
+                    src={defaultAvatar} 
+                    alt="Profile" 
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+                <div className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-success rounded-full border-2 border-background" />
+              </button>
+
               {/* Logo & Title */}
               <div className="flex items-center gap-3.5 mb-5">
                 <div className="relative">
