@@ -82,6 +82,59 @@ function extractJsonFromAI(aiResponse: string) {
   }
 }
 
+/**
+ * Extract partial information from raw AI response when JSON parsing fails
+ */
+function extractPartialInfo(text: string): Record<string, string | null> {
+  const partialInfo: Record<string, string | null> = {};
+  
+  // Try to detect brand mentions
+  const brandPatterns = [
+    /brand[:\s]+["']?([A-Za-z0-9\s]+)["']?/i,
+    /manufacturer[:\s]+["']?([A-Za-z0-9\s]+)["']?/i,
+    /(Apple|Samsung|Sony|LG|Dell|HP|Logitech|Corsair|Razer|ASUS|MSI|Intel|AMD|NVIDIA|Microsoft|Google)/i
+  ];
+  for (const pattern of brandPatterns) {
+    const match = text.match(pattern);
+    if (match) {
+      partialInfo.brand = match[1].trim();
+      console.log('[PARTIAL] Brand detected:', partialInfo.brand);
+      break;
+    }
+  }
+  
+  // Try to detect object type
+  const objectPatterns = [
+    /parent_object[:\s]+["']?([^"'\n,}]+)["']?/i,
+    /this (?:is|appears to be|looks like) (?:a |an )?([^.]+)/i,
+    /identified as (?:a |an )?([^.]+)/i
+  ];
+  for (const pattern of objectPatterns) {
+    const match = text.match(pattern);
+    if (match) {
+      partialInfo.object_type = match[1].trim();
+      console.log('[PARTIAL] Object type detected:', partialInfo.object_type);
+      break;
+    }
+  }
+  
+  // Try to detect category
+  const categoryMatch = text.match(/category[:\s]+["']?(Electronics|Wood|Metal|Fabric|Mechanical|ICs\/Chips|Passive Components|Electromechanical|Connectors|Display\/LEDs|Sensors|Power|PCB|Other)["']?/i);
+  if (categoryMatch) {
+    partialInfo.category = categoryMatch[1];
+    console.log('[PARTIAL] Category detected:', partialInfo.category);
+  }
+  
+  // Try to detect condition
+  const conditionMatch = text.match(/condition[:\s]+["']?(New|Good|Fair|For Parts|Poor)["']?/i);
+  if (conditionMatch) {
+    partialInfo.condition = conditionMatch[1];
+    console.log('[PARTIAL] Condition detected:', partialInfo.condition);
+  }
+  
+  return partialInfo;
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -216,17 +269,47 @@ serve(async (req) => {
       parsedResponse = extractJsonFromAI(aiResponse);
     } catch (parseError) {
       console.error('Failed to parse AI response as JSON:', parseError);
+      
+      // Try to extract partial information from the raw response
+      const partialInfo = extractPartialInfo(aiResponse);
+      console.log('[identify-component] Partial info extracted:', partialInfo);
+      
       return new Response(
         JSON.stringify({
           items: [],
-          message: 'No components could be extracted from the AI response. Please try again with clearer photos.',
+          partial_detection: partialInfo,
+          message: 'Full breakdown failed, but here is what was detected.',
           raw_response: aiResponse,
         }),
         { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    console.log('Successfully identified', parsedResponse.items?.length || 0, 'items from', images.length, 'images');
+    // Log partial detections as they're found
+    console.log('=== IDENTIFICATION RESULTS ===');
+    if (parsedResponse.parent_object) {
+      console.log('[DETECTED] Parent Object:', parsedResponse.parent_object);
+    }
+    if (parsedResponse.salvage_difficulty) {
+      console.log('[DETECTED] Salvage Difficulty:', parsedResponse.salvage_difficulty);
+    }
+    if (parsedResponse.tools_needed?.length) {
+      console.log('[DETECTED] Tools Needed:', parsedResponse.tools_needed.join(', '));
+    }
+    if (parsedResponse.total_estimated_value_low !== undefined) {
+      console.log('[DETECTED] Value Range: $' + parsedResponse.total_estimated_value_low + ' - $' + parsedResponse.total_estimated_value_high);
+    }
+    
+    // Log each identified component
+    if (parsedResponse.items?.length > 0) {
+      console.log('[DETECTED] Found', parsedResponse.items.length, 'salvageable components:');
+      parsedResponse.items.forEach((item: any, idx: number) => {
+        const brand = item.specifications?.brand || item.specifications?.manufacturer || '';
+        const brandStr = brand ? ` (${brand})` : '';
+        console.log(`  ${idx + 1}. ${item.component_name}${brandStr} - ${item.category} - Confidence: ${Math.round((item.confidence || 0) * 100)}%`);
+      });
+    }
+    console.log('==============================');
 
     return new Response(
       JSON.stringify(parsedResponse),
