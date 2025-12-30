@@ -159,6 +159,8 @@ export interface DisassemblyInfo {
   steps: string[];
   difficulty: 'Easy' | 'Medium' | 'Hard';
   time_estimate: string;
+  injury_risk: 'Low' | 'Medium' | 'High';
+  damage_risk: 'Low' | 'Medium' | 'High';
   safety_warnings?: string[];
   tutorial_url?: string;
   video_url?: string;
