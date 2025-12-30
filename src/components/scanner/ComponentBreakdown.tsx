@@ -25,12 +25,16 @@ import {
   Cog,
   Disc,
   Microchip,
-  Loader2
+  Loader2,
+  FileText,
+  HelpCircle,
+  ExternalLink
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { AIIdentificationResponse, IdentifiedItem } from '@/types';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { AIIdentificationResponse, IdentifiedItem, TechnicalSpecs } from '@/types';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -344,6 +348,13 @@ export function ComponentBreakdown({
     const isAdded = addedItems.has(selectedComponent.component_name);
     const confidence = Math.round((selectedComponent.confidence || 0.7) * 100);
     const currentIndex = result.items.findIndex(i => i.component_name === selectedComponent.component_name);
+    const techSpecs = selectedComponent.technical_specs as TechnicalSpecs | undefined;
+    
+    // Helper to display value or "Unknown"
+    const displayValue = (value: unknown) => {
+      if (value === undefined || value === null || value === '') return 'Unknown';
+      return String(value);
+    };
     
     return (
       <div className="space-y-6 animate-fade-in pb-8">
@@ -373,89 +384,191 @@ export function ComponentBreakdown({
           </Badge>
         </div>
 
-        {/* Stats Cards */}
-        <div className="grid grid-cols-2 gap-3">
-          <div className="rounded-2xl bg-muted/50 p-4">
-            <p className="text-xs font-medium tracking-widest text-muted-foreground uppercase mb-2">
-              Value
-            </p>
-            <div className="flex items-baseline gap-1">
-              <DollarSign className="w-5 h-5 text-eco" />
-              <span className="text-3xl font-bold">{selectedComponent.market_value_low}</span>
-              <span className="text-xl text-muted-foreground">- {selectedComponent.market_value_high}</span>
-            </div>
-          </div>
-          
-          <div className="rounded-2xl bg-muted/50 p-4">
-            <p className="text-xs font-medium tracking-widest text-muted-foreground uppercase mb-2">
-              Reusability
-            </p>
-            <div className="flex items-baseline gap-1">
-              <Star className="w-5 h-5 text-amber-500 fill-amber-500" />
-              <span className="text-3xl font-bold">{selectedComponent.reusability_score}</span>
-              <span className="text-xl text-muted-foreground">/10</span>
-            </div>
-          </div>
-        </div>
+        {/* Tabs for Overview and Technical */}
+        <Tabs defaultValue="overview" className="w-full">
+          <TabsList className="grid w-full grid-cols-2 mb-4">
+            <TabsTrigger value="overview" className="text-sm">Overview</TabsTrigger>
+            <TabsTrigger value="technical" className="text-sm">
+              <Cpu className="w-4 h-4 mr-1.5" />
+              Technical
+            </TabsTrigger>
+          </TabsList>
 
-        {/* Confidence */}
-        <div className="rounded-2xl bg-muted/50 p-4">
-          <div className="flex items-center justify-between mb-3">
-            <p className="text-xs font-medium tracking-widest text-muted-foreground uppercase">
-              Confidence
-            </p>
-            <span className="text-lg font-semibold">{confidence}%</span>
-          </div>
-          <Progress value={confidence} className="h-2" />
-        </div>
-
-        {/* Description */}
-        {selectedComponent.description && (
-          <div>
-            <p className="text-xs font-medium tracking-widest text-muted-foreground uppercase mb-2">
-              Description
-            </p>
-            <p className="text-base text-foreground leading-relaxed">
-              {selectedComponent.description}
-            </p>
-          </div>
-        )}
-
-        {/* Specifications */}
-        {selectedComponent.specifications && Object.keys(selectedComponent.specifications).length > 0 && (
-          <div>
-            <p className="text-xs font-medium tracking-widest text-muted-foreground uppercase mb-3">
-              Specifications
-            </p>
-            <div className="rounded-2xl bg-muted/30 divide-y divide-border/50">
-              {Object.entries(selectedComponent.specifications).slice(0, 6).map(([key, value]) => (
-                <div key={key} className="flex justify-between items-center px-4 py-3">
-                  <span className="text-muted-foreground capitalize text-sm">{key.replace(/_/g, ' ')}</span>
-                  <span className="font-medium text-sm">{String(value)}</span>
+          {/* Overview Tab */}
+          <TabsContent value="overview" className="space-y-4 mt-0">
+            {/* Stats Cards */}
+            <div className="grid grid-cols-2 gap-3">
+              <div className="rounded-2xl bg-muted/50 p-4">
+                <p className="text-xs font-medium tracking-widest text-muted-foreground uppercase mb-2">
+                  Value
+                </p>
+                <div className="flex items-baseline gap-1">
+                  <DollarSign className="w-5 h-5 text-eco" />
+                  <span className="text-3xl font-bold">{selectedComponent.market_value_low}</span>
+                  <span className="text-xl text-muted-foreground">- {selectedComponent.market_value_high}</span>
                 </div>
-              ))}
+              </div>
+              
+              <div className="rounded-2xl bg-muted/50 p-4">
+                <p className="text-xs font-medium tracking-widest text-muted-foreground uppercase mb-2">
+                  Reusability
+                </p>
+                <div className="flex items-baseline gap-1">
+                  <Star className="w-5 h-5 text-amber-500 fill-amber-500" />
+                  <span className="text-3xl font-bold">{selectedComponent.reusability_score}</span>
+                  <span className="text-xl text-muted-foreground">/10</span>
+                </div>
+              </div>
             </div>
-          </div>
-        )}
 
-        {/* Common Uses */}
-        {selectedComponent.common_uses && selectedComponent.common_uses.length > 0 && (
-          <div>
-            <p className="text-xs font-medium tracking-widest text-muted-foreground uppercase mb-2">
-              Common Uses
-            </p>
-            <div className="flex flex-wrap gap-2">
-              {selectedComponent.common_uses.map((use, idx) => (
-                <span 
-                  key={idx} 
-                  className="text-sm bg-muted/50 px-3 py-1.5 rounded-lg"
-                >
-                  {use}
-                </span>
-              ))}
+            {/* Confidence */}
+            <div className="rounded-2xl bg-muted/50 p-4">
+              <div className="flex items-center justify-between mb-3">
+                <p className="text-xs font-medium tracking-widest text-muted-foreground uppercase">
+                  Confidence
+                </p>
+                <span className="text-lg font-semibold">{confidence}%</span>
+              </div>
+              <Progress value={confidence} className="h-2" />
             </div>
-          </div>
-        )}
+
+            {/* Description */}
+            {selectedComponent.description && (
+              <div>
+                <p className="text-xs font-medium tracking-widest text-muted-foreground uppercase mb-2">
+                  Description
+                </p>
+                <p className="text-base text-foreground leading-relaxed">
+                  {selectedComponent.description}
+                </p>
+              </div>
+            )}
+
+            {/* Common Uses */}
+            {selectedComponent.common_uses && selectedComponent.common_uses.length > 0 && (
+              <div>
+                <p className="text-xs font-medium tracking-widest text-muted-foreground uppercase mb-2">
+                  Common Uses
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {selectedComponent.common_uses.map((use, idx) => (
+                    <span 
+                      key={idx} 
+                      className="text-sm bg-muted/50 px-3 py-1.5 rounded-lg"
+                    >
+                      {use}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+          </TabsContent>
+
+          {/* Technical Tab */}
+          <TabsContent value="technical" className="space-y-4 mt-0">
+            {/* IC/Part Number - Most Important */}
+            <div className="rounded-2xl bg-primary/10 border border-primary/20 p-4">
+              <div className="flex items-center gap-2 mb-2">
+                <Microchip className="w-5 h-5 text-primary" />
+                <p className="text-xs font-medium tracking-widest text-primary uppercase">
+                  IC / Part Number
+                </p>
+              </div>
+              <p className="text-xl font-mono font-bold text-foreground">
+                {displayValue(techSpecs?.ic_number)}
+              </p>
+              {techSpecs?.ic_number && techSpecs.ic_number !== 'Unknown' && (
+                <p className="text-xs text-muted-foreground mt-1">
+                  Search this number for datasheets
+                </p>
+              )}
+            </div>
+
+            {/* Manufacturer */}
+            <div className="rounded-2xl bg-muted/50 p-4">
+              <p className="text-xs font-medium tracking-widest text-muted-foreground uppercase mb-2">
+                Manufacturer
+              </p>
+              <p className="text-lg font-semibold">{displayValue(techSpecs?.manufacturer)}</p>
+            </div>
+
+            {/* Technical Specs Grid */}
+            <div className="grid grid-cols-2 gap-3">
+              <div className="rounded-2xl bg-muted/30 p-3">
+                <p className="text-xs text-muted-foreground mb-1">Package Type</p>
+                <p className="font-medium text-sm">{displayValue(techSpecs?.package_type)}</p>
+              </div>
+              <div className="rounded-2xl bg-muted/30 p-3">
+                <p className="text-xs text-muted-foreground mb-1">Pin Count</p>
+                <p className="font-medium text-sm">{displayValue(techSpecs?.pin_count)}</p>
+              </div>
+              <div className="rounded-2xl bg-muted/30 p-3">
+                <p className="text-xs text-muted-foreground mb-1">Voltage Range</p>
+                <p className="font-medium text-sm">{displayValue(techSpecs?.voltage_range)}</p>
+              </div>
+              <div className="rounded-2xl bg-muted/30 p-3">
+                <p className="text-xs text-muted-foreground mb-1">Current Rating</p>
+                <p className="font-medium text-sm">{displayValue(techSpecs?.current_rating)}</p>
+              </div>
+            </div>
+
+            {/* Frequency if available */}
+            {techSpecs?.frequency && (
+              <div className="rounded-2xl bg-muted/50 p-4">
+                <p className="text-xs font-medium tracking-widest text-muted-foreground uppercase mb-2">
+                  Operating Frequency
+                </p>
+                <p className="text-lg font-semibold">{techSpecs.frequency}</p>
+              </div>
+            )}
+
+            {/* General Specifications */}
+            {selectedComponent.specifications && Object.keys(selectedComponent.specifications).length > 0 && (
+              <div>
+                <p className="text-xs font-medium tracking-widest text-muted-foreground uppercase mb-3">
+                  Additional Specifications
+                </p>
+                <div className="rounded-2xl bg-muted/30 divide-y divide-border/50">
+                  {Object.entries(selectedComponent.specifications).slice(0, 8).map(([key, value]) => (
+                    <div key={key} className="flex justify-between items-center px-4 py-3">
+                      <span className="text-muted-foreground capitalize text-sm">{key.replace(/_/g, ' ')}</span>
+                      <span className="font-medium text-sm font-mono">{displayValue(value)}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Datasheet Link */}
+            {techSpecs?.datasheet_url && techSpecs.datasheet_url !== 'Unknown' ? (
+              <a 
+                href={techSpecs.datasheet_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center justify-center gap-2 rounded-2xl bg-muted/50 p-4 hover:bg-muted transition-colors"
+              >
+                <FileText className="w-5 h-5 text-primary" />
+                <span className="font-medium">View Datasheet</span>
+                <ExternalLink className="w-4 h-4 text-muted-foreground" />
+              </a>
+            ) : (
+              <div className="flex items-center justify-center gap-2 rounded-2xl bg-muted/30 p-4 text-muted-foreground">
+                <HelpCircle className="w-5 h-5" />
+                <span className="text-sm">No datasheet available</span>
+              </div>
+            )}
+
+            {/* Technical Notes */}
+            {techSpecs?.notes && (
+              <div className="rounded-2xl bg-warning/10 border border-warning/20 p-4">
+                <p className="text-xs font-medium tracking-widest text-warning uppercase mb-2">
+                  Technical Notes
+                </p>
+                <p className="text-sm text-foreground">{techSpecs.notes}</p>
+              </div>
+            )}
+          </TabsContent>
+        </Tabs>
 
         {/* Navigation */}
         {result.items.length > 1 && (

@@ -127,12 +127,29 @@ export type ItemStatus =
 // =============================================
 
 /**
+ * Technical specifications for ICs and components
+ */
+export interface TechnicalSpecs {
+  ic_number?: string;
+  manufacturer?: string;
+  package_type?: string;
+  pin_count?: number;
+  voltage_range?: string;
+  current_rating?: string;
+  frequency?: string;
+  datasheet_url?: string;
+  pinout_diagram?: string;
+  notes?: string;
+}
+
+/**
  * Single identified item from AI
  */
 export interface IdentifiedItem {
   component_name: string;
   category: ComponentCategory;
   specifications: Record<string, unknown>;
+  technical_specs?: TechnicalSpecs;
   reusability_score: number;
   market_value_low: number;
   market_value_high: number;

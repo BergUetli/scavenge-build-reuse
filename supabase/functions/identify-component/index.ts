@@ -30,14 +30,30 @@ For EACH salvageable component inside the object, provide:
 1. component_name: Specific name with quantity if applicable (e.g., "Mechanical Key Switches (~87 pcs)", "USB Controller IC")
 2. category: One of: ICs/Chips, Passive Components, Electromechanical, Connectors, Display/LEDs, Sensors, Power, PCB, Other
 3. specifications: Key specs as object (e.g., {"type": "Cherry MX Brown", "actuation": "45g"} or {"capacity": "1000μF", "voltage": "16V"})
-4. reusability_score: 1-10 based on how useful for DIY projects (10 = Arduino, ESP32, OLED displays; 1 = proprietary chips)
-5. market_value_low: Estimated low value in USD for the quantity
-6. market_value_high: Estimated high value in USD for the quantity
-7. condition: New, Good, Fair, or For Parts
-8. confidence: Your confidence in identification (0.0 to 1.0)
-9. description: What this component does and why it's useful for makers
-10. common_uses: Array of 3-5 project ideas this could enable
-11. quantity: Estimated count (number, use 1 if single item)
+4. technical_specs: DETAILED technical data (CRITICAL - be specific, use "Unknown" if not identifiable):
+   - ic_number: The EXACT IC/chip part number if visible (e.g., "STM32F103C8T6", "ATmega328P", "TPS54531"). Say "Unknown" if not readable.
+   - manufacturer: Chip/component manufacturer (e.g., "Texas Instruments", "STMicroelectronics", "Analog Devices")
+   - package_type: IC package (e.g., "LQFP-48", "QFN-32", "DIP-8", "SOT-23")
+   - pin_count: Number of pins (integer)
+   - voltage_range: Operating voltage (e.g., "3.3V-5V", "1.8V-3.6V")
+   - current_rating: Current specs if applicable (e.g., "500mA max", "3A continuous")
+   - frequency: Clock/operating frequency if applicable (e.g., "72MHz", "16MHz")
+   - datasheet_url: URL to datasheet if known, otherwise null
+   - notes: Any technical notes about the component
+5. reusability_score: 1-10 based on how useful for DIY projects (10 = Arduino, ESP32, OLED displays; 1 = proprietary chips)
+6. market_value_low: Estimated low value in USD for the quantity
+7. market_value_high: Estimated high value in USD for the quantity
+8. condition: New, Good, Fair, or For Parts
+9. confidence: Your confidence in identification (0.0 to 1.0)
+10. description: What this component does and why it's useful for makers
+11. common_uses: Array of 3-5 project ideas this could enable
+12. quantity: Estimated count (number, use 1 if single item)
+
+CRITICAL FOR TECHNICAL SPECS:
+- If you can see text on a chip/IC, include the EXACT part number in ic_number
+- If you cannot read it, say "Unknown" - NEVER make up part numbers
+- DSPs, microcontrollers, and ICs should ALWAYS have technical_specs filled out as much as possible
+- For generic components (resistors, capacitors), focus on electrical specs
 
 ALWAYS respond with valid JSON:
 {
@@ -47,6 +63,17 @@ ALWAYS respond with valid JSON:
       "component_name": "string",
       "category": "string",
       "specifications": {},
+      "technical_specs": {
+        "ic_number": "string or null",
+        "manufacturer": "string or null",
+        "package_type": "string or null",
+        "pin_count": "number or null",
+        "voltage_range": "string or null",
+        "current_rating": "string or null",
+        "frequency": "string or null",
+        "datasheet_url": "string or null",
+        "notes": "string or null"
+      },
       "reusability_score": number,
       "market_value_low": number,
       "market_value_high": number,
