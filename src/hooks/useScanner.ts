@@ -80,22 +80,42 @@ export function useScanner() {
    * Capture image from video stream and add to captured images
    */
   const captureImage = useCallback((): string | null => {
-    if (!videoRef.current) return null;
+    if (!videoRef.current) {
+      console.error('[Scanner] No video ref available');
+      return null;
+    }
 
     const canvas = document.createElement('canvas');
-    canvas.width = videoRef.current.videoWidth;
-    canvas.height = videoRef.current.videoHeight;
+    canvas.width = videoRef.current.videoWidth || 640;
+    canvas.height = videoRef.current.videoHeight || 480;
+    
+    console.log('[Scanner] Capturing image:', canvas.width, 'x', canvas.height);
     
     const ctx = canvas.getContext('2d');
-    if (!ctx) return null;
+    if (!ctx) {
+      console.error('[Scanner] Could not get canvas context');
+      return null;
+    }
     
     ctx.drawImage(videoRef.current, 0, 0);
-    const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
+    const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
     
-    setCapturedImages(prev => [...prev, dataUrl]);
+    console.log('[Scanner] Image captured, size:', dataUrl.length);
+    
+    setCapturedImages(prev => {
+      const newImages = [...prev, dataUrl];
+      console.log('[Scanner] Total captured images:', newImages.length);
+      return newImages;
+    });
     setState(prev => ({ ...prev, capturedImage: dataUrl }));
+    
+    toast({
+      title: 'Photo captured',
+      description: `${capturedImages.length + 1} photo(s) ready`
+    });
+    
     return dataUrl;
-  }, []);
+  }, [capturedImages.length]);
 
   /**
    * Add uploaded image to captured images
@@ -129,6 +149,8 @@ export function useScanner() {
    * Process multiple images with AI identification
    */
   const identifyFromImages = useCallback(async (images: string[]): Promise<AIIdentificationResponse | null> => {
+    console.log('[Scanner] identifyFromImages called with', images.length, 'images');
+    
     if (images.length === 0) {
       toast({
         title: 'No Images',
@@ -143,9 +165,11 @@ export function useScanner() {
 
     try {
       // Prepare images array with base64 and mime type
-      const imagesData = images.map(imageDataUrl => {
+      const imagesData = images.map((imageDataUrl, index) => {
+        console.log(`[Scanner] Processing image ${index + 1}, length: ${imageDataUrl.length}`);
         const base64Match = imageDataUrl.match(/^data:image\/(.*?);base64,(.*)$/);
         if (!base64Match) {
+          console.error(`[Scanner] Image ${index + 1} has invalid format`);
           throw new Error('Invalid image format');
         }
         return {
@@ -154,14 +178,19 @@ export function useScanner() {
         };
       });
 
+      console.log('[Scanner] Sending', imagesData.length, 'images to edge function');
+
       // Call edge function with multiple images
       const { data, error } = await supabase.functions.invoke('identify-component', {
         body: { images: imagesData }
       });
 
       if (error) {
+        console.error('[Scanner] Edge function error:', error);
         throw new Error(error.message || 'Identification failed');
       }
+
+      console.log('[Scanner] Edge function response:', data);
 
       const result = data as AIIdentificationResponse;
       setIdentificationResult(result);
@@ -182,7 +211,7 @@ export function useScanner() {
 
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown error';
-      console.error('Identification error:', error);
+      console.error('[Scanner] Identification error:', error);
       setState(prev => ({ ...prev, error: message }));
       toast({
         title: 'Identification Failed',
