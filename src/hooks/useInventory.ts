@@ -78,10 +78,13 @@ export function useInventory() {
           quantity: input.quantity || 1,
           condition: input.condition,
           specifications: (input.specifications || {}) as { [key: string]: string | number | boolean | null },
+          technical_specs: (input.technical_specs || {}) as { [key: string]: string | number | boolean | null },
           reusability_score: input.reusability_score,
           market_value: input.market_value,
           image_url: input.image_url,
-          notes: input.notes
+          notes: input.notes,
+          description: input.description,
+          common_uses: input.common_uses || []
         }])
         .select()
         .single();
@@ -91,10 +94,6 @@ export function useInventory() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['inventory', user?.id] });
-      toast({
-        title: 'Added to Inventory',
-        description: 'Component saved to your inventory.'
-      });
     },
     onError: (error) => {
       toast({

@@ -221,10 +221,13 @@ export interface AddInventoryInput {
   quantity?: number;
   condition: ItemCondition;
   specifications?: Record<string, unknown>;
+  technical_specs?: TechnicalSpecs;
   reusability_score?: number;
   market_value?: number;
   image_url?: string;
   notes?: string;
+  description?: string;
+  common_uses?: string[];
 }
 
 /**
