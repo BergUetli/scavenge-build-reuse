@@ -1,9 +1,9 @@
 /**
- * SCAN BUTTON - Dung Beetle Style
- * Bold, amber, with beetle-inspired design
+ * SCAN BUTTON - JunkHauler Style
+ * Industrial, glowing, futuristic
  */
 
-import { Camera, Bug } from 'lucide-react';
+import { Crosshair, Scan } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface ScanButtonProps {
@@ -24,9 +24,9 @@ export function ScanButton({ onClick, size = 'large', className }: ScanButtonPro
       )}
     >
       {/* Animated pulse rings */}
-      <div className="absolute inset-0 rounded-full bg-primary/25 pulse-scan" />
+      <div className="absolute inset-0 rounded-2xl bg-primary/25 pulse-scan" />
       <div 
-        className="absolute inset-0 rounded-full bg-primary/15 animate-pulse-soft" 
+        className="absolute inset-0 rounded-2xl bg-primary/15 animate-pulse-soft" 
         style={{ animationDelay: '0.5s' }}
       />
       
@@ -35,35 +35,45 @@ export function ScanButton({ onClick, size = 'large', className }: ScanButtonPro
         className={cn(
           'relative flex flex-col items-center justify-center',
           'bg-gradient-to-br from-primary via-primary to-primary/85',
-          'rounded-full shadow-premium-xl shimmer-shell',
+          'rounded-2xl shadow-premium-xl',
           'transition-all duration-300 ease-out-expo',
           'group-hover:scale-105 group-active:scale-95',
-          'border-2 border-primary-foreground/20',
-          isLarge ? 'w-[130px] h-[130px]' : 'w-16 h-16'
+          'border border-primary-foreground/20',
+          isLarge ? 'w-[140px] h-[140px]' : 'w-14 h-14'
         )}
         style={{
           boxShadow: isLarge 
-            ? '0 16px 48px hsl(38 92% 40% / 0.4), 0 8px 16px hsl(38 92% 40% / 0.2), inset 0 2px 4px rgba(255,255,255,0.2)' 
+            ? '0 0 40px hsl(199 89% 48% / 0.4), 0 16px 48px hsl(199 89% 48% / 0.25), inset 0 1px 0 rgba(255,255,255,0.2)' 
             : undefined
         }}
       >
-        {/* Inner highlight */}
-        <div className="absolute inset-[3px] rounded-full bg-gradient-to-br from-white/30 via-white/5 to-transparent" />
+        {/* Inner glow */}
+        <div className="absolute inset-[2px] rounded-[14px] bg-gradient-to-br from-white/25 via-white/5 to-transparent" />
+        
+        {/* Corner brackets for targeting effect */}
+        {isLarge && (
+          <>
+            <div className="absolute top-3 left-3 w-4 h-4 border-t-2 border-l-2 border-primary-foreground/50 rounded-tl" />
+            <div className="absolute top-3 right-3 w-4 h-4 border-t-2 border-r-2 border-primary-foreground/50 rounded-tr" />
+            <div className="absolute bottom-3 left-3 w-4 h-4 border-b-2 border-l-2 border-primary-foreground/50 rounded-bl" />
+            <div className="absolute bottom-3 right-3 w-4 h-4 border-b-2 border-r-2 border-primary-foreground/50 rounded-br" />
+          </>
+        )}
         
         {/* Icon container */}
-        <div className="relative flex flex-col items-center gap-1.5">
+        <div className="relative flex flex-col items-center gap-2">
           <div className={cn(
             'relative',
-            isLarge ? 'mb-0.5' : ''
+            isLarge ? 'mb-0' : ''
           )}>
             {isLarge ? (
-              <Bug className="w-10 h-10 text-primary-foreground drop-shadow-md" strokeWidth={1.5} />
+              <Crosshair className="w-12 h-12 text-primary-foreground drop-shadow-md" strokeWidth={1.5} />
             ) : (
-              <Camera className="w-6 h-6 text-primary-foreground drop-shadow-sm" strokeWidth={2} />
+              <Scan className="w-6 h-6 text-primary-foreground drop-shadow-sm" strokeWidth={2} />
             )}
           </div>
           {isLarge && (
-            <span className="text-sm font-bold text-primary-foreground/95 tracking-wide uppercase">
+            <span className="text-xs font-bold text-primary-foreground/90 tracking-[0.2em] uppercase">
               Scan
             </span>
           )}
