@@ -8,6 +8,7 @@ import Home from "./pages/Home";
 import Scanner from "./pages/Scanner";
 import Inventory from "./pages/Inventory";
 import Projects from "./pages/Projects";
+import ProjectDetail from "./pages/ProjectDetail";
 import Profile from "./pages/Profile";
 import Auth from "./pages/Auth";
 import Admin from "./pages/Admin";
@@ -27,6 +28,7 @@ const App = () => (
             <Route path="/scan" element={<Scanner />} />
             <Route path="/inventory" element={<Inventory />} />
             <Route path="/projects" element={<Projects />} />
+            <Route path="/projects/:id" element={<ProjectDetail />} />
             <Route path="/profile" element={<Profile />} />
             <Route path="/auth" element={<Auth />} />
             <Route path="/admin" element={<Admin />} />

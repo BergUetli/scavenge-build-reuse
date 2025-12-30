@@ -22,9 +22,12 @@ interface ProjectCardProps {
 
 // Difficulty color mapping
 const difficultyColors: Record<string, string> = {
-  Beginner: 'bg-eco/10 text-eco',
+  Novice: 'bg-emerald-500/10 text-emerald-500',
+  Easy: 'bg-eco/10 text-eco',
+  Beginner: 'bg-green-500/10 text-green-600',
   Intermediate: 'bg-amber-500/10 text-amber-600',
-  Advanced: 'bg-red-500/10 text-red-600',
+  Advanced: 'bg-orange-500/10 text-orange-600',
+  Expert: 'bg-red-500/10 text-red-600',
 };
 
 export function ProjectCard({ 

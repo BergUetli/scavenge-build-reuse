@@ -107,9 +107,12 @@ export type ComponentCategory =
   | 'Other';
 
 export type DifficultyLevel = 
+  | 'Novice'
+  | 'Easy'
   | 'Beginner' 
   | 'Intermediate' 
-  | 'Advanced';
+  | 'Advanced'
+  | 'Expert';
 
 export type ItemCondition = 
   | 'New' 
