@@ -8,7 +8,6 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { ScanButton } from '@/components/scanner/ScanButton';
-import { ImpactStats } from '@/components/stats/ImpactStats';
 import { ComponentCard } from '@/components/cards/ComponentCard';
 import { useAuth } from '@/contexts/AuthContext';
 import { useInventory } from '@/hooks/useInventory';
@@ -20,11 +19,6 @@ export default function Home() {
   const { inventory, stats } = useInventory();
   const { history } = useScanHistory();
 
-  const impactStats = {
-    itemsScanned: history.length,
-    itemsSaved: inventory.length,
-    co2Saved: inventory.length * 0.5,
-  };
 
   return (
     <AppLayout>
@@ -89,10 +83,6 @@ export default function Home() {
             </button>
           </div>
 
-          {/* Impact Stats */}
-          <div className="animate-fade-up" style={{ animationDelay: '0.2s' }}>
-            <ImpactStats {...impactStats} />
-          </div>
 
           {/* Eco Message Card */}
           <Card className="border-0 bg-gradient-to-br from-accent/10 via-accent/5 to-transparent shadow-premium animate-fade-up" style={{ animationDelay: '0.25s' }}>
