@@ -89,22 +89,38 @@ serve(async (req) => {
 
   try {
     const body = await req.json();
+    console.log('[identify-component] Request body keys:', Object.keys(body));
     
     // Support both single image (legacy) and multiple images
     let images: Array<{ imageBase64: string; mimeType: string }> = [];
     
     if (body.images && Array.isArray(body.images)) {
+      console.log('[identify-component] Received images array with', body.images.length, 'items');
       images = body.images;
     } else if (body.imageBase64) {
-      // Legacy single image support
+      console.log('[identify-component] Received single image (legacy format)');
       images = [{ imageBase64: body.imageBase64, mimeType: body.mimeType || 'image/jpeg' }];
     }
 
     if (images.length === 0) {
+      console.error('[identify-component] No images found in request');
       return new Response(
         JSON.stringify({ error: 'No images provided' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
+    }
+
+    // Validate each image
+    for (let i = 0; i < images.length; i++) {
+      const img = images[i];
+      if (!img.imageBase64 || img.imageBase64.length < 100) {
+        console.error(`[identify-component] Image ${i} is invalid or too small`);
+        return new Response(
+          JSON.stringify({ error: `Image ${i + 1} is invalid` }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+      console.log(`[identify-component] Image ${i + 1}: ${img.mimeType}, ${img.imageBase64.length} chars`);
     }
 
     const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
