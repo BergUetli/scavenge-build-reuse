@@ -131,28 +131,21 @@ export type ItemStatus =
 
 /**
  * Technical specifications for ICs and components
+ * Focused on rebuild-critical info
  */
 export interface TechnicalSpecs {
-  ic_number?: string;
-  manufacturer?: string;
-  package_type?: string;
-  pin_count?: number;
-  voltage_range?: string;
-  current_rating?: string;
-  frequency?: string;
-  datasheet_url?: string;
-  pinout_diagram?: string;
-  notes?: string;
+  voltage?: string;           // Operating voltage (e.g., "5V", "3.3V")
+  power_rating?: string;      // Power/current specs (e.g., "500mA", "10W")
+  part_number?: string;       // IC part number for lookup (e.g., "STM32F103", "NE555")
+  notes?: string;             // One-line practical tip
 }
 
 /**
- * Source/reference information
+ * Source/reference information for lookup
  */
 export interface SourceInfo {
-  manufacturer_url?: string;
   datasheet_url?: string;
   purchase_url?: string;
-  source_name?: string;
 }
 
 /**
