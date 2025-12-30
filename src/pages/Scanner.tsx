@@ -3,18 +3,19 @@
  * 
  * Full-screen camera interface for scanning and identifying components.
  * Supports multi-photo capture for better AI identification.
+ * Shows full component breakdown with parent object and all salvageable parts.
  */
 
 import { useState, useCallback, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Loader2 } from 'lucide-react';
 import { CameraView } from '@/components/scanner/CameraView';
-import { IdentificationResult } from '@/components/scanner/IdentificationResult';
+import { ComponentBreakdown } from '@/components/scanner/ComponentBreakdown';
 import { useScanner } from '@/hooks/useScanner';
 import { useInventory } from '@/hooks/useInventory';
 import { useScanHistory } from '@/hooks/useScanHistory';
 import { useAuth } from '@/contexts/AuthContext';
-import { IdentifiedItem } from '@/types';
+import { IdentifiedItem, AIIdentificationResponse } from '@/types';
 import { toast } from '@/hooks/use-toast';
 
 export default function Scanner() {
@@ -40,8 +41,7 @@ export default function Scanner() {
   const { isCapturing, isProcessing, capturedImage } = state;
 
   const [showResult, setShowResult] = useState(false);
-  const [selectedItem, setSelectedItem] = useState<IdentifiedItem | null>(null);
-  const [noResultMessage, setNoResultMessage] = useState<string | null>(null);
+  const [fullResult, setFullResult] = useState<AIIdentificationResponse | null>(null);
 
   // Start camera on mount
   useEffect(() => {
@@ -66,20 +66,13 @@ export default function Scanner() {
     const result = await analyzeAllImages();
     
     if (!result) {
-      setNoResultMessage('Analysis failed. Please try again.');
-      setSelectedItem(null);
+      setFullResult({ items: [], message: 'Analysis failed. Please try again.' });
       setShowResult(true);
       return;
     }
 
-    if (result.items?.length > 0) {
-      setSelectedItem(result.items[0]);
-      setNoResultMessage(null);
-    } else {
-      setSelectedItem(null);
-      setNoResultMessage(result.message || 'No salvageable components detected. Try clearer shots or different angles.');
-    }
-
+    console.log('[Scanner] Full AI result:', result);
+    setFullResult(result);
     setShowResult(true);
   }, [analyzeAllImages]);
 
@@ -89,54 +82,63 @@ export default function Scanner() {
     navigate(-1);
   }, [stopCamera, navigate]);
 
-  // Handle confirming identification and adding to inventory
-  const handleConfirm = useCallback(async () => {
-    if (!selectedItem || !user) return;
+  // Handle adding a single component to inventory
+  const handleAddComponent = useCallback(async (item: IdentifiedItem) => {
+    if (!user) return;
 
     try {
       await addItem.mutateAsync({
-        component_name: selectedItem.component_name,
-        category: selectedItem.category,
-        condition: selectedItem.condition,
-        specifications: selectedItem.specifications,
-        reusability_score: selectedItem.reusability_score,
-        market_value: (selectedItem.market_value_low + selectedItem.market_value_high) / 2,
+        component_name: item.component_name,
+        category: item.category,
+        condition: item.condition,
+        specifications: item.specifications,
+        reusability_score: item.reusability_score,
+        market_value: (item.market_value_low + item.market_value_high) / 2,
         image_url: capturedImage || undefined,
       });
 
       await addScan.mutateAsync({
-        component_name: selectedItem.component_name,
-        category: selectedItem.category,
-        confidence: selectedItem.confidence,
+        component_name: item.component_name,
+        category: item.category,
+        confidence: item.confidence,
         image_url: capturedImage || undefined,
-        ai_response: identificationResult || undefined,
+        ai_response: fullResult || undefined,
       });
 
       toast({
         title: 'Added to Inventory!',
-        description: `${selectedItem.component_name} has been saved.`,
+        description: `${item.component_name} has been saved.`,
       });
-
-      stopCamera();
-      navigate('/inventory');
     } catch (error) {
       console.error('Failed to save:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to add component to inventory.',
+        variant: 'destructive',
+      });
     }
-  }, [selectedItem, user, addItem, addScan, capturedImage, identificationResult, stopCamera, navigate]);
+  }, [user, addItem, addScan, capturedImage, fullResult]);
 
-  // Handle editing identification
-  const handleEdit = useCallback(() => {
+  // Handle adding all components
+  const handleAddAll = useCallback(async () => {
+    if (!user || !fullResult?.items) return;
+
+    for (const item of fullResult.items) {
+      await handleAddComponent(item);
+    }
+
     toast({
-      title: 'Edit Mode',
-      description: 'Manual editing coming soon!',
+      title: 'All Components Added!',
+      description: `${fullResult.items.length} components saved to inventory.`,
     });
-  }, []);
 
-  // Handle rejecting and rescanning
-  const handleReject = useCallback(() => {
+    navigate('/inventory');
+  }, [user, fullResult, handleAddComponent, navigate]);
+
+  // Handle rescanning
+  const handleRescan = useCallback(() => {
     setShowResult(false);
-    setSelectedItem(null);
-    setNoResultMessage(null);
+    setFullResult(null);
     reset();
     startCamera();
   }, [reset, startCamera]);
@@ -161,42 +163,19 @@ export default function Scanner() {
     );
   }
 
-  // Show result view
-  if (showResult) {
+  // Show result view with full breakdown
+  if (showResult && fullResult) {
     return (
-      <div className="min-h-screen bg-background p-4 safe-area-pt safe-area-pb">
-        <div className="max-w-md mx-auto pt-8">
-          {selectedItem ? (
-            <IdentificationResult
-              result={selectedItem}
-              imageUrl={capturedImage || undefined}
-              onConfirm={handleConfirm}
-              onEdit={handleEdit}
-              onReject={handleReject}
-              isLoading={addItem.isPending}
-            />
-          ) : (
-            <div className="card-ios p-5 animate-fade-up">
-              <h2 className="text-title-2 text-foreground">No components found</h2>
-              <p className="text-body text-muted-foreground mt-2">
-                {noResultMessage || 'No salvageable components detected.'}
-              </p>
-              <div className="flex gap-2 mt-5">
-                <button
-                  onClick={handleReject}
-                  className="flex-1 h-11 rounded-xl bg-primary text-primary-foreground font-semibold shadow-premium active:scale-[0.97] transition-transform"
-                >
-                  Try again
-                </button>
-                <button
-                  onClick={handleClose}
-                  className="h-11 px-4 rounded-xl bg-muted text-foreground font-semibold active:scale-[0.97] transition-transform"
-                >
-                  Close
-                </button>
-              </div>
-            </div>
-          )}
+      <div className="min-h-screen bg-background p-4 safe-area-pt safe-area-pb overflow-y-auto">
+        <div className="max-w-md mx-auto pt-4 pb-8">
+          <ComponentBreakdown
+            result={fullResult}
+            imageUrl={capturedImage || undefined}
+            onAddComponent={handleAddComponent}
+            onAddAll={handleAddAll}
+            onRescan={handleRescan}
+            isLoading={addItem.isPending}
+          />
         </div>
       </div>
     );

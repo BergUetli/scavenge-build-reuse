@@ -143,12 +143,18 @@ export interface IdentifiedItem {
 }
 
 /**
- * AI identification response
+ * AI identification response with full breakdown
  */
 export interface AIIdentificationResponse {
+  parent_object?: string;
   items: IdentifiedItem[];
+  salvage_difficulty?: 'Easy' | 'Medium' | 'Hard';
+  tools_needed?: string[];
+  total_estimated_value_low?: number;
+  total_estimated_value_high?: number;
   message?: string;
   raw_response?: string;
+  partial_detection?: Record<string, string | null>;
 }
 
 /**
