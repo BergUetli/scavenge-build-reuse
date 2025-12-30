@@ -74,7 +74,28 @@ ALWAYS respond with valid JSON:
   "salvage_difficulty": "Easy | Medium | Hard",
   "tools_needed": ["string array of tools needed to disassemble"],
   "message": "string (optional tips or warnings)"
-}`;
+ }`;
+
+function extractJsonFromAI(aiResponse: string) {
+  // If model still returns markdown, strip code fences.
+  let text = aiResponse.trim();
+  const fenceMatch = text.match(/```(?:json)?\s*([\s\S]*?)\s*```/i);
+  if (fenceMatch?.[1]) text = fenceMatch[1].trim();
+
+  // Try direct parse first.
+  try {
+    return JSON.parse(text);
+  } catch {
+    // Fallback: grab the largest JSON object in the text.
+    const firstBrace = text.indexOf('{');
+    const lastBrace = text.lastIndexOf('}');
+    if (firstBrace === -1 || lastBrace === -1 || lastBrace <= firstBrace) {
+      throw new Error('No JSON object found in AI response');
+    }
+    const candidate = text.slice(firstBrace, lastBrace + 1);
+    return JSON.parse(candidate);
+  }
+}
 
 serve(async (req) => {
   // Handle CORS preflight requests
@@ -122,7 +143,7 @@ serve(async (req) => {
             content: [
               {
                 type: 'text',
-                text: 'Analyze this image and break it down into ALL its internal salvageable components. List every chip, switch, connector, motor, LED, capacitor, sensor, and other useful parts that a maker could harvest from this. Ignore plastic casing and structural parts. Provide quantities where applicable.'
+                text: 'Return ONLY valid JSON (no markdown, no code fences). If unsure, set confidence lower and still return a complete JSON object. Keep tools_needed to <= 8 items and common_uses to <= 4.'
               },
               {
                 type: 'image_url',
@@ -133,7 +154,7 @@ serve(async (req) => {
             ]
           }
         ],
-        max_tokens: 2000,
+        max_tokens: 3000,
       }),
     });
 
@@ -177,21 +198,15 @@ serve(async (req) => {
     // Parse the JSON response from the AI
     let parsedResponse;
     try {
-      // Extract JSON from markdown code blocks if present
-      let jsonString = aiResponse;
-      const jsonMatch = aiResponse.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
-      if (jsonMatch) {
-        jsonString = jsonMatch[1];
-      }
-      parsedResponse = JSON.parse(jsonString);
+      parsedResponse = extractJsonFromAI(aiResponse);
     } catch (parseError) {
       console.error('Failed to parse AI response as JSON:', parseError);
       // Return a structured error with the raw response for debugging
       return new Response(
-        JSON.stringify({ 
+        JSON.stringify({
           items: [],
-          message: 'Could not parse identification results',
-          raw_response: aiResponse
+          message: 'No components could be extracted from the AI response. Please try again with a clearer photo.',
+          raw_response: aiResponse,
         }),
         { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
