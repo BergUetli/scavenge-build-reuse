@@ -1,8 +1,9 @@
 /**
- * SCAN BUTTON - Premium iOS Style
+ * SCAN BUTTON - Dung Beetle Style
+ * Bold, amber, with beetle-inspired design
  */
 
-import { Camera, Scan } from 'lucide-react';
+import { Camera, Bug } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface ScanButtonProps {
@@ -23,9 +24,9 @@ export function ScanButton({ onClick, size = 'large', className }: ScanButtonPro
       )}
     >
       {/* Animated pulse rings */}
-      <div className="absolute inset-0 rounded-full bg-primary/20 pulse-scan" />
+      <div className="absolute inset-0 rounded-full bg-primary/25 pulse-scan" />
       <div 
-        className="absolute inset-0 rounded-full bg-primary/10 animate-pulse-soft" 
+        className="absolute inset-0 rounded-full bg-primary/15 animate-pulse-soft" 
         style={{ animationDelay: '0.5s' }}
       />
       
@@ -33,31 +34,36 @@ export function ScanButton({ onClick, size = 'large', className }: ScanButtonPro
       <div
         className={cn(
           'relative flex flex-col items-center justify-center',
-          'bg-gradient-to-br from-primary via-primary to-primary/90',
-          'rounded-full shadow-premium-xl',
+          'bg-gradient-to-br from-primary via-primary to-primary/85',
+          'rounded-full shadow-premium-xl shimmer-shell',
           'transition-all duration-300 ease-out-expo',
           'group-hover:scale-105 group-active:scale-95',
-          'group-hover:shadow-[0_16px_48px_hsl(211_100%_50%/0.35)]',
-          isLarge ? 'w-[120px] h-[120px]' : 'w-16 h-16'
+          'border-2 border-primary-foreground/20',
+          isLarge ? 'w-[130px] h-[130px]' : 'w-16 h-16'
         )}
+        style={{
+          boxShadow: isLarge 
+            ? '0 16px 48px hsl(38 92% 40% / 0.4), 0 8px 16px hsl(38 92% 40% / 0.2), inset 0 2px 4px rgba(255,255,255,0.2)' 
+            : undefined
+        }}
       >
         {/* Inner highlight */}
-        <div className="absolute inset-[2px] rounded-full bg-gradient-to-br from-white/25 to-transparent opacity-80" />
+        <div className="absolute inset-[3px] rounded-full bg-gradient-to-br from-white/30 via-white/5 to-transparent" />
         
         {/* Icon container */}
-        <div className="relative flex flex-col items-center gap-1">
+        <div className="relative flex flex-col items-center gap-1.5">
           <div className={cn(
             'relative',
-            isLarge ? 'mb-1' : ''
+            isLarge ? 'mb-0.5' : ''
           )}>
             {isLarge ? (
-              <Scan className="w-9 h-9 text-white drop-shadow-sm" strokeWidth={2} />
+              <Bug className="w-10 h-10 text-primary-foreground drop-shadow-md" strokeWidth={1.5} />
             ) : (
-              <Camera className="w-6 h-6 text-white drop-shadow-sm" strokeWidth={2} />
+              <Camera className="w-6 h-6 text-primary-foreground drop-shadow-sm" strokeWidth={2} />
             )}
           </div>
           {isLarge && (
-            <span className="text-[13px] font-semibold text-white/95 tracking-wide">
+            <span className="text-sm font-bold text-primary-foreground/95 tracking-wide uppercase">
               Scan
             </span>
           )}
