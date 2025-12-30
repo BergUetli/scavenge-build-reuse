@@ -28,13 +28,26 @@ import {
   Loader2,
   FileText,
   HelpCircle,
-  ExternalLink
+  ExternalLink,
+  Info,
+  AlertTriangle,
+  Clock,
+  BookOpen,
+  Play,
+  ShoppingCart,
+  Link2,
+  X
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { AIIdentificationResponse, IdentifiedItem, TechnicalSpecs } from '@/types';
+import { 
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
+import { AIIdentificationResponse, IdentifiedItem, TechnicalSpecs, DisassemblyInfo, SourceInfo } from '@/types';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -224,9 +237,90 @@ export function ComponentBreakdown({
               className="w-full h-full object-cover"
             />
             <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/80 to-transparent">
-              <p className="text-white/80 text-sm">
-                {difficulty ? `${difficulty.label} to salvage` : 'Tap below to see parts'}
-              </p>
+              <div className="flex items-center justify-between">
+                <p className="text-white/80 text-sm">
+                  {difficulty ? `${difficulty.label} to salvage` : 'Tap below to see parts'}
+                </p>
+                {/* Disassembly Info Button */}
+                {result.disassembly && (
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <button className="w-8 h-8 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center hover:bg-white/30 transition-colors">
+                        <Info className="w-4 h-4 text-white" />
+                      </button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-80 p-0" align="end">
+                      <div className="p-4 space-y-3">
+                        <div className="flex items-center justify-between">
+                          <h4 className="font-semibold text-sm">How to Disassemble</h4>
+                          <div className="flex items-center gap-2">
+                            <Badge variant="outline" className="text-xs">
+                              <Clock className="w-3 h-3 mr-1" />
+                              {result.disassembly.time_estimate || 'Unknown'}
+                            </Badge>
+                          </div>
+                        </div>
+                        
+                        {/* Steps */}
+                        <div className="space-y-2">
+                          {result.disassembly.steps?.slice(0, 5).map((step, idx) => (
+                            <div key={idx} className="flex gap-2 text-xs">
+                              <span className="font-bold text-primary">{idx + 1}.</span>
+                              <span className="text-muted-foreground">{step}</span>
+                            </div>
+                          ))}
+                          {(result.disassembly.steps?.length || 0) > 5 && (
+                            <p className="text-xs text-muted-foreground italic">
+                              +{result.disassembly.steps!.length - 5} more steps...
+                            </p>
+                          )}
+                        </div>
+
+                        {/* Safety Warnings */}
+                        {result.disassembly.safety_warnings && result.disassembly.safety_warnings.length > 0 && (
+                          <div className="rounded-lg bg-warning/10 border border-warning/20 p-2">
+                            <div className="flex items-center gap-1.5 text-warning mb-1">
+                              <AlertTriangle className="w-3 h-3" />
+                              <span className="text-xs font-medium">Safety</span>
+                            </div>
+                            <ul className="text-xs text-muted-foreground space-y-0.5">
+                              {result.disassembly.safety_warnings.map((warn, idx) => (
+                                <li key={idx}>• {warn}</li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+
+                        {/* External Links */}
+                        <div className="flex gap-2 pt-1">
+                          {result.disassembly.tutorial_url && (
+                            <a 
+                              href={result.disassembly.tutorial_url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="flex items-center gap-1 text-xs text-primary hover:underline"
+                            >
+                              <BookOpen className="w-3 h-3" />
+                              Guide
+                            </a>
+                          )}
+                          {result.disassembly.video_url && (
+                            <a 
+                              href={result.disassembly.video_url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="flex items-center gap-1 text-xs text-primary hover:underline"
+                            >
+                              <Play className="w-3 h-3" />
+                              Video
+                            </a>
+                          )}
+                        </div>
+                      </div>
+                    </PopoverContent>
+                  </Popover>
+                )}
+              </div>
             </div>
           </div>
         )}
@@ -539,24 +633,105 @@ export function ComponentBreakdown({
               </div>
             )}
 
-            {/* Datasheet Link */}
-            {techSpecs?.datasheet_url && techSpecs.datasheet_url !== 'Unknown' ? (
-              <a 
-                href={techSpecs.datasheet_url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center justify-center gap-2 rounded-2xl bg-muted/50 p-4 hover:bg-muted transition-colors"
-              >
-                <FileText className="w-5 h-5 text-primary" />
-                <span className="font-medium">View Datasheet</span>
-                <ExternalLink className="w-4 h-4 text-muted-foreground" />
-              </a>
-            ) : (
-              <div className="flex items-center justify-center gap-2 rounded-2xl bg-muted/30 p-4 text-muted-foreground">
-                <HelpCircle className="w-5 h-5" />
-                <span className="text-sm">No datasheet available</span>
-              </div>
-            )}
+            {/* Source Info Button */}
+            {(() => {
+              const sourceInfo = selectedComponent.source_info as SourceInfo | undefined;
+              const hasSourceInfo = sourceInfo?.manufacturer_url || sourceInfo?.datasheet_url || sourceInfo?.purchase_url;
+              
+              return (
+                <div className="flex items-center gap-2">
+                  {/* Datasheet Link */}
+                  {(techSpecs?.datasheet_url && techSpecs.datasheet_url !== 'Unknown') || sourceInfo?.datasheet_url ? (
+                    <a 
+                      href={sourceInfo?.datasheet_url || techSpecs?.datasheet_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex-1 flex items-center justify-center gap-2 rounded-2xl bg-muted/50 p-4 hover:bg-muted transition-colors"
+                    >
+                      <FileText className="w-5 h-5 text-primary" />
+                      <span className="font-medium">Datasheet</span>
+                      <ExternalLink className="w-4 h-4 text-muted-foreground" />
+                    </a>
+                  ) : (
+                    <div className="flex-1 flex items-center justify-center gap-2 rounded-2xl bg-muted/30 p-4 text-muted-foreground">
+                      <HelpCircle className="w-5 h-5" />
+                      <span className="text-sm">No datasheet</span>
+                    </div>
+                  )}
+
+                  {/* Source Info Popover */}
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <button className="w-12 h-12 rounded-2xl bg-muted/50 flex items-center justify-center hover:bg-muted transition-colors">
+                        <Info className="w-5 h-5 text-muted-foreground" />
+                      </button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-72 p-0" align="end">
+                      <div className="p-4 space-y-3">
+                        <h4 className="font-semibold text-sm">Sources & Links</h4>
+                        
+                        {hasSourceInfo ? (
+                          <div className="space-y-2">
+                            {sourceInfo?.source_name && (
+                              <p className="text-xs text-muted-foreground">
+                                Data from: <span className="font-medium text-foreground">{sourceInfo.source_name}</span>
+                              </p>
+                            )}
+                            
+                            {sourceInfo?.manufacturer_url && (
+                              <a 
+                                href={sourceInfo.manufacturer_url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="flex items-center gap-2 text-sm text-primary hover:underline"
+                              >
+                                <Link2 className="w-4 h-4" />
+                                Official Product Page
+                                <ExternalLink className="w-3 h-3 ml-auto" />
+                              </a>
+                            )}
+                            
+                            {sourceInfo?.datasheet_url && (
+                              <a 
+                                href={sourceInfo.datasheet_url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="flex items-center gap-2 text-sm text-primary hover:underline"
+                              >
+                                <FileText className="w-4 h-4" />
+                                Official Datasheet
+                                <ExternalLink className="w-3 h-3 ml-auto" />
+                              </a>
+                            )}
+                            
+                            {sourceInfo?.purchase_url && (
+                              <a 
+                                href={sourceInfo.purchase_url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="flex items-center gap-2 text-sm text-primary hover:underline"
+                              >
+                                <ShoppingCart className="w-4 h-4" />
+                                Where to Buy
+                                <ExternalLink className="w-3 h-3 ml-auto" />
+                              </a>
+                            )}
+                          </div>
+                        ) : (
+                          <p className="text-xs text-muted-foreground">
+                            No verified source links available for this component.
+                          </p>
+                        )}
+                        
+                        <p className="text-[10px] text-muted-foreground/70 pt-2 border-t">
+                          Links to official manufacturer sites when available.
+                        </p>
+                      </div>
+                    </PopoverContent>
+                  </Popover>
+                </div>
+              );
+            })()}
 
             {/* Technical Notes */}
             {techSpecs?.notes && (

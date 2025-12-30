@@ -143,6 +143,28 @@ export interface TechnicalSpecs {
 }
 
 /**
+ * Source/reference information
+ */
+export interface SourceInfo {
+  manufacturer_url?: string;
+  datasheet_url?: string;
+  purchase_url?: string;
+  source_name?: string;
+}
+
+/**
+ * Disassembly instructions for parent object
+ */
+export interface DisassemblyInfo {
+  steps: string[];
+  difficulty: 'Easy' | 'Medium' | 'Hard';
+  time_estimate: string;
+  safety_warnings?: string[];
+  tutorial_url?: string;
+  video_url?: string;
+}
+
+/**
  * Single identified item from AI
  */
 export interface IdentifiedItem {
@@ -150,6 +172,7 @@ export interface IdentifiedItem {
   category: ComponentCategory;
   specifications: Record<string, unknown>;
   technical_specs?: TechnicalSpecs;
+  source_info?: SourceInfo;
   reusability_score: number;
   market_value_low: number;
   market_value_high: number;
@@ -157,6 +180,22 @@ export interface IdentifiedItem {
   confidence: number;
   description: string;
   common_uses: string[];
+}
+
+/**
+ * AI identification response with full breakdown
+ */
+export interface AIIdentificationResponse {
+  parent_object?: string;
+  items: IdentifiedItem[];
+  salvage_difficulty?: 'Easy' | 'Medium' | 'Hard';
+  tools_needed?: string[];
+  total_estimated_value_low?: number;
+  total_estimated_value_high?: number;
+  disassembly?: DisassemblyInfo;
+  message?: string;
+  raw_response?: string;
+  partial_detection?: Record<string, string | null>;
 }
 
 /**
