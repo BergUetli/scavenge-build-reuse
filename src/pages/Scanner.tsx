@@ -23,17 +23,17 @@ export default function Scanner() {
   const { addScan } = useScanHistory();
   
   const {
+    state,
     videoRef,
-    isStreaming,
-    isProcessing,
-    capturedImage,
     identificationResult,
     startCamera,
     stopCamera,
     captureImage,
-    processImage,
+    identifyComponent,
     reset
   } = useScanner();
+
+  const { isCapturing, isProcessing, capturedImage } = state;
 
   const [showResult, setShowResult] = useState(false);
   const [selectedItem, setSelectedItem] = useState<IdentifiedItem | null>(null);
@@ -49,13 +49,13 @@ export default function Scanner() {
   const handleCapture = useCallback(async () => {
     const imageData = captureImage();
     if (imageData) {
-      const result = await processImage(imageData);
+      const result = await identifyComponent(imageData);
       if (result && result.items.length > 0) {
         setSelectedItem(result.items[0]);
         setShowResult(true);
       }
     }
-  }, [captureImage, processImage]);
+  }, [captureImage, identifyComponent]);
 
   // Handle file upload from gallery
   const handleUpload = useCallback(async (file: File) => {
@@ -63,7 +63,7 @@ export default function Scanner() {
     reader.onload = async (e) => {
       const imageData = e.target?.result as string;
       if (imageData) {
-        const result = await processImage(imageData);
+        const result = await identifyComponent(imageData);
         if (result && result.items.length > 0) {
           setSelectedItem(result.items[0]);
           setShowResult(true);
@@ -71,7 +71,7 @@ export default function Scanner() {
       }
     };
     reader.readAsDataURL(file);
-  }, [processImage]);
+  }, [identifyComponent]);
 
   // Handle closing scanner
   const handleClose = useCallback(() => {
@@ -189,7 +189,7 @@ export default function Scanner() {
   return (
     <CameraView
       videoRef={videoRef}
-      isStreaming={isStreaming}
+      isStreaming={isCapturing}
       onCapture={handleCapture}
       onUpload={handleUpload}
       onClose={handleClose}
