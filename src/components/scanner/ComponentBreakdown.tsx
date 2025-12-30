@@ -2,15 +2,10 @@
  * COMPONENT BREAKDOWN VIEW
  * 
  * iOS-native style display of identified components.
- * Features:
- * - Large bold titles
- * - Caption labels in uppercase
- * - Component images/icons based on category
- * - Clean grid layouts
- * - Native iOS typography
+ * Fetches real AI-generated images for each component.
  */
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { 
   ChevronRight,
   ChevronLeft,
@@ -26,19 +21,18 @@ import {
   CircuitBoard,
   Eye,
   Zap,
-  Radio,
   Lightbulb,
   Cog,
-  Cable,
   Disc,
-  MemoryStick,
-  Microchip
+  Microchip,
+  Loader2
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { AIIdentificationResponse, IdentifiedItem } from '@/types';
 import { cn } from '@/lib/utils';
+import { supabase } from '@/integrations/supabase/client';
 
 interface ComponentBreakdownProps {
   result: AIIdentificationResponse;
@@ -49,75 +43,36 @@ interface ComponentBreakdownProps {
   isLoading?: boolean;
 }
 
-// Component category to icon and gradient mapping
-const componentVisuals: Record<string, { 
-  icon: React.ReactNode; 
-  gradient: string;
-  bgColor: string;
-}> = {
-  'Power': { 
-    icon: <Battery className="w-10 h-10" />, 
-    gradient: 'from-amber-500 to-orange-600',
-    bgColor: 'bg-gradient-to-br from-amber-500/20 to-orange-600/10'
-  },
-  'ICs/Chips': { 
-    icon: <Microchip className="w-10 h-10" />, 
-    gradient: 'from-violet-500 to-purple-600',
-    bgColor: 'bg-gradient-to-br from-violet-500/20 to-purple-600/10'
-  },
-  'Electromechanical': { 
-    icon: <Speaker className="w-10 h-10" />, 
-    gradient: 'from-blue-500 to-cyan-600',
-    bgColor: 'bg-gradient-to-br from-blue-500/20 to-cyan-600/10'
-  },
-  'Connectors': { 
-    icon: <Plug className="w-10 h-10" />, 
-    gradient: 'from-cyan-500 to-teal-600',
-    bgColor: 'bg-gradient-to-br from-cyan-500/20 to-teal-600/10'
-  },
-  'PCB': { 
-    icon: <CircuitBoard className="w-10 h-10" />, 
-    gradient: 'from-green-500 to-emerald-600',
-    bgColor: 'bg-gradient-to-br from-green-500/20 to-emerald-600/10'
-  },
-  'Electronics': { 
-    icon: <Zap className="w-10 h-10" />, 
-    gradient: 'from-primary to-primary/80',
-    bgColor: 'bg-gradient-to-br from-primary/20 to-primary/10'
-  },
-  'Display/LEDs': { 
-    icon: <Lightbulb className="w-10 h-10" />, 
-    gradient: 'from-pink-500 to-rose-600',
-    bgColor: 'bg-gradient-to-br from-pink-500/20 to-rose-600/10'
-  },
-  'Sensors': { 
-    icon: <Eye className="w-10 h-10" />, 
-    gradient: 'from-indigo-500 to-blue-600',
-    bgColor: 'bg-gradient-to-br from-indigo-500/20 to-blue-600/10'
-  },
-  'Passive Components': { 
-    icon: <Disc className="w-10 h-10" />, 
-    gradient: 'from-slate-500 to-gray-600',
-    bgColor: 'bg-gradient-to-br from-slate-500/20 to-gray-600/10'
-  },
-  'Mechanical': { 
-    icon: <Cog className="w-10 h-10" />, 
-    gradient: 'from-orange-500 to-red-600',
-    bgColor: 'bg-gradient-to-br from-orange-500/20 to-red-600/10'
-  },
-  'Other': { 
-    icon: <Package className="w-10 h-10" />, 
-    gradient: 'from-muted-foreground to-muted-foreground/80',
-    bgColor: 'bg-gradient-to-br from-muted/50 to-muted/30'
-  },
+// Fallback icons for when images aren't loaded
+const categoryIcons: Record<string, React.ReactNode> = {
+  'Power': <Battery className="w-8 h-8" />,
+  'ICs/Chips': <Microchip className="w-8 h-8" />,
+  'Electromechanical': <Speaker className="w-8 h-8" />,
+  'Connectors': <Plug className="w-8 h-8" />,
+  'PCB': <CircuitBoard className="w-8 h-8" />,
+  'Electronics': <Zap className="w-8 h-8" />,
+  'Display/LEDs': <Lightbulb className="w-8 h-8" />,
+  'Sensors': <Eye className="w-8 h-8" />,
+  'Passive Components': <Disc className="w-8 h-8" />,
+  'Mechanical': <Cog className="w-8 h-8" />,
+  'Other': <Package className="w-8 h-8" />,
 };
 
-// Get visual config for a component
-const getVisual = (category: string) => {
-  return componentVisuals[category] || componentVisuals['Other'];
+// Category gradient colors
+const categoryGradients: Record<string, string> = {
+  'Power': 'from-amber-500 to-orange-600',
+  'ICs/Chips': 'from-violet-500 to-purple-600',
+  'Electromechanical': 'from-blue-500 to-cyan-600',
+  'Connectors': 'from-cyan-500 to-teal-600',
+  'PCB': 'from-green-500 to-emerald-600',
+  'Electronics': 'from-primary to-primary/80',
+  'Display/LEDs': 'from-pink-500 to-rose-600',
+  'Sensors': 'from-indigo-500 to-blue-600',
+  'Passive Components': 'from-slate-500 to-gray-600',
+  'Mechanical': 'from-orange-500 to-red-600',
+  'Other': 'from-muted-foreground to-muted-foreground/80',
 };
 
-// Difficulty display
 const difficultyConfig: Record<string, { label: string; color: string }> = {
   Easy: { label: 'Easy', color: 'text-eco' },
   Medium: { label: 'Medium', color: 'text-amber-500' },
@@ -137,6 +92,60 @@ export function ComponentBreakdown({
   const [viewMode, setViewMode] = useState<ViewMode>('main');
   const [selectedComponent, setSelectedComponent] = useState<IdentifiedItem | null>(null);
   const [addedItems, setAddedItems] = useState<Set<string>>(new Set());
+  const [componentImages, setComponentImages] = useState<Record<string, string>>({});
+  const [loadingImages, setLoadingImages] = useState<Set<string>>(new Set());
+
+  // Generate image for a component
+  const generateImage = async (componentName: string, category: string) => {
+    if (componentImages[componentName] || loadingImages.has(componentName)) {
+      return;
+    }
+
+    setLoadingImages(prev => new Set(prev).add(componentName));
+
+    try {
+      const { data, error } = await supabase.functions.invoke('generate-component-image', {
+        body: { componentName, category }
+      });
+
+      if (error) {
+        console.error('Error generating image:', error);
+        return;
+      }
+
+      if (data?.success && data?.imageUrl) {
+        setComponentImages(prev => ({
+          ...prev,
+          [componentName]: data.imageUrl
+        }));
+      }
+    } catch (error) {
+      console.error('Failed to generate image:', error);
+    } finally {
+      setLoadingImages(prev => {
+        const next = new Set(prev);
+        next.delete(componentName);
+        return next;
+      });
+    }
+  };
+
+  // Generate images for visible components
+  useEffect(() => {
+    if (result.items && result.items.length > 0) {
+      // Generate images for first 4 components initially
+      result.items.slice(0, 4).forEach(item => {
+        generateImage(item.component_name, item.category);
+      });
+    }
+  }, [result.items]);
+
+  // Generate image when viewing detail
+  useEffect(() => {
+    if (selectedComponent) {
+      generateImage(selectedComponent.component_name, selectedComponent.category);
+    }
+  }, [selectedComponent]);
 
   const handleAddComponent = (item: IdentifiedItem) => {
     onAddComponent(item);
@@ -146,7 +155,39 @@ export function ComponentBreakdown({
   const hasComponents = result.items && result.items.length > 0;
   const difficulty = result.salvage_difficulty ? difficultyConfig[result.salvage_difficulty] : null;
 
-  // Main view - iOS native style
+  // Render component image or fallback
+  const renderComponentImage = (item: IdentifiedItem, size: 'small' | 'large' = 'small') => {
+    const image = componentImages[item.component_name];
+    const isLoadingImage = loadingImages.has(item.component_name);
+    const gradient = categoryGradients[item.category] || categoryGradients['Other'];
+    const icon = categoryIcons[item.category] || categoryIcons['Other'];
+
+    if (image) {
+      return (
+        <img 
+          src={image} 
+          alt={item.component_name}
+          className="w-full h-full object-cover"
+        />
+      );
+    }
+
+    // Fallback with icon and gradient
+    return (
+      <>
+        <div className={cn("absolute inset-0 bg-gradient-to-br", gradient)} />
+        <div className="absolute inset-0 flex items-center justify-center text-white/90">
+          {isLoadingImage ? (
+            <Loader2 className={cn("animate-spin", size === 'large' ? 'w-12 h-12' : 'w-8 h-8')} />
+          ) : (
+            icon
+          )}
+        </div>
+      </>
+    );
+  };
+
+  // Main view
   if (viewMode === 'main') {
     return (
       <div className="space-y-6 animate-fade-in pb-8">
@@ -178,7 +219,6 @@ export function ComponentBreakdown({
               alt="Scanned item" 
               className="w-full h-full object-cover"
             />
-            {/* Overlay Caption */}
             <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/80 to-transparent">
               <p className="text-white/80 text-sm">
                 {difficulty ? `${difficulty.label} to salvage` : 'Tap below to see parts'}
@@ -211,7 +251,7 @@ export function ComponentBreakdown({
           </div>
         )}
 
-        {/* Parts Section Header */}
+        {/* Parts Section */}
         {hasComponents && (
           <div>
             <p className="text-xs font-medium tracking-widest text-muted-foreground uppercase mb-3">
@@ -220,12 +260,11 @@ export function ComponentBreakdown({
           </div>
         )}
 
-        {/* Parts Grid with Images */}
+        {/* Parts Grid */}
         {hasComponents && (
           <div className="grid grid-cols-2 gap-3">
             {result.items.map((item, index) => {
               const isAdded = addedItems.has(item.component_name);
-              const visual = getVisual(item.category);
               
               return (
                 <button
@@ -234,30 +273,15 @@ export function ComponentBreakdown({
                     setSelectedComponent(item);
                     setViewMode('detail');
                   }}
+                  onMouseEnter={() => generateImage(item.component_name, item.category)}
                   className={cn(
                     "relative rounded-2xl overflow-hidden aspect-square",
                     "active:scale-[0.97] transition-all duration-200",
+                    "bg-muted",
                     isAdded && "ring-2 ring-eco ring-offset-2 ring-offset-background"
                   )}
                 >
-                  {/* Background gradient based on category */}
-                  <div className={cn(
-                    "absolute inset-0 bg-gradient-to-br",
-                    visual.gradient
-                  )} />
-                  
-                  {/* Pattern overlay */}
-                  <div className="absolute inset-0 opacity-20" 
-                    style={{
-                      backgroundImage: 'radial-gradient(circle at 2px 2px, white 1px, transparent 0)',
-                      backgroundSize: '20px 20px'
-                    }} 
-                  />
-                  
-                  {/* Icon */}
-                  <div className="absolute inset-0 flex items-center justify-center text-white/90">
-                    {visual.icon}
-                  </div>
+                  {renderComponentImage(item, 'small')}
                   
                   {/* Bottom overlay with name */}
                   <div className="absolute bottom-0 left-0 right-0 p-3 bg-gradient-to-t from-black/90 via-black/70 to-transparent">
@@ -315,12 +339,11 @@ export function ComponentBreakdown({
     );
   }
 
-  // Detail view - single component
+  // Detail view
   if (viewMode === 'detail' && selectedComponent) {
     const isAdded = addedItems.has(selectedComponent.component_name);
     const confidence = Math.round((selectedComponent.confidence || 0.7) * 100);
     const currentIndex = result.items.findIndex(i => i.component_name === selectedComponent.component_name);
-    const visual = getVisual(selectedComponent.category);
     
     return (
       <div className="space-y-6 animate-fade-in pb-8">
@@ -333,36 +356,19 @@ export function ComponentBreakdown({
           <span>Back</span>
         </button>
 
-        {/* Component Image Card */}
-        <div className={cn(
-          "relative rounded-3xl overflow-hidden aspect-square max-w-[200px] mx-auto",
-          "shadow-xl"
-        )}>
-          <div className={cn(
-            "absolute inset-0 bg-gradient-to-br",
-            visual.gradient
-          )} />
-          <div className="absolute inset-0 opacity-20" 
-            style={{
-              backgroundImage: 'radial-gradient(circle at 2px 2px, white 1px, transparent 0)',
-              backgroundSize: '20px 20px'
-            }} 
-          />
-          <div className="absolute inset-0 flex items-center justify-center text-white">
-            <div className="w-20 h-20">
-              {visual.icon}
-            </div>
-          </div>
+        {/* Component Image */}
+        <div className="relative rounded-3xl overflow-hidden aspect-square max-w-[200px] mx-auto shadow-xl bg-muted">
+          {renderComponentImage(selectedComponent, 'large')}
         </div>
 
-        {/* Large Title */}
+        {/* Title */}
         <h1 className="text-2xl font-bold tracking-tight text-foreground leading-tight text-center">
           {selectedComponent.component_name}
         </h1>
 
         {/* Category Badge */}
         <div className="flex justify-center">
-          <Badge variant="secondary" className={cn("text-sm px-4 py-1", visual.bgColor)}>
+          <Badge variant="secondary" className="text-sm px-4 py-1">
             {selectedComponent.category}
           </Badge>
         </div>
@@ -451,7 +457,7 @@ export function ComponentBreakdown({
           </div>
         )}
 
-        {/* Navigation between parts */}
+        {/* Navigation */}
         {result.items.length > 1 && (
           <div className="flex items-center justify-between pt-2">
             <button
