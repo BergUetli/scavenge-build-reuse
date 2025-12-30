@@ -77,7 +77,7 @@ export function useInventory() {
           category: input.category,
           quantity: input.quantity || 1,
           condition: input.condition,
-          specifications: input.specifications || {},
+          specifications: (input.specifications || {}) as { [key: string]: string | number | boolean | null },
           reusability_score: input.reusability_score,
           market_value: input.market_value,
           image_url: input.image_url,
