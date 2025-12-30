@@ -30,14 +30,14 @@ For EACH salvageable component inside the object, provide:
 1. component_name: Specific name with quantity if applicable (e.g., "Mechanical Key Switches (~87 pcs)", "USB Controller IC")
 2. category: One of: ICs/Chips, Passive Components, Electromechanical, Connectors, Display/LEDs, Sensors, Power, PCB, Other
 3. specifications: Key specs as object (e.g., {"type": "Cherry MX Brown", "actuation": "45g"} or {"capacity": "1000μF", "voltage": "16V"})
-4. technical_specs: KEY INFO FOR REBUILDING ONLY (keep it minimal):
+4. technical_specs: CRITICAL - identify specific parts for lookup:
    - voltage: Operating voltage (e.g., "5V", "3.3V", "12V") - CRITICAL for rebuilding
    - power_rating: Power/current specs (e.g., "500mA", "10W", "2A") - CRITICAL for rebuilding  
-   - part_number: IC/chip part number if visible and useful (e.g., "LM7805", "NE555") - for lookup
-   - notes: One-line tip for reuse (e.g., "Standard USB voltage", "Needs heatsink above 1A")
-5. source_info: For user lookup (keep brief, only include if confident):
-   - datasheet_url: Direct datasheet link if known
-   - purchase_url: Where to buy (Digi-Key, Mouser, etc.)
+   - part_number: IC/chip part number - LOOK CAREFULLY at chip markings! Read text printed on ICs/chips. Examples: "STM32F103", "ATmega328P", "ESP32-WROOM", "NE555", "LM7805", "TPS54331", "SN74HC595". If text is too small or unclear, estimate likely chip based on device type (e.g., USB keyboard likely has "CY8C24794" or similar Cypress USB controller)
+   - notes: One-line tip for reuse
+5. source_info: For user lookup:
+   - datasheet_url: Link to datasheet if you know it (e.g., ti.com, st.com, microchip.com datasheets)
+   - purchase_url: Where to buy (Digi-Key, Mouser, LCSC)
 6. reusability_score: 1-10 based on how useful for DIY projects (10 = Arduino, ESP32, OLED displays; 1 = proprietary chips)
 7. market_value_low: Estimated low value in USD for the quantity
 8. market_value_high: Estimated high value in USD for the quantity
@@ -47,11 +47,12 @@ For EACH salvageable component inside the object, provide:
 12. common_uses: Array of 3-5 project ideas this could enable
 13. quantity: Estimated count (number, use 1 if single item)
 
-CRITICAL FOR TECHNICAL SPECS:
-- ONLY include voltage and power specs - the stuff needed to safely reuse the component
-- Part numbers are optional - only include if clearly visible and useful for lookup
-- Keep notes to ONE practical tip for makers
-- For source_info, only include URLs you are confident are correct - leave null if unsure
+CRITICAL FOR TECHNICAL SPECS - READ THIS CAREFULLY:
+- For ICs/Chips: ALWAYS try to identify the part_number! Look at chip markings, read any text on the IC package
+- Common ICs to look for: microcontrollers (STM32, ATmega, ESP32, PIC), USB controllers, audio codecs, power management ICs, LED drivers, motor drivers, Bluetooth/WiFi modules
+- If you recognize the device type, infer likely chips even if not directly visible (e.g., a Bluetooth speaker likely has CSR/Qualcomm BT chip, TI audio amp, Li-ion charger IC)
+- For passive components: focus on voltage/current ratings
+- For source_info: include datasheet URLs from official sources (ti.com, st.com, microchip.com, analog.com, nxp.com, infineon.com)
 
 ALSO PROVIDE DISASSEMBLY INSTRUCTIONS for the parent object:
 - steps: Array of clear, numbered steps to safely disassemble and extract components
