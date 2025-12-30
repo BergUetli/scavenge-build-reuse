@@ -16,6 +16,8 @@ export type Database = {
     Tables: {
       components: {
         Row: {
+          abstraction_level: string | null
+          brand: string | null
           category: string
           common_uses: string[] | null
           component_name: string
@@ -25,10 +27,16 @@ export type Database = {
           id: string
           image_url: string | null
           market_value: number | null
+          model: string | null
+          parent_component_id: string | null
           reusability_score: number | null
+          source: string | null
           specifications: Json | null
+          verified: boolean | null
         }
         Insert: {
+          abstraction_level?: string | null
+          brand?: string | null
           category: string
           common_uses?: string[] | null
           component_name: string
@@ -38,10 +46,16 @@ export type Database = {
           id?: string
           image_url?: string | null
           market_value?: number | null
+          model?: string | null
+          parent_component_id?: string | null
           reusability_score?: number | null
+          source?: string | null
           specifications?: Json | null
+          verified?: boolean | null
         }
         Update: {
+          abstraction_level?: string | null
+          brand?: string | null
           category?: string
           common_uses?: string[] | null
           component_name?: string
@@ -51,8 +65,68 @@ export type Database = {
           id?: string
           image_url?: string | null
           market_value?: number | null
+          model?: string | null
+          parent_component_id?: string | null
           reusability_score?: number | null
+          source?: string | null
           specifications?: Json | null
+          verified?: boolean | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "components_parent_component_id_fkey"
+            columns: ["parent_component_id"]
+            isOneToOne: false
+            referencedRelation: "components"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      datasets: {
+        Row: {
+          created_at: string
+          description: string | null
+          error_log: string | null
+          field_mappings: Json | null
+          id: string
+          name: string
+          original_fields: Json | null
+          processed_count: number | null
+          records_count: number | null
+          source_url: string | null
+          status: string
+          updated_at: string
+          uploaded_by: string | null
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          error_log?: string | null
+          field_mappings?: Json | null
+          id?: string
+          name: string
+          original_fields?: Json | null
+          processed_count?: number | null
+          records_count?: number | null
+          source_url?: string | null
+          status?: string
+          updated_at?: string
+          uploaded_by?: string | null
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          error_log?: string | null
+          field_mappings?: Json | null
+          id?: string
+          name?: string
+          original_fields?: Json | null
+          processed_count?: number | null
+          records_count?: number | null
+          source_url?: string | null
+          status?: string
+          updated_at?: string
+          uploaded_by?: string | null
         }
         Relationships: []
       }
@@ -221,15 +295,42 @@ export type Database = {
         }
         Relationships: []
       }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "moderator" | "user"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -356,6 +457,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin", "moderator", "user"],
+    },
   },
 } as const
