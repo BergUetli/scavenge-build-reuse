@@ -37,6 +37,7 @@ export default function Scanner() {
 
   const [showResult, setShowResult] = useState(false);
   const [selectedItem, setSelectedItem] = useState<IdentifiedItem | null>(null);
+  const [noResultMessage, setNoResultMessage] = useState<string | null>(null);
 
   // Start camera on mount
   useState(() => {
@@ -48,13 +49,20 @@ export default function Scanner() {
   // Handle image capture
   const handleCapture = useCallback(async () => {
     const imageData = captureImage();
-    if (imageData) {
-      const result = await identifyComponent(imageData);
-      if (result && result.items.length > 0) {
-        setSelectedItem(result.items[0]);
-        setShowResult(true);
-      }
+    if (!imageData) return;
+
+    const result = await identifyComponent(imageData);
+    if (!result) return;
+
+    if (result.items?.length > 0) {
+      setSelectedItem(result.items[0]);
+      setNoResultMessage(null);
+    } else {
+      setSelectedItem(null);
+      setNoResultMessage(result.message || 'No salvageable components detected in this photo. Try a clearer shot or a different angle.');
     }
+
+    setShowResult(true);
   }, [captureImage, identifyComponent]);
 
   // Handle file upload from gallery
@@ -62,13 +70,20 @@ export default function Scanner() {
     const reader = new FileReader();
     reader.onload = async (e) => {
       const imageData = e.target?.result as string;
-      if (imageData) {
-        const result = await identifyComponent(imageData);
-        if (result && result.items.length > 0) {
-          setSelectedItem(result.items[0]);
-          setShowResult(true);
-        }
+      if (!imageData) return;
+
+      const result = await identifyComponent(imageData);
+      if (!result) return;
+
+      if (result.items?.length > 0) {
+        setSelectedItem(result.items[0]);
+        setNoResultMessage(null);
+      } else {
+        setSelectedItem(null);
+        setNoResultMessage(result.message || 'No salvageable components detected in this photo. Try a clearer shot or a different angle.');
       }
+
+      setShowResult(true);
     };
     reader.readAsDataURL(file);
   }, [identifyComponent]);
@@ -129,6 +144,7 @@ export default function Scanner() {
   const handleReject = useCallback(() => {
     setShowResult(false);
     setSelectedItem(null);
+    setNoResultMessage(null);
     reset();
   }, [reset]);
 
@@ -153,18 +169,41 @@ export default function Scanner() {
   }
 
   // Show result view
-  if (showResult && selectedItem) {
+  if (showResult) {
     return (
       <div className="min-h-screen bg-background p-4 safe-area-pt safe-area-pb">
         <div className="max-w-md mx-auto pt-8">
-          <IdentificationResult
-            result={selectedItem}
-            imageUrl={capturedImage || undefined}
-            onConfirm={handleConfirm}
-            onEdit={handleEdit}
-            onReject={handleReject}
-            isLoading={addItem.isPending}
-          />
+          {selectedItem ? (
+            <IdentificationResult
+              result={selectedItem}
+              imageUrl={capturedImage || undefined}
+              onConfirm={handleConfirm}
+              onEdit={handleEdit}
+              onReject={handleReject}
+              isLoading={addItem.isPending}
+            />
+          ) : (
+            <div className="card-ios p-5 animate-fade-up">
+              <h2 className="text-title-2 text-foreground">No components found</h2>
+              <p className="text-body text-muted-foreground mt-2">
+                {noResultMessage || 'No salvageable components detected.'}
+              </p>
+              <div className="flex gap-2 mt-5">
+                <button
+                  onClick={handleReject}
+                  className="flex-1 h-11 rounded-xl bg-primary text-primary-foreground font-semibold shadow-premium active:scale-[0.97] transition-transform"
+                >
+                  Try again
+                </button>
+                <button
+                  onClick={handleClose}
+                  className="h-11 px-4 rounded-xl bg-muted text-foreground font-semibold active:scale-[0.97] transition-transform"
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     );
