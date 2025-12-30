@@ -64,11 +64,54 @@ export function useInventory() {
     enabled: !!user
   });
 
-  // Add item to inventory
+  // Add item to inventory (also adds to shared components database if new)
   const addItem = useMutation({
     mutationFn: async (input: AddInventoryInput) => {
       if (!user) throw new Error('Not authenticated');
 
+      // First, check if component exists in the shared components database
+      const { data: existingComponent } = await supabase
+        .from('components')
+        .select('id')
+        .eq('component_name', input.component_name)
+        .maybeSingle();
+
+      // If component doesn't exist in shared database, add it
+      if (!existingComponent) {
+        console.log('[Inventory] Adding new component to shared database:', input.component_name);
+        
+        // Prepare specifications with technical_specs merged
+        const mergedSpecs = {
+          ...(input.specifications || {}),
+          technical_specs: input.technical_specs || {}
+        } as { [key: string]: string | number | boolean | null | object };
+
+        const { error: componentError } = await supabase
+          .from('components')
+          .insert([{
+            component_name: input.component_name,
+            category: input.category,
+            specifications: mergedSpecs as { [key: string]: string | number | boolean | null },
+            reusability_score: input.reusability_score,
+            market_value: input.market_value,
+            image_url: input.image_url,
+            description: input.description,
+            common_uses: input.common_uses || [],
+            source: 'scan',
+            verified: false
+          }]);
+
+        if (componentError) {
+          console.error('[Inventory] Failed to add to shared database:', componentError);
+          // Don't throw - continue to add to user inventory
+        } else {
+          console.log('[Inventory] Component added to shared database');
+        }
+      } else {
+        console.log('[Inventory] Component already exists in shared database:', input.component_name);
+      }
+
+      // Now add to user's personal inventory
       const { data, error } = await supabase
         .from('user_inventory')
         .insert([{
