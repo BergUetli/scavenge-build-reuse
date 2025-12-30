@@ -68,7 +68,7 @@ export function useScanHistory() {
           category: scan.category,
           confidence: scan.confidence,
           image_url: scan.image_url,
-          ai_response: scan.ai_response as unknown as Record<string, unknown>
+          ai_response: (scan.ai_response || null) as never
         }])
         .select()
         .single();
