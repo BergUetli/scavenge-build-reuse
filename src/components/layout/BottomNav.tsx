@@ -1,8 +1,5 @@
 /**
- * BOTTOM NAVIGATION COMPONENT
- * 
- * Mobile-first bottom navigation bar with icons for:
- * - Home, Inventory, Projects, Profile
+ * BOTTOM NAVIGATION - iOS Tab Bar Style
  */
 
 import { Home, Package, Lightbulb, User } from 'lucide-react';
@@ -24,22 +21,46 @@ const navItems: NavItem[] = [
 
 export function BottomNav() {
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-md border-t border-border safe-area-pb">
-      <div className="flex items-center justify-around h-16 max-w-md mx-auto px-4">
+    <nav className="fixed bottom-0 left-0 right-0 z-50 glass safe-area-pb">
+      <div className="flex items-center justify-around h-[52px] max-w-lg mx-auto">
         {navItems.map(({ to, icon: Icon, label }) => (
           <NavLink
             key={to}
             to={to}
             className={({ isActive }) =>
               cn(
-                'flex flex-col items-center justify-center gap-1 px-4 py-2 rounded-xl transition-all duration-200',
-                'text-muted-foreground hover:text-foreground',
-                isActive && 'text-primary bg-primary/10'
+                'flex flex-col items-center justify-center gap-0.5 min-w-[64px] py-1',
+                'transition-all duration-200 ease-out',
+                isActive 
+                  ? 'text-primary' 
+                  : 'text-muted-foreground hover:text-foreground active:scale-90'
               )
             }
           >
-            <Icon className="w-5 h-5" />
-            <span className="text-xs font-medium">{label}</span>
+            {({ isActive }) => (
+              <>
+                <div className={cn(
+                  'relative flex items-center justify-center w-7 h-7 transition-transform duration-200',
+                  isActive && 'scale-105'
+                )}>
+                  <Icon 
+                    className={cn(
+                      'w-[22px] h-[22px] transition-all duration-200',
+                      isActive ? 'stroke-[2.5px]' : 'stroke-[1.75px]'
+                    )} 
+                  />
+                  {isActive && (
+                    <div className="absolute inset-0 bg-primary/10 rounded-full blur-md" />
+                  )}
+                </div>
+                <span className={cn(
+                  'text-[10px] font-medium transition-all duration-200',
+                  isActive && 'font-semibold'
+                )}>
+                  {label}
+                </span>
+              </>
+            )}
           </NavLink>
         ))}
       </div>

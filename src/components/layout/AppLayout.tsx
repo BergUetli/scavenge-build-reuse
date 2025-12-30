@@ -1,8 +1,5 @@
 /**
- * APP LAYOUT COMPONENT
- * 
- * Main layout wrapper with bottom navigation.
- * Provides consistent spacing and safe areas.
+ * APP LAYOUT - Premium iOS Container
  */
 
 import { ReactNode } from 'react';
@@ -16,7 +13,7 @@ interface AppLayoutProps {
 export function AppLayout({ children, hideNav = false }: AppLayoutProps) {
   return (
     <div className="min-h-screen bg-background">
-      <main className={hideNav ? '' : 'pb-20'}>
+      <main className={hideNav ? '' : 'pb-[72px]'}>
         {children}
       </main>
       {!hideNav && <BottomNav />}

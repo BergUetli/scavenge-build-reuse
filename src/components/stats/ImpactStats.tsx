@@ -1,13 +1,8 @@
 /**
- * IMPACT STATS COMPONENT
- * 
- * Shows user's environmental impact metrics:
- * - Items scanned
- * - Items saved from waste
- * - CO2 saved
+ * IMPACT STATS - Premium iOS Style
  */
 
-import { Leaf, Package, Recycle, TrendingUp } from 'lucide-react';
+import { Leaf, Package, Recycle } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 
@@ -22,7 +17,8 @@ interface StatItem {
   icon: React.ElementType;
   value: string | number;
   label: string;
-  color: string;
+  iconBg: string;
+  iconColor: string;
 }
 
 export function ImpactStats({ 
@@ -36,38 +32,50 @@ export function ImpactStats({
       icon: Package, 
       value: itemsScanned, 
       label: 'Scanned',
-      color: 'text-primary'
+      iconBg: 'bg-primary/10',
+      iconColor: 'text-primary'
     },
     { 
       icon: Recycle, 
       value: itemsSaved, 
       label: 'Saved',
-      color: 'text-eco'
+      iconBg: 'bg-accent/10',
+      iconColor: 'text-accent'
     },
     { 
       icon: Leaf, 
       value: `${co2Saved.toFixed(1)}kg`, 
       label: 'CO₂ Saved',
-      color: 'text-eco'
+      iconBg: 'bg-success/10',
+      iconColor: 'text-success'
     },
   ];
   
   return (
-    <Card className={cn('bg-gradient-subtle border-border/50', className)}>
-      <CardContent className="p-4">
-        <div className="flex items-center gap-2 mb-3">
-          <TrendingUp className="w-4 h-4 text-eco" />
-          <span className="text-sm font-medium text-foreground">Your Impact</span>
+    <Card className={cn(
+      'card-ios overflow-hidden',
+      className
+    )}>
+      <CardContent className="p-0">
+        {/* Header */}
+        <div className="px-4 py-3 border-b border-border/50 bg-muted/30">
+          <p className="text-callout text-muted-foreground">Your Impact</p>
         </div>
         
-        <div className="grid grid-cols-3 gap-4">
-          {stats.map(({ icon: Icon, value, label, color }) => (
-            <div key={label} className="text-center">
-              <div className={cn('flex items-center justify-center mb-1', color)}>
-                <Icon className="w-5 h-5" />
+        {/* Stats Grid */}
+        <div className="grid grid-cols-3 divide-x divide-border/50">
+          {stats.map(({ icon: Icon, value, label, iconBg, iconColor }) => (
+            <div key={label} className="py-4 px-2 text-center">
+              <div className={cn(
+                'w-9 h-9 rounded-xl mx-auto mb-2 flex items-center justify-center',
+                iconBg
+              )}>
+                <Icon className={cn('w-[18px] h-[18px]', iconColor)} />
               </div>
-              <div className="text-lg font-bold text-foreground">{value}</div>
-              <div className="text-xs text-muted-foreground">{label}</div>
+              <div className="text-xl font-bold text-foreground tracking-tight">
+                {value}
+              </div>
+              <div className="text-caption mt-0.5">{label}</div>
             </div>
           ))}
         </div>
