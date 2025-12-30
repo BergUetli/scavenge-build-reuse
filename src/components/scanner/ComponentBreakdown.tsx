@@ -5,7 +5,7 @@
  * Features:
  * - Large bold titles
  * - Caption labels in uppercase
- * - Rounded image cards with overlays
+ * - Component images/icons based on category
  * - Clean grid layouts
  * - Native iOS typography
  */
@@ -18,7 +18,21 @@ import {
   Star,
   DollarSign,
   Wrench,
-  Package
+  Package,
+  Battery,
+  Cpu,
+  Speaker,
+  Plug,
+  CircuitBoard,
+  Eye,
+  Zap,
+  Radio,
+  Lightbulb,
+  Cog,
+  Cable,
+  Disc,
+  MemoryStick,
+  Microchip
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -34,6 +48,74 @@ interface ComponentBreakdownProps {
   onRescan: () => void;
   isLoading?: boolean;
 }
+
+// Component category to icon and gradient mapping
+const componentVisuals: Record<string, { 
+  icon: React.ReactNode; 
+  gradient: string;
+  bgColor: string;
+}> = {
+  'Power': { 
+    icon: <Battery className="w-10 h-10" />, 
+    gradient: 'from-amber-500 to-orange-600',
+    bgColor: 'bg-gradient-to-br from-amber-500/20 to-orange-600/10'
+  },
+  'ICs/Chips': { 
+    icon: <Microchip className="w-10 h-10" />, 
+    gradient: 'from-violet-500 to-purple-600',
+    bgColor: 'bg-gradient-to-br from-violet-500/20 to-purple-600/10'
+  },
+  'Electromechanical': { 
+    icon: <Speaker className="w-10 h-10" />, 
+    gradient: 'from-blue-500 to-cyan-600',
+    bgColor: 'bg-gradient-to-br from-blue-500/20 to-cyan-600/10'
+  },
+  'Connectors': { 
+    icon: <Plug className="w-10 h-10" />, 
+    gradient: 'from-cyan-500 to-teal-600',
+    bgColor: 'bg-gradient-to-br from-cyan-500/20 to-teal-600/10'
+  },
+  'PCB': { 
+    icon: <CircuitBoard className="w-10 h-10" />, 
+    gradient: 'from-green-500 to-emerald-600',
+    bgColor: 'bg-gradient-to-br from-green-500/20 to-emerald-600/10'
+  },
+  'Electronics': { 
+    icon: <Zap className="w-10 h-10" />, 
+    gradient: 'from-primary to-primary/80',
+    bgColor: 'bg-gradient-to-br from-primary/20 to-primary/10'
+  },
+  'Display/LEDs': { 
+    icon: <Lightbulb className="w-10 h-10" />, 
+    gradient: 'from-pink-500 to-rose-600',
+    bgColor: 'bg-gradient-to-br from-pink-500/20 to-rose-600/10'
+  },
+  'Sensors': { 
+    icon: <Eye className="w-10 h-10" />, 
+    gradient: 'from-indigo-500 to-blue-600',
+    bgColor: 'bg-gradient-to-br from-indigo-500/20 to-blue-600/10'
+  },
+  'Passive Components': { 
+    icon: <Disc className="w-10 h-10" />, 
+    gradient: 'from-slate-500 to-gray-600',
+    bgColor: 'bg-gradient-to-br from-slate-500/20 to-gray-600/10'
+  },
+  'Mechanical': { 
+    icon: <Cog className="w-10 h-10" />, 
+    gradient: 'from-orange-500 to-red-600',
+    bgColor: 'bg-gradient-to-br from-orange-500/20 to-red-600/10'
+  },
+  'Other': { 
+    icon: <Package className="w-10 h-10" />, 
+    gradient: 'from-muted-foreground to-muted-foreground/80',
+    bgColor: 'bg-gradient-to-br from-muted/50 to-muted/30'
+  },
+};
+
+// Get visual config for a component
+const getVisual = (category: string) => {
+  return componentVisuals[category] || componentVisuals['Other'];
+};
 
 // Difficulty display
 const difficultyConfig: Record<string, { label: string; color: string }> = {
@@ -131,23 +213,19 @@ export function ComponentBreakdown({
 
         {/* Parts Section Header */}
         {hasComponents && (
-          <button 
-            className="flex items-center gap-2 group"
-            onClick={() => {
-              setSelectedComponent(result.items[0]);
-              setViewMode('detail');
-            }}
-          >
-            <span className="text-2xl font-semibold text-foreground">Parts</span>
-            <ChevronRight className="w-6 h-6 text-muted-foreground group-active:translate-x-1 transition-transform" />
-          </button>
+          <div>
+            <p className="text-xs font-medium tracking-widest text-muted-foreground uppercase mb-3">
+              Salvageable Parts
+            </p>
+          </div>
         )}
 
-        {/* Parts Grid */}
+        {/* Parts Grid with Images */}
         {hasComponents && (
           <div className="grid grid-cols-2 gap-3">
-            {result.items.slice(0, 6).map((item, index) => {
+            {result.items.map((item, index) => {
               const isAdded = addedItems.has(item.component_name);
+              const visual = getVisual(item.category);
               
               return (
                 <button
@@ -157,32 +235,46 @@ export function ComponentBreakdown({
                     setViewMode('detail');
                   }}
                   className={cn(
-                    "relative rounded-2xl overflow-hidden aspect-square bg-gradient-to-br from-muted to-muted/50",
-                    "active:scale-[0.97] transition-transform",
-                    isAdded && "ring-2 ring-eco"
+                    "relative rounded-2xl overflow-hidden aspect-square",
+                    "active:scale-[0.97] transition-all duration-200",
+                    isAdded && "ring-2 ring-eco ring-offset-2 ring-offset-background"
                   )}
                 >
-                  {/* Category color overlay */}
-                  <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-transparent" />
+                  {/* Background gradient based on category */}
+                  <div className={cn(
+                    "absolute inset-0 bg-gradient-to-br",
+                    visual.gradient
+                  )} />
                   
-                  {/* Icon placeholder */}
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <Package className="w-12 h-12 text-muted-foreground/50" />
+                  {/* Pattern overlay */}
+                  <div className="absolute inset-0 opacity-20" 
+                    style={{
+                      backgroundImage: 'radial-gradient(circle at 2px 2px, white 1px, transparent 0)',
+                      backgroundSize: '20px 20px'
+                    }} 
+                  />
+                  
+                  {/* Icon */}
+                  <div className="absolute inset-0 flex items-center justify-center text-white/90">
+                    {visual.icon}
                   </div>
                   
                   {/* Bottom overlay with name */}
-                  <div className="absolute bottom-0 left-0 right-0 p-3 bg-gradient-to-t from-black/90 via-black/60 to-transparent">
-                    <p className="text-white text-sm font-medium line-clamp-2 leading-tight">
+                  <div className="absolute bottom-0 left-0 right-0 p-3 bg-gradient-to-t from-black/90 via-black/70 to-transparent">
+                    <p className="text-white text-sm font-semibold line-clamp-2 leading-tight">
                       {item.component_name}
                     </p>
-                    <p className="text-white/60 text-xs mt-0.5">
-                      ${item.market_value_low}-{item.market_value_high}
-                    </p>
+                    <div className="flex items-center justify-between mt-1">
+                      <span className="text-white/70 text-xs">{item.category}</span>
+                      <span className="text-white font-medium text-xs">
+                        ${item.market_value_low}-{item.market_value_high}
+                      </span>
+                    </div>
                   </div>
 
                   {/* Added checkmark */}
                   {isAdded && (
-                    <div className="absolute top-2 right-2 w-6 h-6 rounded-full bg-eco flex items-center justify-center">
+                    <div className="absolute top-2 right-2 w-7 h-7 rounded-full bg-eco flex items-center justify-center shadow-lg">
                       <Check className="w-4 h-4 text-white" />
                     </div>
                   )}
@@ -190,13 +282,6 @@ export function ComponentBreakdown({
               );
             })}
           </div>
-        )}
-
-        {/* Show more indicator */}
-        {hasComponents && result.items.length > 6 && (
-          <p className="text-center text-muted-foreground text-sm">
-            +{result.items.length - 6} more parts
-          </p>
         )}
 
         {/* Action Buttons */}
@@ -235,6 +320,7 @@ export function ComponentBreakdown({
     const isAdded = addedItems.has(selectedComponent.component_name);
     const confidence = Math.round((selectedComponent.confidence || 0.7) * 100);
     const currentIndex = result.items.findIndex(i => i.component_name === selectedComponent.component_name);
+    const visual = getVisual(selectedComponent.category);
     
     return (
       <div className="space-y-6 animate-fade-in pb-8">
@@ -247,22 +333,38 @@ export function ComponentBreakdown({
           <span>Back</span>
         </button>
 
+        {/* Component Image Card */}
+        <div className={cn(
+          "relative rounded-3xl overflow-hidden aspect-square max-w-[200px] mx-auto",
+          "shadow-xl"
+        )}>
+          <div className={cn(
+            "absolute inset-0 bg-gradient-to-br",
+            visual.gradient
+          )} />
+          <div className="absolute inset-0 opacity-20" 
+            style={{
+              backgroundImage: 'radial-gradient(circle at 2px 2px, white 1px, transparent 0)',
+              backgroundSize: '20px 20px'
+            }} 
+          />
+          <div className="absolute inset-0 flex items-center justify-center text-white">
+            <div className="w-20 h-20">
+              {visual.icon}
+            </div>
+          </div>
+        </div>
+
         {/* Large Title */}
-        <h1 className="text-3xl font-bold tracking-tight text-foreground leading-tight">
+        <h1 className="text-2xl font-bold tracking-tight text-foreground leading-tight text-center">
           {selectedComponent.component_name}
         </h1>
 
-        {/* Caption Section */}
-        <div>
-          <p className="text-xs font-medium tracking-widest text-muted-foreground uppercase mb-1">
-            Category
-          </p>
-          <p className="text-xl font-semibold text-foreground">
+        {/* Category Badge */}
+        <div className="flex justify-center">
+          <Badge variant="secondary" className={cn("text-sm px-4 py-1", visual.bgColor)}>
             {selectedComponent.category}
-          </p>
-          <p className="text-lg text-muted-foreground">
-            {selectedComponent.condition} condition
-          </p>
+          </Badge>
         </div>
 
         {/* Stats Cards */}
@@ -299,11 +401,6 @@ export function ComponentBreakdown({
             <span className="text-lg font-semibold">{confidence}%</span>
           </div>
           <Progress value={confidence} className="h-2" />
-          <p className="text-sm text-muted-foreground mt-2">
-            {confidence >= 85 ? "High confidence match" : 
-             confidence >= 60 ? "Good match" : 
-             "Best estimate"}
-          </p>
         </div>
 
         {/* Description */}
