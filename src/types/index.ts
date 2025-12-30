@@ -1,0 +1,249 @@
+/**
+ * SCAVENGER APP - TYPE DEFINITIONS
+ * 
+ * Central type definitions for the entire application.
+ * These types mirror the database schema and API responses.
+ */
+
+// =============================================
+// DATABASE ENTITY TYPES
+// =============================================
+
+/**
+ * Component/Material from the database
+ * Reference data for known components
+ */
+export interface Component {
+  id: string;
+  component_name: string;
+  category: ComponentCategory;
+  specifications: Record<string, unknown>;
+  reusability_score: number | null;
+  market_value: number | null;
+  datasheet_url: string | null;
+  image_url: string | null;
+  description: string | null;
+  common_uses: string[] | null;
+  created_at: string;
+}
+
+/**
+ * DIY Project from the database
+ */
+export interface Project {
+  id: string;
+  project_name: string;
+  description: string;
+  difficulty_level: DifficultyLevel;
+  estimated_time: string;
+  category: string;
+  tutorial_url: string | null;
+  thumbnail_url: string | null;
+  required_components: RequiredComponent[];
+  required_tools: string[] | null;
+  skills_needed: string[] | null;
+  created_at: string;
+}
+
+/**
+ * User's inventory item
+ */
+export interface InventoryItem {
+  id: string;
+  user_id: string;
+  component_name: string;
+  category: ComponentCategory;
+  quantity: number;
+  condition: ItemCondition;
+  status: ItemStatus;
+  specifications: Record<string, unknown>;
+  reusability_score: number | null;
+  market_value: number | null;
+  image_url: string | null;
+  notes: string | null;
+  date_added: string;
+  updated_at: string;
+}
+
+/**
+ * Scan history entry
+ */
+export interface ScanHistoryItem {
+  id: string;
+  user_id: string;
+  component_name: string;
+  category: ComponentCategory;
+  confidence: number | null;
+  image_url: string | null;
+  ai_response: AIIdentificationResponse | null;
+  scanned_at: string;
+}
+
+/**
+ * User profile
+ */
+export interface UserProfile {
+  id: string;
+  user_id: string;
+  display_name: string | null;
+  avatar_url: string | null;
+  items_scanned: number;
+  items_saved: number;
+  co2_saved: number;
+  created_at: string;
+  updated_at: string;
+}
+
+// =============================================
+// ENUM TYPES
+// =============================================
+
+export type ComponentCategory = 
+  | 'Electronics' 
+  | 'Wood' 
+  | 'Metal' 
+  | 'Fabric' 
+  | 'Mechanical' 
+  | 'Other';
+
+export type DifficultyLevel = 
+  | 'Beginner' 
+  | 'Intermediate' 
+  | 'Advanced';
+
+export type ItemCondition = 
+  | 'New' 
+  | 'Good' 
+  | 'Fair' 
+  | 'For Parts';
+
+export type ItemStatus = 
+  | 'Available' 
+  | 'In Use' 
+  | 'Used';
+
+// =============================================
+// API RESPONSE TYPES
+// =============================================
+
+/**
+ * Single identified item from AI
+ */
+export interface IdentifiedItem {
+  component_name: string;
+  category: ComponentCategory;
+  specifications: Record<string, unknown>;
+  reusability_score: number;
+  market_value_low: number;
+  market_value_high: number;
+  condition: ItemCondition;
+  confidence: number;
+  description: string;
+  common_uses: string[];
+}
+
+/**
+ * AI identification response
+ */
+export interface AIIdentificationResponse {
+  items: IdentifiedItem[];
+  message?: string;
+  raw_response?: string;
+}
+
+/**
+ * Required component in a project
+ */
+export interface RequiredComponent {
+  name: string;
+  quantity: number;
+  optional?: boolean;
+  alternatives?: string[];
+}
+
+/**
+ * Project match result from AI
+ */
+export interface ProjectMatch {
+  project_id: string;
+  project_name: string;
+  match_score: number;
+  components_have: string[];
+  components_missing: Array<{
+    name: string;
+    estimated_cost: number;
+  }>;
+  total_missing_cost: number;
+  recommendation: string;
+}
+
+/**
+ * Project matching response
+ */
+export interface ProjectMatchResponse {
+  matched_projects: ProjectMatch[];
+  error?: string;
+}
+
+// =============================================
+// FORM / INPUT TYPES
+// =============================================
+
+/**
+ * Input for adding item to inventory
+ */
+export interface AddInventoryInput {
+  component_name: string;
+  category: ComponentCategory;
+  quantity?: number;
+  condition: ItemCondition;
+  specifications?: Record<string, unknown>;
+  reusability_score?: number;
+  market_value?: number;
+  image_url?: string;
+  notes?: string;
+}
+
+/**
+ * Input for updating inventory item
+ */
+export interface UpdateInventoryInput {
+  id: string;
+  quantity?: number;
+  condition?: ItemCondition;
+  status?: ItemStatus;
+  notes?: string;
+}
+
+// =============================================
+// UI STATE TYPES
+// =============================================
+
+/**
+ * Scanner state
+ */
+export interface ScannerState {
+  isCapturing: boolean;
+  isProcessing: boolean;
+  capturedImage: string | null;
+  error: string | null;
+}
+
+/**
+ * Filter options for inventory
+ */
+export interface InventoryFilters {
+  category?: ComponentCategory;
+  status?: ItemStatus;
+  searchQuery?: string;
+}
+
+/**
+ * Filter options for projects
+ */
+export interface ProjectFilters {
+  category?: string;
+  difficulty?: DifficultyLevel;
+  hasAllParts?: boolean;
+  searchQuery?: string;
+}
