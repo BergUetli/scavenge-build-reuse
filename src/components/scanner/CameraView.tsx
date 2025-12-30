@@ -2,37 +2,45 @@
  * CAMERA VIEW COMPONENT
  * 
  * Full-screen camera interface for scanning components.
- * Handles camera permissions, capture, and gallery upload.
+ * Supports multi-photo capture with thumbnail strip.
  */
 
 import { useRef, useState, useCallback } from 'react';
-import { Camera, X, ImagePlus, FlipHorizontal, Zap } from 'lucide-react';
+import { Camera, X, ImagePlus, Trash2, Send } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
 interface CameraViewProps {
   videoRef: React.RefObject<HTMLVideoElement>;
   isStreaming: boolean;
+  capturedImages: string[];
   onCapture: () => void;
   onUpload: (file: File) => void;
+  onRemoveImage: (index: number) => void;
+  onAnalyze: () => void;
   onClose: () => void;
 }
 
 export function CameraView({ 
   videoRef, 
-  isStreaming, 
+  isStreaming,
+  capturedImages,
   onCapture, 
-  onUpload, 
+  onUpload,
+  onRemoveImage,
+  onAnalyze,
   onClose 
 }: CameraViewProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [flash, setFlash] = useState(false);
 
   const handleFileChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      onUpload(file);
+    const files = e.target.files;
+    if (files) {
+      Array.from(files).forEach(file => onUpload(file));
     }
+    // Reset input so same file can be selected again
+    e.target.value = '';
   }, [onUpload]);
 
   const triggerCapture = useCallback(() => {
@@ -40,6 +48,8 @@ export function CameraView({
     onCapture();
     setTimeout(() => setFlash(false), 150);
   }, [onCapture]);
+
+  const hasImages = capturedImages.length > 0;
 
   return (
     <div className="fixed inset-0 z-50 bg-black">
@@ -85,34 +95,55 @@ export function CameraView({
           <X className="w-6 h-6" />
         </Button>
         
-        <div className="flex items-center gap-2">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="text-white bg-black/30 backdrop-blur-sm hover:bg-black/50"
-          >
-            <FlipHorizontal className="w-5 h-5" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="text-white bg-black/30 backdrop-blur-sm hover:bg-black/50"
-          >
-            <Zap className="w-5 h-5" />
-          </Button>
-        </div>
+        {/* Photo counter */}
+        {hasImages && (
+          <div className="bg-primary text-primary-foreground px-3 py-1.5 rounded-full text-sm font-semibold">
+            {capturedImages.length} photo{capturedImages.length !== 1 ? 's' : ''}
+          </div>
+        )}
       </div>
       
       {/* Hint text */}
       <div className="absolute top-20 left-0 right-0 text-center safe-area-pt">
         <p className="text-white/80 text-sm bg-black/30 backdrop-blur-sm inline-block px-4 py-2 rounded-full">
-          Position component within the frame
+          {hasImages 
+            ? 'Take more angles or tap Analyze'
+            : 'Position component within the frame'}
         </p>
       </div>
+
+      {/* Captured images thumbnail strip */}
+      {hasImages && (
+        <div className="absolute left-0 right-0 bottom-36 safe-area-pb px-4">
+          <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
+            {capturedImages.map((img, index) => (
+              <div 
+                key={index} 
+                className="relative flex-shrink-0 w-16 h-16 rounded-xl overflow-hidden border-2 border-white/50 shadow-lg"
+              >
+                <img 
+                  src={img} 
+                  alt={`Capture ${index + 1}`}
+                  className="w-full h-full object-cover"
+                />
+                <button
+                  onClick={() => onRemoveImage(index)}
+                  className="absolute -top-1 -right-1 w-5 h-5 bg-destructive text-destructive-foreground rounded-full flex items-center justify-center shadow-md"
+                >
+                  <X className="w-3 h-3" />
+                </button>
+                <div className="absolute bottom-0 left-0 right-0 bg-black/60 text-white text-[10px] text-center py-0.5">
+                  {index + 1}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
       
       {/* Bottom controls */}
       <div className="absolute bottom-0 left-0 right-0 p-6 safe-area-pb">
-        <div className="flex items-center justify-center gap-8">
+        <div className="flex items-center justify-center gap-6">
           {/* Gallery button */}
           <Button
             variant="ghost"
@@ -137,16 +168,27 @@ export function CameraView({
             <Camera className="w-8 h-8 text-white" />
           </Button>
           
-          {/* Spacer for layout */}
-          <div className="w-14 h-14" />
+          {/* Analyze button - shows when images are captured */}
+          {hasImages ? (
+            <Button
+              size="icon"
+              className="w-14 h-14 rounded-full bg-primary text-primary-foreground shadow-premium hover:bg-primary/90 active:scale-95"
+              onClick={onAnalyze}
+            >
+              <Send className="w-6 h-6" />
+            </Button>
+          ) : (
+            <div className="w-14 h-14" />
+          )}
         </div>
       </div>
       
-      {/* Hidden file input */}
+      {/* Hidden file input - allow multiple */}
       <input
         ref={fileInputRef}
         type="file"
         accept="image/*"
+        multiple
         className="hidden"
         onChange={handleFileChange}
       />

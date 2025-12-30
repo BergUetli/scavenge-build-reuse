@@ -2,16 +2,16 @@
  * AI SCANNER HOOK
  * 
  * Handles image capture and AI-powered component identification.
- * Uses the identify-component edge function.
+ * Supports multi-image capture for better identification.
  */
 
 import { useState, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { AIIdentificationResponse, IdentifiedItem, ScannerState } from '@/types';
+import { AIIdentificationResponse, ScannerState } from '@/types';
 import { toast } from '@/hooks/use-toast';
 
 /**
- * Hook for AI-powered component scanning
+ * Hook for AI-powered component scanning with multi-image support
  */
 export function useScanner() {
   const [state, setState] = useState<ScannerState>({
@@ -21,6 +21,7 @@ export function useScanner() {
     error: null
   });
   
+  const [capturedImages, setCapturedImages] = useState<string[]>([]);
   const [identificationResult, setIdentificationResult] = useState<AIIdentificationResponse | null>(null);
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -34,7 +35,7 @@ export function useScanner() {
       
       const stream = await navigator.mediaDevices.getUserMedia({
         video: { 
-          facingMode: 'environment', // Use rear camera on mobile
+          facingMode: 'environment',
           width: { ideal: 1920 },
           height: { ideal: 1080 }
         }
@@ -76,7 +77,7 @@ export function useScanner() {
   }, []);
 
   /**
-   * Capture image from video stream
+   * Capture image from video stream and add to captured images
    */
   const captureImage = useCallback((): string | null => {
     if (!videoRef.current) return null;
@@ -91,30 +92,71 @@ export function useScanner() {
     ctx.drawImage(videoRef.current, 0, 0);
     const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
     
+    setCapturedImages(prev => [...prev, dataUrl]);
     setState(prev => ({ ...prev, capturedImage: dataUrl }));
     return dataUrl;
   }, []);
 
   /**
-   * Process image with AI identification
+   * Add uploaded image to captured images
    */
-  const identifyComponent = useCallback(async (imageDataUrl: string): Promise<AIIdentificationResponse | null> => {
+  const addUploadedImage = useCallback((file: File): Promise<string | null> => {
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const dataUrl = e.target?.result as string;
+        if (dataUrl) {
+          setCapturedImages(prev => [...prev, dataUrl]);
+          setState(prev => ({ ...prev, capturedImage: dataUrl }));
+          resolve(dataUrl);
+        } else {
+          resolve(null);
+        }
+      };
+      reader.onerror = () => resolve(null);
+      reader.readAsDataURL(file);
+    });
+  }, []);
+
+  /**
+   * Remove image from captured images
+   */
+  const removeImage = useCallback((index: number) => {
+    setCapturedImages(prev => prev.filter((_, i) => i !== index));
+  }, []);
+
+  /**
+   * Process multiple images with AI identification
+   */
+  const identifyFromImages = useCallback(async (images: string[]): Promise<AIIdentificationResponse | null> => {
+    if (images.length === 0) {
+      toast({
+        title: 'No Images',
+        description: 'Please capture at least one image',
+        variant: 'destructive'
+      });
+      return null;
+    }
+
     setState(prev => ({ ...prev, isProcessing: true, error: null }));
     setIdentificationResult(null);
 
     try {
-      // Extract base64 data from data URL
-      const base64Match = imageDataUrl.match(/^data:image\/(.*?);base64,(.*)$/);
-      if (!base64Match) {
-        throw new Error('Invalid image format');
-      }
+      // Prepare images array with base64 and mime type
+      const imagesData = images.map(imageDataUrl => {
+        const base64Match = imageDataUrl.match(/^data:image\/(.*?);base64,(.*)$/);
+        if (!base64Match) {
+          throw new Error('Invalid image format');
+        }
+        return {
+          mimeType: `image/${base64Match[1]}`,
+          imageBase64: base64Match[2]
+        };
+      });
 
-      const mimeType = `image/${base64Match[1]}`;
-      const imageBase64 = base64Match[2];
-
-      // Call edge function
+      // Call edge function with multiple images
       const { data, error } = await supabase.functions.invoke('identify-component', {
-        body: { imageBase64, mimeType }
+        body: { images: imagesData }
       });
 
       if (error) {
@@ -127,12 +169,12 @@ export function useScanner() {
       if (result.items && result.items.length > 0) {
         toast({
           title: 'Components Identified',
-          description: `Found ${result.items.length} item(s)`
+          description: `Found ${result.items.length} item(s) from ${images.length} photo(s)`
         });
       } else {
         toast({
           title: 'No Components Found',
-          description: result.message || 'Try taking a clearer photo'
+          description: result.message || 'Try taking clearer photos from different angles'
         });
       }
 
@@ -154,56 +196,19 @@ export function useScanner() {
   }, []);
 
   /**
-   * Capture and identify in one step
+   * Analyze all captured images
    */
-  const captureAndIdentify = useCallback(async (): Promise<AIIdentificationResponse | null> => {
-    const imageDataUrl = captureImage();
-    if (!imageDataUrl) {
-      toast({
-        title: 'Capture Failed',
-        description: 'Could not capture image from camera',
-        variant: 'destructive'
-      });
-      return null;
-    }
-    
+  const analyzeAllImages = useCallback(async (): Promise<AIIdentificationResponse | null> => {
     stopCamera();
-    return identifyComponent(imageDataUrl);
-  }, [captureImage, stopCamera, identifyComponent]);
-
-  /**
-   * Process image from file upload
-   */
-  const processUploadedImage = useCallback(async (file: File): Promise<AIIdentificationResponse | null> => {
-    return new Promise((resolve) => {
-      const reader = new FileReader();
-      reader.onload = async (e) => {
-        const dataUrl = e.target?.result as string;
-        if (dataUrl) {
-          setState(prev => ({ ...prev, capturedImage: dataUrl }));
-          const result = await identifyComponent(dataUrl);
-          resolve(result);
-        } else {
-          resolve(null);
-        }
-      };
-      reader.onerror = () => {
-        toast({
-          title: 'Upload Failed',
-          description: 'Could not read the image file',
-          variant: 'destructive'
-        });
-        resolve(null);
-      };
-      reader.readAsDataURL(file);
-    });
-  }, [identifyComponent]);
+    return identifyFromImages(capturedImages);
+  }, [capturedImages, identifyFromImages, stopCamera]);
 
   /**
    * Reset scanner state
    */
   const reset = useCallback(() => {
     stopCamera();
+    setCapturedImages([]);
     setState({
       isCapturing: false,
       isProcessing: false,
@@ -215,14 +220,16 @@ export function useScanner() {
 
   return {
     state,
+    capturedImages,
     identificationResult,
     videoRef,
     startCamera,
     stopCamera,
     captureImage,
-    identifyComponent,
-    captureAndIdentify,
-    processUploadedImage,
+    addUploadedImage,
+    removeImage,
+    analyzeAllImages,
+    identifyFromImages,
     reset
   };
 }

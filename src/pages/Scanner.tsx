@@ -2,9 +2,10 @@
  * SCANNER PAGE
  * 
  * Full-screen camera interface for scanning and identifying components.
+ * Supports multi-photo capture for better AI identification.
  */
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Loader2 } from 'lucide-react';
 import { CameraView } from '@/components/scanner/CameraView';
@@ -24,12 +25,15 @@ export default function Scanner() {
   
   const {
     state,
+    capturedImages,
     videoRef,
     identificationResult,
     startCamera,
     stopCamera,
     captureImage,
-    identifyComponent,
+    addUploadedImage,
+    removeImage,
+    analyzeAllImages,
     reset
   } = useScanner();
 
@@ -40,53 +44,44 @@ export default function Scanner() {
   const [noResultMessage, setNoResultMessage] = useState<string | null>(null);
 
   // Start camera on mount
-  useState(() => {
+  useEffect(() => {
     if (user) {
       startCamera();
     }
-  });
+    return () => stopCamera();
+  }, [user, startCamera, stopCamera]);
 
-  // Handle image capture
-  const handleCapture = useCallback(async () => {
-    const imageData = captureImage();
-    if (!imageData) return;
+  // Handle image capture (just adds to captured images)
+  const handleCapture = useCallback(() => {
+    captureImage();
+  }, [captureImage]);
 
-    const result = await identifyComponent(imageData);
-    if (!result) return;
+  // Handle file upload
+  const handleUpload = useCallback(async (file: File) => {
+    await addUploadedImage(file);
+  }, [addUploadedImage]);
+
+  // Handle analyze button - sends all images to AI
+  const handleAnalyze = useCallback(async () => {
+    const result = await analyzeAllImages();
+    
+    if (!result) {
+      setNoResultMessage('Analysis failed. Please try again.');
+      setSelectedItem(null);
+      setShowResult(true);
+      return;
+    }
 
     if (result.items?.length > 0) {
       setSelectedItem(result.items[0]);
       setNoResultMessage(null);
     } else {
       setSelectedItem(null);
-      setNoResultMessage(result.message || 'No salvageable components detected in this photo. Try a clearer shot or a different angle.');
+      setNoResultMessage(result.message || 'No salvageable components detected. Try clearer shots or different angles.');
     }
 
     setShowResult(true);
-  }, [captureImage, identifyComponent]);
-
-  // Handle file upload from gallery
-  const handleUpload = useCallback(async (file: File) => {
-    const reader = new FileReader();
-    reader.onload = async (e) => {
-      const imageData = e.target?.result as string;
-      if (!imageData) return;
-
-      const result = await identifyComponent(imageData);
-      if (!result) return;
-
-      if (result.items?.length > 0) {
-        setSelectedItem(result.items[0]);
-        setNoResultMessage(null);
-      } else {
-        setSelectedItem(null);
-        setNoResultMessage(result.message || 'No salvageable components detected in this photo. Try a clearer shot or a different angle.');
-      }
-
-      setShowResult(true);
-    };
-    reader.readAsDataURL(file);
-  }, [identifyComponent]);
+  }, [analyzeAllImages]);
 
   // Handle closing scanner
   const handleClose = useCallback(() => {
@@ -99,7 +94,6 @@ export default function Scanner() {
     if (!selectedItem || !user) return;
 
     try {
-      // Add to inventory
       await addItem.mutateAsync({
         component_name: selectedItem.component_name,
         category: selectedItem.category,
@@ -110,7 +104,6 @@ export default function Scanner() {
         image_url: capturedImage || undefined,
       });
 
-      // Add to scan history
       await addScan.mutateAsync({
         component_name: selectedItem.component_name,
         category: selectedItem.category,
@@ -133,7 +126,6 @@ export default function Scanner() {
 
   // Handle editing identification
   const handleEdit = useCallback(() => {
-    // TODO: Open edit modal
     toast({
       title: 'Edit Mode',
       description: 'Manual editing coming soon!',
@@ -146,7 +138,8 @@ export default function Scanner() {
     setSelectedItem(null);
     setNoResultMessage(null);
     reset();
-  }, [reset]);
+    startCamera();
+  }, [reset, startCamera]);
 
   // Require auth
   if (!user) {
@@ -215,7 +208,7 @@ export default function Scanner() {
       <div className="fixed inset-0 z-50 bg-black flex items-center justify-center">
         <div className="text-center text-white">
           <Loader2 className="w-12 h-12 animate-spin mx-auto mb-4" />
-          <p className="text-lg font-medium">Analyzing...</p>
+          <p className="text-lg font-medium">Analyzing {capturedImages.length} photo{capturedImages.length !== 1 ? 's' : ''}...</p>
           <p className="text-sm text-white/70 mt-1">
             Identifying components with AI
           </p>
@@ -224,13 +217,16 @@ export default function Scanner() {
     );
   }
 
-  // Show camera view
+  // Show camera view with multi-photo support
   return (
     <CameraView
       videoRef={videoRef}
       isStreaming={isCapturing}
+      capturedImages={capturedImages}
       onCapture={handleCapture}
       onUpload={handleUpload}
+      onRemoveImage={removeImage}
+      onAnalyze={handleAnalyze}
       onClose={handleClose}
     />
   );
