@@ -253,11 +253,45 @@ export function ComponentBreakdown({
                       <div className="p-4 space-y-3">
                         <div className="flex items-center justify-between">
                           <h4 className="font-semibold text-sm">How to Disassemble</h4>
-                          <div className="flex items-center gap-2">
-                            <Badge variant="outline" className="text-xs">
-                              <Clock className="w-3 h-3 mr-1" />
-                              {result.disassembly.time_estimate || 'Unknown'}
-                            </Badge>
+                          <Badge variant="outline" className="text-xs">
+                            <Clock className="w-3 h-3 mr-1" />
+                            {result.disassembly.time_estimate || 'Unknown'}
+                          </Badge>
+                        </div>
+
+                        {/* Risk Indicators */}
+                        <div className="grid grid-cols-2 gap-2">
+                          <div className={cn(
+                            "rounded-lg p-2 text-center",
+                            result.disassembly.injury_risk === 'High' ? 'bg-destructive/10 border border-destructive/20' :
+                            result.disassembly.injury_risk === 'Medium' ? 'bg-warning/10 border border-warning/20' :
+                            'bg-eco/10 border border-eco/20'
+                          )}>
+                            <p className="text-[10px] uppercase tracking-wide text-muted-foreground mb-0.5">Injury Risk</p>
+                            <p className={cn(
+                              "text-xs font-bold",
+                              result.disassembly.injury_risk === 'High' ? 'text-destructive' :
+                              result.disassembly.injury_risk === 'Medium' ? 'text-warning' :
+                              'text-eco'
+                            )}>
+                              {result.disassembly.injury_risk || 'Unknown'}
+                            </p>
+                          </div>
+                          <div className={cn(
+                            "rounded-lg p-2 text-center",
+                            result.disassembly.damage_risk === 'High' ? 'bg-destructive/10 border border-destructive/20' :
+                            result.disassembly.damage_risk === 'Medium' ? 'bg-warning/10 border border-warning/20' :
+                            'bg-eco/10 border border-eco/20'
+                          )}>
+                            <p className="text-[10px] uppercase tracking-wide text-muted-foreground mb-0.5">Damage Risk</p>
+                            <p className={cn(
+                              "text-xs font-bold",
+                              result.disassembly.damage_risk === 'High' ? 'text-destructive' :
+                              result.disassembly.damage_risk === 'Medium' ? 'text-warning' :
+                              'text-eco'
+                            )}>
+                              {result.disassembly.damage_risk || 'Unknown'}
+                            </p>
                           </div>
                         </div>
                         

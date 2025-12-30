@@ -65,6 +65,8 @@ ALSO PROVIDE DISASSEMBLY INSTRUCTIONS for the parent object:
 - steps: Array of clear, numbered steps to safely disassemble and extract components
 - difficulty: Easy (snap-fit, no tools), Medium (screws, basic tools), Hard (glued, soldering required)
 - time_estimate: How long it takes (e.g., "5-10 minutes", "30 minutes - 1 hour")
+- injury_risk: Risk of injury during disassembly - Low (safe, no sharp edges), Medium (sharp edges, spring tension), High (high voltage, toxic materials, explosion risk)
+- damage_risk: Risk of damaging components during extraction - Low (easy to remove intact), Medium (requires care), High (fragile, likely to break)
 - safety_warnings: Array of safety concerns (e.g., "Disconnect battery first", "Capacitors may hold charge")
 - tutorial_url: Link to a disassembly guide if one exists (iFixit, YouTube, etc.) - only include if confident it exists
 - video_url: Link to video tutorial if known
@@ -112,6 +114,8 @@ ALWAYS respond with valid JSON:
     "steps": ["Step 1: ...", "Step 2: ...", ...],
     "difficulty": "Easy | Medium | Hard",
     "time_estimate": "string",
+    "injury_risk": "Low | Medium | High",
+    "damage_risk": "Low | Medium | High",
     "safety_warnings": ["string array"] or null,
     "tutorial_url": "string or null",
     "video_url": "string or null"
