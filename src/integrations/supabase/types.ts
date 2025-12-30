@@ -14,6 +14,30 @@ export type Database = {
   }
   public: {
     Tables: {
+      component_images: {
+        Row: {
+          category: string
+          component_name: string
+          created_at: string
+          id: string
+          image_url: string
+        }
+        Insert: {
+          category: string
+          component_name: string
+          created_at?: string
+          id?: string
+          image_url: string
+        }
+        Update: {
+          category?: string
+          component_name?: string
+          created_at?: string
+          id?: string
+          image_url?: string
+        }
+        Relationships: []
+      }
       components: {
         Row: {
           abstraction_level: string | null

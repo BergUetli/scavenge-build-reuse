@@ -2,7 +2,10 @@
  * GENERATE COMPONENT IMAGE
  * 
  * Uses Lovable AI to generate stock images of electronic components.
+ * Caches images in the database to avoid redundant API calls.
  */
+
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -24,6 +27,40 @@ Deno.serve(async (req) => {
       );
     }
 
+    // Initialize Supabase client with service role for database access
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+    // Normalize the component name and category for consistent lookups
+    const normalizedName = componentName.toLowerCase().trim();
+    const normalizedCategory = (category || 'unknown').toLowerCase().trim();
+
+    console.log(`[generate-component-image] Checking cache for: ${normalizedName} (${normalizedCategory})`);
+
+    // Check if image already exists in cache
+    const { data: cachedImage, error: cacheError } = await supabase
+      .from('component_images')
+      .select('image_url')
+      .eq('component_name', normalizedName)
+      .eq('category', normalizedCategory)
+      .single();
+
+    if (cachedImage && !cacheError) {
+      console.log(`[generate-component-image] Cache hit! Returning cached image for: ${normalizedName}`);
+      return new Response(
+        JSON.stringify({ 
+          success: true, 
+          imageUrl: cachedImage.image_url,
+          componentName,
+          cached: true
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    console.log(`[generate-component-image] Cache miss. Generating new image for: ${componentName} (${category})`);
+
     const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
     if (!LOVABLE_API_KEY) {
       console.error('LOVABLE_API_KEY not configured');
@@ -32,8 +69,6 @@ Deno.serve(async (req) => {
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
-
-    console.log(`[generate-component-image] Generating image for: ${componentName} (${category})`);
 
     // Create a detailed prompt for the component
     const prompt = `A clean, professional product photo of a ${componentName}, ${category} electronic component. White background, studio lighting, high detail, realistic. The component should be clearly visible and well-lit. No text or labels.`;
@@ -45,7 +80,7 @@ Deno.serve(async (req) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'google/gemini-2.5-flash-image',
+        model: 'google/gemini-2.5-flash-image-preview',
         messages: [
           {
             role: 'user',
@@ -87,13 +122,28 @@ Deno.serve(async (req) => {
       );
     }
 
-    console.log('[generate-component-image] Image generated successfully');
+    // Store the generated image in cache for future use
+    const { error: insertError } = await supabase
+      .from('component_images')
+      .insert({
+        component_name: normalizedName,
+        category: normalizedCategory,
+        image_url: imageUrl
+      });
+
+    if (insertError) {
+      // Log but don't fail - the image was still generated successfully
+      console.error('[generate-component-image] Failed to cache image:', insertError.message);
+    } else {
+      console.log(`[generate-component-image] Image cached successfully for: ${normalizedName}`);
+    }
 
     return new Response(
       JSON.stringify({ 
         success: true, 
         imageUrl,
-        componentName 
+        componentName,
+        cached: false
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
