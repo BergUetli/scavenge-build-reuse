@@ -4,29 +4,27 @@
  * This function uses Lovable AI (Gemini 2.5 Flash) with vision capabilities
  * to identify components and materials from images.
  * 
- * Input: Base64 encoded image
- * Output: Component identification with specs, reusability score, and market value
+ * Supports multiple images for better identification accuracy.
  */
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
-// CORS headers for browser requests
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// System prompt for component identification with sub-component breakdown
 const IDENTIFICATION_PROMPT = `You are Scavenger AI, an expert at identifying salvageable components from electronics, devices, and materials.
 
-Your task is to analyze the image and BREAK DOWN the object into its individual salvageable internal components.
+Your task is to analyze the provided image(s) and BREAK DOWN the object into its individual salvageable internal components.
 
 IMPORTANT RULES:
-1. If the image shows a device (keyboard, phone, laptop, appliance, etc.), list the INTERNAL components that could be harvested from it
-2. IGNORE: plastic casing, screws, rubber feet, labels, packaging, structural plastic parts
-3. FOCUS ON: chips, ICs, capacitors, resistors, motors, switches, LEDs, displays, sensors, connectors, cables, PCBs, batteries, speakers, etc.
-4. Estimate QUANTITIES for repeated components (e.g., "~50 mechanical switches" for a keyboard)
-5. Group similar components when there are many (e.g., "SMD Capacitors (various values)" rather than listing each)
+1. If multiple images are provided, they show the SAME OBJECT from different angles - combine the information
+2. If the image shows a device (keyboard, phone, laptop, appliance, etc.), list the INTERNAL components that could be harvested from it
+3. IGNORE: plastic casing, screws, rubber feet, labels, packaging, structural plastic parts
+4. FOCUS ON: chips, ICs, capacitors, resistors, motors, switches, LEDs, displays, sensors, connectors, cables, PCBs, batteries, speakers, etc.
+5. Estimate QUANTITIES for repeated components (e.g., "~50 mechanical switches" for a keyboard)
+6. Group similar components when there are many (e.g., "SMD Capacitors (various values)" rather than listing each)
 
 For EACH salvageable component inside the object, provide:
 1. component_name: Specific name with quantity if applicable (e.g., "Mechanical Key Switches (~87 pcs)", "USB Controller IC")
@@ -40,16 +38,6 @@ For EACH salvageable component inside the object, provide:
 9. description: What this component does and why it's useful for makers
 10. common_uses: Array of 3-5 project ideas this could enable
 11. quantity: Estimated count (number, use 1 if single item)
-
-EXAMPLE - For a mechanical keyboard image, you might return:
-- Mechanical Key Switches (~87 pcs) - Cherry MX or similar
-- USB Controller IC - Handles USB HID communication
-- Stabilizer Assemblies (~8 pcs) - For larger keys
-- RGB LEDs (~87 pcs) - If backlit model
-- PCB - The keyboard's main circuit board
-- USB-C Port - Connector for cable
-- Diodes (~87 pcs) - For key matrix
-- Microcontroller - Brain of the keyboard
 
 ALWAYS respond with valid JSON:
 {
@@ -74,19 +62,16 @@ ALWAYS respond with valid JSON:
   "salvage_difficulty": "Easy | Medium | Hard",
   "tools_needed": ["string array of tools needed to disassemble"],
   "message": "string (optional tips or warnings)"
- }`;
+}`;
 
 function extractJsonFromAI(aiResponse: string) {
-  // If model still returns markdown, strip code fences.
   let text = aiResponse.trim();
   const fenceMatch = text.match(/```(?:json)?\s*([\s\S]*?)\s*```/i);
   if (fenceMatch?.[1]) text = fenceMatch[1].trim();
 
-  // Try direct parse first.
   try {
     return JSON.parse(text);
   } catch {
-    // Fallback: grab the largest JSON object in the text.
     const firstBrace = text.indexOf('{');
     const lastBrace = text.lastIndexOf('}');
     if (firstBrace === -1 || lastBrace === -1 || lastBrace <= firstBrace) {
@@ -98,17 +83,26 @@ function extractJsonFromAI(aiResponse: string) {
 }
 
 serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const { imageBase64, mimeType = 'image/jpeg' } = await req.json();
+    const body = await req.json();
+    
+    // Support both single image (legacy) and multiple images
+    let images: Array<{ imageBase64: string; mimeType: string }> = [];
+    
+    if (body.images && Array.isArray(body.images)) {
+      images = body.images;
+    } else if (body.imageBase64) {
+      // Legacy single image support
+      images = [{ imageBase64: body.imageBase64, mimeType: body.mimeType || 'image/jpeg' }];
+    }
 
-    if (!imageBase64) {
+    if (images.length === 0) {
       return new Response(
-        JSON.stringify({ error: 'No image provided' }),
+        JSON.stringify({ error: 'No images provided' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
@@ -122,9 +116,26 @@ serve(async (req) => {
       );
     }
 
-    console.log('Sending image to Lovable AI for identification...');
+    console.log(`Sending ${images.length} image(s) to Lovable AI for identification...`);
 
-    // Call Lovable AI Gateway with vision model
+    // Build content array with all images
+    const userContent: Array<{ type: string; text?: string; image_url?: { url: string } }> = [
+      {
+        type: 'text',
+        text: `I'm providing ${images.length} image(s) of the same object from different angles. Analyze ALL images together to identify the object and its salvageable components. Return ONLY valid JSON (no markdown, no code fences). If unsure, set confidence lower and still return a complete JSON object. Keep tools_needed to <= 8 items and common_uses to <= 4.`
+      }
+    ];
+
+    // Add all images
+    for (const img of images) {
+      userContent.push({
+        type: 'image_url',
+        image_url: {
+          url: `data:${img.mimeType};base64,${img.imageBase64}`
+        }
+      });
+    }
+
     const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -140,18 +151,7 @@ serve(async (req) => {
           },
           {
             role: 'user',
-            content: [
-              {
-                type: 'text',
-                text: 'Return ONLY valid JSON (no markdown, no code fences). If unsure, set confidence lower and still return a complete JSON object. Keep tools_needed to <= 8 items and common_uses to <= 4.'
-              },
-              {
-                type: 'image_url',
-                image_url: {
-                  url: `data:${mimeType};base64,${imageBase64}`
-                }
-              }
-            ]
+            content: userContent
           }
         ],
         max_tokens: 3000,
@@ -195,24 +195,22 @@ serve(async (req) => {
 
     console.log('AI Response received:', aiResponse.substring(0, 200) + '...');
 
-    // Parse the JSON response from the AI
     let parsedResponse;
     try {
       parsedResponse = extractJsonFromAI(aiResponse);
     } catch (parseError) {
       console.error('Failed to parse AI response as JSON:', parseError);
-      // Return a structured error with the raw response for debugging
       return new Response(
         JSON.stringify({
           items: [],
-          message: 'No components could be extracted from the AI response. Please try again with a clearer photo.',
+          message: 'No components could be extracted from the AI response. Please try again with clearer photos.',
           raw_response: aiResponse,
         }),
         { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    console.log('Successfully identified', parsedResponse.items?.length || 0, 'items');
+    console.log('Successfully identified', parsedResponse.items?.length || 0, 'items from', images.length, 'images');
 
     return new Response(
       JSON.stringify(parsedResponse),
