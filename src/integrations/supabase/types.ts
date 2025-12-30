@@ -271,9 +271,11 @@ export type Database = {
       user_inventory: {
         Row: {
           category: string
+          common_uses: string[] | null
           component_name: string
           condition: string
           date_added: string
+          description: string | null
           id: string
           image_url: string | null
           market_value: number | null
@@ -282,14 +284,17 @@ export type Database = {
           reusability_score: number | null
           specifications: Json | null
           status: string
+          technical_specs: Json | null
           updated_at: string
           user_id: string
         }
         Insert: {
           category: string
+          common_uses?: string[] | null
           component_name: string
           condition: string
           date_added?: string
+          description?: string | null
           id?: string
           image_url?: string | null
           market_value?: number | null
@@ -298,14 +303,17 @@ export type Database = {
           reusability_score?: number | null
           specifications?: Json | null
           status?: string
+          technical_specs?: Json | null
           updated_at?: string
           user_id: string
         }
         Update: {
           category?: string
+          common_uses?: string[] | null
           component_name?: string
           condition?: string
           date_added?: string
+          description?: string | null
           id?: string
           image_url?: string | null
           market_value?: number | null
@@ -314,6 +322,7 @@ export type Database = {
           reusability_score?: number | null
           specifications?: Json | null
           status?: string
+          technical_specs?: Json | null
           updated_at?: string
           user_id?: string
         }

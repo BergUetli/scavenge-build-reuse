@@ -92,9 +92,12 @@ export default function Scanner() {
         category: item.category,
         condition: item.condition,
         specifications: item.specifications,
+        technical_specs: item.technical_specs,
         reusability_score: item.reusability_score,
         market_value: (item.market_value_low + item.market_value_high) / 2,
         image_url: capturedImage || undefined,
+        description: item.description,
+        common_uses: item.common_uses,
       });
 
       await addScan.mutateAsync({
@@ -106,8 +109,8 @@ export default function Scanner() {
       });
 
       toast({
-        title: 'Added to Inventory!',
-        description: `${item.component_name} has been saved.`,
+        title: 'Saved to Cargo Hold!',
+        description: `${item.component_name} has been added to your inventory.`,
       });
     } catch (error) {
       console.error('Failed to save:', error);
@@ -123,13 +126,19 @@ export default function Scanner() {
   const handleAddAll = useCallback(async () => {
     if (!user || !fullResult?.items) return;
 
+    let savedCount = 0;
     for (const item of fullResult.items) {
-      await handleAddComponent(item);
+      try {
+        await handleAddComponent(item);
+        savedCount++;
+      } catch (error) {
+        console.error('Failed to save item:', item.component_name, error);
+      }
     }
 
     toast({
-      title: 'All Components Added!',
-      description: `${fullResult.items.length} components saved to inventory.`,
+      title: 'Cargo Loaded!',
+      description: `${savedCount} components saved to your Cargo Hold.`,
     });
 
     navigate('/inventory');
