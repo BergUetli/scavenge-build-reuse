@@ -83,7 +83,7 @@ export default function Home() {
                   Welcome back, Junker.
                 </p>
                 <p className="text-white/90 text-lg font-semibold leading-relaxed">
-                  Take stuff apart, build something epic, or flip it for profit.
+                  Take stuff apart, build something epic, or flip parts for profit.
                 </p>
               </div>
             </div>
