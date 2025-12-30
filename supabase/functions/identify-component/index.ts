@@ -125,20 +125,101 @@ ALWAYS respond with valid JSON:
 
 function extractJsonFromAI(aiResponse: string) {
   let text = aiResponse.trim();
-  const fenceMatch = text.match(/```(?:json)?\s*([\s\S]*?)\s*```/i);
+  
+  // Remove markdown fences (handle incomplete closing fence too)
+  const fenceMatch = text.match(/```(?:json)?\s*([\s\S]*?)(?:\s*```|$)/i);
   if (fenceMatch?.[1]) text = fenceMatch[1].trim();
 
   try {
     return JSON.parse(text);
-  } catch {
+  } catch (e1) {
+    console.log('[JSON] Initial parse failed, attempting repair...');
+    
+    // Find the JSON object boundaries
     const firstBrace = text.indexOf('{');
-    const lastBrace = text.lastIndexOf('}');
-    if (firstBrace === -1 || lastBrace === -1 || lastBrace <= firstBrace) {
+    if (firstBrace === -1) {
       throw new Error('No JSON object found in AI response');
     }
-    const candidate = text.slice(firstBrace, lastBrace + 1);
-    return JSON.parse(candidate);
+    
+    let candidate = text.slice(firstBrace);
+    
+    // Try parsing as-is first
+    try {
+      return JSON.parse(candidate);
+    } catch (e2) {
+      // Attempt to repair truncated JSON
+      console.log('[JSON] Attempting to repair truncated JSON...');
+      candidate = repairTruncatedJson(candidate);
+      return JSON.parse(candidate);
+    }
   }
+}
+
+/**
+ * Attempt to repair truncated JSON by closing open brackets/braces
+ */
+function repairTruncatedJson(json: string): string {
+  // Track open brackets and braces
+  let openBraces = 0;
+  let openBrackets = 0;
+  let inString = false;
+  let escapeNext = false;
+  
+  for (let i = 0; i < json.length; i++) {
+    const char = json[i];
+    
+    if (escapeNext) {
+      escapeNext = false;
+      continue;
+    }
+    
+    if (char === '\\' && inString) {
+      escapeNext = true;
+      continue;
+    }
+    
+    if (char === '"' && !escapeNext) {
+      inString = !inString;
+      continue;
+    }
+    
+    if (!inString) {
+      if (char === '{') openBraces++;
+      else if (char === '}') openBraces--;
+      else if (char === '[') openBrackets++;
+      else if (char === ']') openBrackets--;
+    }
+  }
+  
+  // If we're in a string, close it
+  if (inString) {
+    // Find the last quote and truncate incomplete string values
+    const lastQuote = json.lastIndexOf('"');
+    if (lastQuote > 0) {
+      // Check if this is a key or value - look for patterns like "key": "incomplete
+      const beforeQuote = json.substring(0, lastQuote);
+      const colonQuoteMatch = beforeQuote.match(/:\s*$/);
+      if (colonQuoteMatch) {
+        // We're in a value string, close it with empty/null
+        json = beforeQuote + 'null';
+      } else {
+        json = json.substring(0, lastQuote + 1);
+      }
+    }
+    // Recalculate after truncation
+    return repairTruncatedJson(json);
+  }
+  
+  // Remove trailing commas before closing
+  json = json.replace(/,\s*$/, '');
+  
+  // Close any open structures
+  let closing = '';
+  for (let i = 0; i < openBrackets; i++) closing += ']';
+  for (let i = 0; i < openBraces; i++) closing += '}';
+  
+  console.log(`[JSON] Repaired by closing ${openBrackets} brackets and ${openBraces} braces`);
+  return json + closing;
 }
 
 /**
@@ -282,7 +363,7 @@ serve(async (req) => {
             content: userContent
           }
         ],
-        max_tokens: 3000,
+        max_tokens: 8000,
       }),
     });
 
