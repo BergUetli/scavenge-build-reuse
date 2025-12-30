@@ -33,3 +33,6 @@ verify_jwt = false
 
 [functions.match-projects]
 verify_jwt = false
+
+[functions.generate-component-image]
+verify_jwt = false
