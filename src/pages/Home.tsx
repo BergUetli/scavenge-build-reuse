@@ -67,8 +67,8 @@ export default function Home() {
                 <p className="text-white/60 text-base font-medium">
                   Welcome back, Junker.
                 </p>
-                <p className="text-white/90 text-xl font-semibold leading-relaxed">
-                  What are we hauling today?
+                <p className="text-white/90 text-lg font-semibold leading-relaxed">
+                  Find treasure, build something epic, or flip it for profit.
                 </p>
               </div>
             </div>
