@@ -1,11 +1,14 @@
 /**
- * Sound Effects Hook - Futuristic & Gentle
- * Uses Web Audio API for lightweight, procedural sounds
+ * Sound & Haptic Feedback Hook - Futuristic & Gentle
+ * Uses Web Audio API for sounds and Vibration API for haptics
  */
 
 import { useCallback, useRef } from 'react';
 
 type SoundType = 'click' | 'whoosh' | 'success' | 'error' | 'scan' | 'hover';
+
+// Check if vibration is supported
+const canVibrate = typeof navigator !== 'undefined' && 'vibrate' in navigator;
 
 export function useSounds() {
   const audioContextRef = useRef<AudioContext | null>(null);
@@ -17,7 +20,34 @@ export function useSounds() {
     return audioContextRef.current;
   }, []);
 
+  // Haptic feedback patterns (in milliseconds)
+  const hapticLight = useCallback(() => {
+    if (canVibrate) navigator.vibrate(10);
+  }, []);
+
+  const hapticMedium = useCallback(() => {
+    if (canVibrate) navigator.vibrate(25);
+  }, []);
+
+  const hapticHeavy = useCallback(() => {
+    if (canVibrate) navigator.vibrate(50);
+  }, []);
+
+  const hapticSuccess = useCallback(() => {
+    if (canVibrate) navigator.vibrate([15, 50, 15]); // Double tap pattern
+  }, []);
+
+  const hapticError = useCallback(() => {
+    if (canVibrate) navigator.vibrate([30, 30, 30, 30, 50]); // Rumble pattern
+  }, []);
+
+  const hapticScan = useCallback(() => {
+    if (canVibrate) navigator.vibrate([10, 30, 10, 30, 10]); // Triple pulse
+  }, []);
+
   const playClick = useCallback(() => {
+    hapticLight();
+    
     const ctx = getContext();
     const oscillator = ctx.createOscillator();
     const gainNode = ctx.createGain();
@@ -34,9 +64,11 @@ export function useSounds() {
 
     oscillator.start(ctx.currentTime);
     oscillator.stop(ctx.currentTime + 0.08);
-  }, [getContext]);
+  }, [getContext, hapticLight]);
 
   const playWhoosh = useCallback(() => {
+    hapticMedium();
+    
     const ctx = getContext();
     
     // Create noise for whoosh effect
@@ -66,9 +98,11 @@ export function useSounds() {
     gainNode.connect(ctx.destination);
 
     noise.start(ctx.currentTime);
-  }, [getContext]);
+  }, [getContext, hapticMedium]);
 
   const playSuccess = useCallback(() => {
+    hapticSuccess();
+    
     const ctx = getContext();
     
     const frequencies = [523.25, 659.25, 783.99]; // C5, E5, G5 chord
@@ -91,9 +125,11 @@ export function useSounds() {
       oscillator.start(startTime);
       oscillator.stop(startTime + 0.3);
     });
-  }, [getContext]);
+  }, [getContext, hapticSuccess]);
 
   const playError = useCallback(() => {
+    hapticError();
+    
     const ctx = getContext();
     const oscillator = ctx.createOscillator();
     const gainNode = ctx.createGain();
@@ -110,9 +146,11 @@ export function useSounds() {
 
     oscillator.start(ctx.currentTime);
     oscillator.stop(ctx.currentTime + 0.15);
-  }, [getContext]);
+  }, [getContext, hapticError]);
 
   const playScan = useCallback(() => {
+    hapticScan();
+    
     const ctx = getContext();
     
     // Scanning beep sequence
@@ -133,9 +171,10 @@ export function useSounds() {
       oscillator.start(startTime);
       oscillator.stop(startTime + 0.06);
     }
-  }, [getContext]);
+  }, [getContext, hapticScan]);
 
   const playHover = useCallback(() => {
+    // No haptic for hover - too subtle
     const ctx = getContext();
     const oscillator = ctx.createOscillator();
     const gainNode = ctx.createGain();
@@ -176,5 +215,17 @@ export function useSounds() {
     }
   }, [playClick, playWhoosh, playSuccess, playError, playScan, playHover]);
 
-  return { play, playClick, playWhoosh, playSuccess, playError, playScan, playHover };
+  return { 
+    play, 
+    playClick, 
+    playWhoosh, 
+    playSuccess, 
+    playError, 
+    playScan, 
+    playHover,
+    // Expose haptics for standalone use
+    hapticLight,
+    hapticMedium,
+    hapticHeavy,
+  };
 }
