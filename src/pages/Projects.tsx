@@ -37,12 +37,14 @@ export default function Projects() {
   const [filters, setFilters] = useState<ProjectFilters>({});
   const [activeTab, setActiveTab] = useState('all');
 
-  // Calculate compatibility for all projects
+  // Calculate compatibility for all projects - only include those with at least 1 matching component
   const projectsWithCompatibility = useMemo(() => {
-    return projects.map((project) => ({
-      project,
-      ...getProjectCompatibility(project),
-    }));
+    return projects
+      .map((project) => ({
+        project,
+        ...getProjectCompatibility(project),
+      }))
+      .filter((p) => p.haveComponents.length > 0); // Only show projects with at least 1 matching part
   }, [projects, getProjectCompatibility]);
 
   // Filter and sort projects
@@ -80,14 +82,14 @@ export default function Projects() {
     return result.sort((a, b) => b.matchPercentage - a.matchPercentage);
   }, [projectsWithCompatibility, activeTab, filters]);
 
-  // Count projects by category
+  // Count projects by category - based on filtered projects with matches
   const counts = useMemo(() => {
     const ready = projectsWithCompatibility.filter((p) => p.canBuild).length;
     const almost = projectsWithCompatibility.filter(
       (p) => !p.canBuild && p.missingComponents.length <= 2
     ).length;
-    return { ready, almost, all: projects.length };
-  }, [projectsWithCompatibility, projects.length]);
+    return { ready, almost, all: projectsWithCompatibility.length };
+  }, [projectsWithCompatibility]);
 
   // Handle project click - navigate to detail page
   const handleProjectClick = (project: Project) => {
@@ -107,7 +109,7 @@ export default function Projects() {
                   Schematics
                 </h1>
                 <p className="text-sm text-muted-foreground">
-                  {projects.length} builds • {inventory.length} parts in cargo
+                  {projectsWithCompatibility.length} matching builds • {inventory.length} parts in cargo
                 </p>
               </div>
             </div>
@@ -204,16 +206,18 @@ export default function Projects() {
               <h3 className="font-medium text-foreground mb-1">
                 {filters.searchQuery || filters.difficulty
                   ? 'No matching schematics'
-                  : 'No schematics available'}
+                  : inventory.length === 0
+                    ? 'No components in cargo yet'
+                    : 'No builds match your cargo'}
               </h3>
               <p className="text-sm text-muted-foreground mb-4">
                 {inventory.length === 0
-                  ? 'Scan some components to see matching projects'
-                  : 'Try adjusting your filters'}
+                  ? 'Scan some components to discover matching builds'
+                  : 'Add more components to your cargo to unlock builds'}
               </p>
-              {inventory.length === 0 && (
-                <Button onClick={() => navigate('/scan')}>Start Scanning</Button>
-              )}
+              <Button onClick={() => navigate('/scan')}>
+                {inventory.length === 0 ? 'Start Scanning' : 'Scan More Parts'}
+              </Button>
             </div>
           )}
         </div>

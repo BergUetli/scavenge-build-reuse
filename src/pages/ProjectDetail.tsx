@@ -19,7 +19,9 @@ import {
   Zap,
   Shield,
   Target,
-  BookOpen
+  BookOpen,
+  Recycle,
+  ShoppingCart
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -250,36 +252,103 @@ export default function ProjectDetail() {
               </CollapsibleTrigger>
               <CollapsibleContent>
                 <CardContent className="pt-0 px-4 pb-4">
-                  <div className="space-y-2">
-                    {project.required_components?.map((comp, idx) => {
-                      const hasComponent = compatibility?.haveComponents.some(
-                        (c) => c.name.toLowerCase() === comp.name.toLowerCase()
-                      );
-                      return (
-                        <div 
-                          key={idx}
-                          className={cn(
-                            'flex items-center justify-between p-3 rounded-lg border',
-                            hasComponent 
-                              ? 'bg-eco/5 border-eco/20' 
-                              : 'bg-muted/30 border-border/50'
-                          )}
-                        >
-                          <div className="flex items-center gap-2">
-                            {hasComponent ? (
+                  {/* Components you have */}
+                  {compatibility && compatibility.haveComponents.length > 0 && (
+                    <div className="mb-4">
+                      <h4 className="text-xs font-medium text-eco mb-2 flex items-center gap-1">
+                        <CheckCircle2 className="w-3 h-3" />
+                        In Your Cargo ({compatibility.haveComponents.length})
+                      </h4>
+                      <div className="space-y-2">
+                        {compatibility.haveComponents.map((comp, idx) => (
+                          <div 
+                            key={idx}
+                            className="flex items-center justify-between p-3 rounded-lg border bg-eco/5 border-eco/20"
+                          >
+                            <div className="flex items-center gap-2">
                               <CheckCircle2 className="w-4 h-4 text-eco" />
-                            ) : (
-                              <XCircle className="w-4 h-4 text-muted-foreground" />
-                            )}
-                            <span className="text-sm font-medium">{comp.name}</span>
+                              <span className="text-sm font-medium">{comp.name}</span>
+                            </div>
+                            <Badge variant="outline" className="text-xs text-eco border-eco/30">
+                              x{comp.quantity}
+                            </Badge>
                           </div>
-                          <Badge variant="outline" className="text-xs">
-                            x{comp.quantity}
-                          </Badge>
-                        </div>
-                      );
-                    })}
-                  </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Components you need */}
+                  {compatibility && compatibility.missingComponents.length > 0 && (
+                    <div>
+                      <h4 className="text-xs font-medium text-muted-foreground mb-2 flex items-center gap-1">
+                        <XCircle className="w-3 h-3" />
+                        Still Needed ({compatibility.missingComponents.length})
+                      </h4>
+                      <div className="space-y-2">
+                        {compatibility.missingComponents.map((comp, idx) => {
+                          // Determine if component is easy to salvage or better to buy
+                          const salvageableCategories = ['resistor', 'capacitor', 'led', 'switch', 'wire', 'connector', 'motor', 'sensor', 'pcb'];
+                          const buyCategories = ['microcontroller', 'arduino', 'esp32', 'raspberry', 'display', 'module', 'breakout', 'shield'];
+                          
+                          const nameLower = comp.name.toLowerCase();
+                          const isSalvageable = salvageableCategories.some(cat => nameLower.includes(cat));
+                          const isBuyRecommended = buyCategories.some(cat => nameLower.includes(cat));
+                          
+                          return (
+                            <div 
+                              key={idx}
+                              className="flex items-center justify-between p-3 rounded-lg border bg-muted/30 border-border/50"
+                            >
+                              <div className="flex items-center gap-2 flex-1 min-w-0">
+                                <XCircle className="w-4 h-4 text-muted-foreground shrink-0" />
+                                <span className="text-sm font-medium truncate">{comp.name}</span>
+                              </div>
+                              <div className="flex items-center gap-2 shrink-0">
+                                {isSalvageable && (
+                                  <Badge variant="outline" className="text-xs bg-amber-500/10 text-amber-600 border-amber-500/30">
+                                    <Recycle className="w-3 h-3 mr-1" />
+                                    Salvage
+                                  </Badge>
+                                )}
+                                {isBuyRecommended && (
+                                  <Badge variant="outline" className="text-xs bg-blue-500/10 text-blue-600 border-blue-500/30">
+                                    <ShoppingCart className="w-3 h-3 mr-1" />
+                                    Buy
+                                  </Badge>
+                                )}
+                                {!isSalvageable && !isBuyRecommended && (
+                                  <Badge variant="outline" className="text-xs">
+                                    x{comp.quantity}
+                                  </Badge>
+                                )}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                      
+                      {/* Salvage tips */}
+                      <div className="mt-4 p-3 rounded-lg bg-muted/50 border border-border/50">
+                        <h5 className="text-xs font-medium text-foreground mb-2">💡 Tips</h5>
+                        <ul className="text-xs text-muted-foreground space-y-1">
+                          <li className="flex items-start gap-2">
+                            <Recycle className="w-3 h-3 text-amber-500 mt-0.5 shrink-0" />
+                            <span><strong>Salvage:</strong> Common in old electronics, appliances, toys</span>
+                          </li>
+                          <li className="flex items-start gap-2">
+                            <ShoppingCart className="w-3 h-3 text-blue-500 mt-0.5 shrink-0" />
+                            <span><strong>Buy:</strong> Specialized parts worth buying new for reliability</span>
+                          </li>
+                        </ul>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* No components case */}
+                  {(!project.required_components || project.required_components.length === 0) && (
+                    <p className="text-sm text-muted-foreground">No specific components listed for this project.</p>
+                  )}
                 </CardContent>
               </CollapsibleContent>
             </Card>
