@@ -67,10 +67,10 @@ export default function Home() {
                   <div className="absolute -top-1 -right-1 w-3 h-3 bg-success rounded-full border-2 border-background animate-pulse" />
                 </div>
                 <div>
-                  <h1 className="text-3xl font-bold text-white tracking-tight">
+                  <h1 className="text-3xl sm:text-4xl font-bold text-white tracking-tight">
                     JunkHauler
                   </h1>
-                  <p className="text-primary/80 text-xs font-mono tracking-widest uppercase">
+                  <p className="text-primary/80 text-xs sm:text-sm font-mono tracking-widest uppercase">
                     Salvage // Build // Repeat
                   </p>
                 </div>
@@ -78,10 +78,10 @@ export default function Home() {
               
               {/* Tagline */}
               <div className="space-y-1">
-                <p className="text-white/60 text-base font-medium">
+                <p className="text-white/60 text-base sm:text-lg font-medium">
                   Welcome back, Junker.
                 </p>
-                <p className="text-white/90 text-lg font-semibold leading-relaxed">
+                <p className="text-white/90 text-lg sm:text-xl font-semibold leading-relaxed">
                   Take stuff apart, build something epic, or flip parts for profit.
                 </p>
               </div>
@@ -101,26 +101,26 @@ export default function Home() {
           <div className="grid grid-cols-2 gap-3 animate-fade-up" style={{ animationDelay: '0.15s' }}>
             <button
               onClick={() => navigate('/inventory')}
-              className="group card-industrial p-5 text-left tap-highlight active:scale-[0.98] transition-all duration-150 corner-accent"
+              className="group card-industrial p-5 text-left tap-highlight active:scale-[0.98] transition-all duration-150 corner-accent touch-target"
             >
               <div className="w-11 h-11 rounded-lg bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center mb-4 group-active:scale-95 transition-transform border border-primary/30">
                 <Package className="w-5 h-5 text-primary" />
               </div>
-              <p className="font-bold text-[15px] text-foreground mb-1">Cargo Hold</p>
-              <p className="text-xs text-muted-foreground font-mono tracking-wide">
+              <p className="font-bold text-base sm:text-[15px] text-foreground mb-1">Cargo Hold</p>
+              <p className="text-sm sm:text-xs text-muted-foreground font-mono tracking-wide">
                 {stats.totalItems} <span className="text-primary/70">UNITS</span>
               </p>
             </button>
             
             <button
               onClick={() => navigate('/projects')}
-              className="group card-industrial p-5 text-left tap-highlight active:scale-[0.98] transition-all duration-150 corner-accent"
+              className="group card-industrial p-5 text-left tap-highlight active:scale-[0.98] transition-all duration-150 corner-accent touch-target"
             >
               <div className="w-11 h-11 rounded-lg bg-gradient-to-br from-accent/20 to-accent/5 flex items-center justify-center mb-4 group-active:scale-95 transition-transform border border-accent/30">
                 <Lightbulb className="w-5 h-5 text-accent" />
               </div>
-              <p className="font-bold text-[15px] text-foreground mb-1">Schematics</p>
-              <p className="text-xs text-muted-foreground">Browse builds</p>
+              <p className="font-bold text-base sm:text-[15px] text-foreground mb-1">Schematics</p>
+              <p className="text-sm sm:text-xs text-muted-foreground">Browse builds</p>
             </button>
           </div>
 
@@ -136,14 +136,14 @@ export default function Home() {
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1.5">
-                    <h3 className="font-bold text-base text-foreground">
+                    <h3 className="font-bold text-base sm:text-lg text-foreground">
                       Mission Brief
                     </h3>
                     <span className="px-1.5 py-0.5 bg-accent/20 text-accent text-[10px] font-bold rounded tracking-wider uppercase">
                       New
                     </span>
                   </div>
-                  <p className="text-sm text-muted-foreground leading-relaxed">
+                  <p className="text-sm sm:text-base text-muted-foreground leading-relaxed">
                     Every piece of salvage has potential. Scan it, catalog it, build something epic.
                   </p>
                 </div>
@@ -210,8 +210,8 @@ export default function Home() {
                   <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-muted to-muted/50 mx-auto mb-5 flex items-center justify-center border border-border">
                     <Crosshair className="w-9 h-9 text-muted-foreground" />
                   </div>
-                  <h3 className="font-bold text-xl text-foreground mb-2">Cargo hold empty</h3>
-                  <p className="text-sm text-muted-foreground mb-6 max-w-[260px] mx-auto leading-relaxed">
+                  <h3 className="font-bold text-xl sm:text-2xl text-foreground mb-2">Cargo hold empty</h3>
+                  <p className="text-sm sm:text-base text-muted-foreground mb-6 max-w-[280px] mx-auto leading-relaxed">
                     Time to go salvaging, Junker. Scan your first haul and start building your inventory.
                   </p>
                   <Button 

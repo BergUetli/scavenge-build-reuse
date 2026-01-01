@@ -141,12 +141,24 @@
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     text-rendering: optimizeLegibility;
+    /* Mobile-first: larger base font for touch devices */
+    font-size: 16px;
+  }
+
+  /* Scale up for mobile devices */
+  @media (max-width: 640px) {
+    html {
+      font-size: 17px;
+    }
   }
 
   body {
     @apply bg-background text-foreground;
     font-family: 'Exo 2', system-ui, sans-serif;
     letter-spacing: 0.01em;
+    /* Ensure minimum readable text size */
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
   }
 
   /* Safe areas */
@@ -248,39 +260,48 @@
     box-shadow: 0 0 8px hsl(199 89% 48% / 0.6), 0 0 16px hsl(199 89% 48% / 0.3), 0 0 32px hsl(199 89% 48% / 0.15);
   }
 
-  /* Text hierarchy */
+  /* Text hierarchy - Mobile optimized */
   .text-headline {
-    @apply text-[28px] font-bold tracking-tight leading-tight;
+    @apply text-[28px] sm:text-[32px] font-bold tracking-tight leading-tight;
     font-family: 'Exo 2', system-ui, sans-serif;
   }
 
   .text-title-1 {
-    @apply text-[22px] font-bold tracking-tight leading-snug;
+    @apply text-[22px] sm:text-[24px] font-bold tracking-tight leading-snug;
     font-family: 'Exo 2', system-ui, sans-serif;
   }
 
   .text-title-2 {
-    @apply text-lg font-semibold tracking-tight;
+    @apply text-lg sm:text-xl font-semibold tracking-tight;
   }
 
   .text-title-3 {
-    @apply text-base font-semibold;
+    @apply text-base sm:text-lg font-semibold;
   }
 
   .text-body {
-    @apply text-[15px] leading-relaxed;
+    @apply text-[16px] sm:text-[15px] leading-relaxed;
+  }
+
+  .text-body-lg {
+    @apply text-[17px] sm:text-[16px] leading-relaxed;
   }
 
   .text-callout {
-    @apply text-sm font-medium;
+    @apply text-[15px] sm:text-sm font-medium;
   }
 
   .text-footnote {
-    @apply text-[13px] text-muted-foreground;
+    @apply text-[14px] sm:text-[13px] text-muted-foreground;
   }
 
   .text-caption {
-    @apply text-xs text-muted-foreground;
+    @apply text-[13px] sm:text-xs text-muted-foreground;
+  }
+
+  /* Mobile-friendly touch targets */
+  .touch-target {
+    @apply min-h-[44px] min-w-[44px];
   }
 
   /* Mono for tech details */
