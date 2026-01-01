@@ -57,9 +57,12 @@ export interface InventoryItem {
   condition: ItemCondition;
   status: ItemStatus;
   specifications: Record<string, unknown>;
+  technical_specs: Record<string, unknown> | null;
   reusability_score: number | null;
   market_value: number | null;
   image_url: string | null;
+  description: string | null;
+  common_uses: string[] | null;
   notes: string | null;
   date_added: string;
   updated_at: string;

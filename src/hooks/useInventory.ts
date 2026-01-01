@@ -58,7 +58,10 @@ export function useInventory() {
         category: isValidCategory(item.category) ? item.category : 'Other',
         condition: isValidCondition(item.condition) ? item.condition : 'Good',
         status: isValidStatus(item.status) ? item.status : 'Available',
-        specifications: item.specifications as Record<string, unknown>
+        specifications: item.specifications as Record<string, unknown>,
+        technical_specs: item.technical_specs as Record<string, unknown> | null,
+        common_uses: item.common_uses || null,
+        description: item.description || null,
       }));
     },
     enabled: !!user
