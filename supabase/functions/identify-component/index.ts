@@ -216,12 +216,14 @@ async function callAI(
   }
 }
 
-const IDENTIFICATION_PROMPT = `You are Scavenger AI, an expert at identifying salvageable components from electronics, devices, and materials.
+// Generate the identification prompt with configurable component limits
+function getIdentificationPrompt(minComponents: number, maxComponents: number): string {
+  return `You are Scavenger AI, an expert at identifying salvageable components from electronics, devices, and materials.
 
 Your task is to analyze the provided image(s) and BREAK DOWN the object into its individual salvageable internal components.
 
 CRITICAL: IDENTIFY AS MANY COMPONENTS AS POSSIBLE!
-For a typical electronic device, you should identify 8-20+ components. Be THOROUGH - don't just list the obvious ones!
+For a typical electronic device, you should identify ${minComponents}-${maxComponents}+ components. Be THOROUGH - don't just list the obvious ones!
 
 IMPORTANT RULES:
 1. If multiple images are provided, they show the SAME OBJECT from different angles - combine the information
@@ -230,6 +232,7 @@ IMPORTANT RULES:
 4. FOCUS ON: chips, ICs, capacitors, resistors, motors, switches, LEDs, displays, sensors, connectors, cables, PCBs, batteries, speakers, antennas, etc.
 5. Estimate QUANTITIES for repeated components (e.g., "~50 mechanical switches" for a keyboard)
 6. Group similar components when there are many (e.g., "SMD Capacitors (various values)" rather than listing each)
+7. YOU MUST IDENTIFY AT LEAST ${minComponents} COMPONENTS - look harder if you haven't found that many!
 
 EXAMPLE - For a Bluetooth speaker, identify ALL of these:
 - Bluetooth/WiFi module (CSR, Qualcomm, etc.)
@@ -336,6 +339,7 @@ ALWAYS respond with valid JSON:
   },
   "message": "string (optional tips or warnings)"
 }`;
+}
 function extractJsonFromAI(aiResponse: string) {
   let text = aiResponse.trim();
   
@@ -605,8 +609,31 @@ serve(async (req) => {
 
     console.log(`[identify-component] Using provider: ${configs[selectedProvider].name}`);
 
+    // Fetch component limit settings from database
+    let minComponents = 8;
+    let maxComponents = 20;
+    try {
+      const { data: settingsData } = await supabase
+        .from('app_settings')
+        .select('value')
+        .eq('key', 'component_limit')
+        .single();
+      
+      if (settingsData?.value) {
+        const limits = settingsData.value as { min?: number; max?: number };
+        if (limits.min) minComponents = limits.min;
+        if (limits.max) maxComponents = limits.max;
+        console.log(`[identify-component] Using component limits from settings: ${minComponents}-${maxComponents}`);
+      }
+    } catch (e) {
+      console.log('[identify-component] Using default component limits: 8-20');
+    }
+
+    // Generate the prompt with configured limits
+    const systemPrompt = getIdentificationPrompt(minComponents, maxComponents);
+
     // Build content array with all images
-    let promptText = `I'm providing ${images.length} image(s) of the same object from different angles. Analyze ALL images together to identify the object and its salvageable components. Return ONLY valid JSON (no markdown, no code fences). If unsure, set confidence lower and still return a complete JSON object. Keep tools_needed to <= 8 items and common_uses to <= 4.`;
+    let promptText = `I'm providing ${images.length} image(s) of the same object from different angles. Analyze ALL images together to identify the object and its salvageable components. Return ONLY valid JSON (no markdown, no code fences). If unsure, set confidence lower and still return a complete JSON object. Keep tools_needed to <= 8 items and common_uses to <= 4. YOU MUST IDENTIFY AT LEAST ${minComponents} COMPONENTS.`;
     
     // Add user hint if provided
     if (userHint) {
@@ -634,7 +661,7 @@ serve(async (req) => {
     // Call the selected AI provider
     let aiResponse: string;
     try {
-      aiResponse = await callAI(selectedProvider, apiKey, IDENTIFICATION_PROMPT, userContent);
+      aiResponse = await callAI(selectedProvider, apiKey, systemPrompt, userContent);
     } catch (error) {
       console.error(`[${selectedProvider}] API call failed:`, error);
       return new Response(
