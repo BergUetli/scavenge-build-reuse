@@ -6,10 +6,11 @@ import { AppLayout } from '@/components/layout/AppLayout';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Database, Upload, Settings, Shield, SlidersHorizontal } from 'lucide-react';
+import { Database, Upload, Settings, Shield, SlidersHorizontal, DollarSign } from 'lucide-react';
 import { ComponentInventoryTab } from '@/components/admin/ComponentInventoryTab';
 import { DataAgentTab } from '@/components/admin/DataAgentTab';
 import { SettingsTab } from '@/components/admin/SettingsTab';
+import { CostsTab } from '@/components/admin/CostsTab';
 
 export default function Admin() {
   const { user, isLoading: authLoading } = useAuth();
@@ -58,7 +59,7 @@ export default function Admin() {
           <div>
             <h1 className="text-2xl font-bold">Admin Panel</h1>
             <p className="text-muted-foreground text-sm">
-              Manage components, datasets, and system settings
+              Manage components, datasets, costs, and system settings
             </p>
           </div>
           <Badge variant="secondary" className="ml-auto">
@@ -68,7 +69,7 @@ export default function Admin() {
 
         {/* Tabs */}
         <Tabs defaultValue="inventory" className="space-y-6">
-          <TabsList className="grid w-full max-w-lg grid-cols-3">
+          <TabsList className="grid w-full max-w-2xl grid-cols-4">
             <TabsTrigger value="inventory" className="flex items-center gap-2">
               <Database className="h-4 w-4" />
               Components
@@ -76,6 +77,10 @@ export default function Admin() {
             <TabsTrigger value="data-agent" className="flex items-center gap-2">
               <Upload className="h-4 w-4" />
               Data Agent
+            </TabsTrigger>
+            <TabsTrigger value="costs" className="flex items-center gap-2">
+              <DollarSign className="h-4 w-4" />
+              Costs
             </TabsTrigger>
             <TabsTrigger value="settings" className="flex items-center gap-2">
               <SlidersHorizontal className="h-4 w-4" />
@@ -89,6 +94,10 @@ export default function Admin() {
 
           <TabsContent value="data-agent">
             <DataAgentTab />
+          </TabsContent>
+
+          <TabsContent value="costs">
+            <CostsTab />
           </TabsContent>
 
           <TabsContent value="settings">

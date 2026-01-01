@@ -228,13 +228,14 @@ export function useScanner() {
         console.log('[Scanner] Using preferred provider:', preferredProvider);
       }
 
-      // Call edge function with compressed images, hint, hash, and provider preference
+      // Call edge function with compressed images, hint, hash, provider preference, and user ID
       const { data, error } = await supabase.functions.invoke('identify-component', {
         body: { 
           images: imagesData, 
           userHint: userHint?.trim() || undefined,
           imageHash, // For server-side cache lookup
-          provider: preferredProvider // User's preferred AI provider
+          provider: preferredProvider, // User's preferred AI provider
+          userId: user?.id // For cost tracking
         }
       });
 

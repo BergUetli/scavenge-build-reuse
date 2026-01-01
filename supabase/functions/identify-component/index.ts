@@ -66,8 +66,22 @@ function getAvailableProvider(): { provider: AIProvider; config: ProviderConfig 
   return null;
 }
 
+// Cost per 1K tokens for different providers (approximate)
+const COST_PER_1K_TOKENS: Record<string, { input: number; output: number }> = {
+  openai: { input: 0.00015, output: 0.0006 },      // GPT-4o-mini
+  gemini: { input: 0.000075, output: 0.0003 },    // Gemini 1.5 Flash
+  claude: { input: 0.00025, output: 0.00125 }      // Claude 3 Haiku
+};
+
+interface AICallResult {
+  content: string;
+  inputTokens: number;
+  outputTokens: number;
+  model: string;
+}
+
 // Call OpenAI API
-async function callOpenAI(apiKey: string, systemPrompt: string, userContent: any[]): Promise<string> {
+async function callOpenAI(apiKey: string, systemPrompt: string, userContent: any[]): Promise<AICallResult> {
   console.log('[OpenAI] Calling GPT-4o-mini...');
   
   const response = await fetch('https://api.openai.com/v1/chat/completions', {
@@ -93,11 +107,20 @@ async function callOpenAI(apiKey: string, systemPrompt: string, userContent: any
   }
 
   const data = await response.json();
-  return data.choices?.[0]?.message?.content || '';
+  const inputTokens = data.usage?.prompt_tokens || 0;
+  const outputTokens = data.usage?.completion_tokens || 0;
+  console.log(`[OpenAI] Tokens used - input: ${inputTokens}, output: ${outputTokens}`);
+  
+  return {
+    content: data.choices?.[0]?.message?.content || '',
+    inputTokens,
+    outputTokens,
+    model: 'gpt-4o-mini'
+  };
 }
 
 // Call Google Gemini API
-async function callGemini(apiKey: string, systemPrompt: string, userContent: any[]): Promise<string> {
+async function callGemini(apiKey: string, systemPrompt: string, userContent: any[]): Promise<AICallResult> {
   console.log('[Gemini] Calling Gemini 1.5 Flash...');
   
   // Build Gemini-formatted content
@@ -141,11 +164,21 @@ async function callGemini(apiKey: string, systemPrompt: string, userContent: any
   }
 
   const data = await response.json();
-  return data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+  // Gemini returns token count in usageMetadata
+  const inputTokens = data.usageMetadata?.promptTokenCount || 0;
+  const outputTokens = data.usageMetadata?.candidatesTokenCount || 0;
+  console.log(`[Gemini] Tokens used - input: ${inputTokens}, output: ${outputTokens}`);
+  
+  return {
+    content: data.candidates?.[0]?.content?.parts?.[0]?.text || '',
+    inputTokens,
+    outputTokens,
+    model: 'gemini-1.5-flash'
+  };
 }
 
 // Call Anthropic Claude API
-async function callClaude(apiKey: string, systemPrompt: string, userContent: any[]): Promise<string> {
+async function callClaude(apiKey: string, systemPrompt: string, userContent: any[]): Promise<AICallResult> {
   console.log('[Claude] Calling Claude 3 Haiku...');
   
   // Build Claude-formatted content
@@ -194,7 +227,24 @@ async function callClaude(apiKey: string, systemPrompt: string, userContent: any
   }
 
   const data = await response.json();
-  return data.content?.[0]?.text || '';
+  // Claude returns usage.input_tokens and usage.output_tokens
+  const inputTokens = data.usage?.input_tokens || 0;
+  const outputTokens = data.usage?.output_tokens || 0;
+  console.log(`[Claude] Tokens used - input: ${inputTokens}, output: ${outputTokens}`);
+  
+  return {
+    content: data.content?.[0]?.text || '',
+    inputTokens,
+    outputTokens,
+    model: 'claude-3-haiku'
+  };
+}
+
+// Calculate cost in USD
+function calculateCost(provider: AIProvider, inputTokens: number, outputTokens: number): number {
+  const rates = COST_PER_1K_TOKENS[provider] || COST_PER_1K_TOKENS.openai;
+  const cost = (inputTokens / 1000) * rates.input + (outputTokens / 1000) * rates.output;
+  return Math.round(cost * 1000000) / 1000000; // Round to 6 decimal places
 }
 
 // Main AI call dispatcher
@@ -203,7 +253,7 @@ async function callAI(
   apiKey: string,
   systemPrompt: string,
   userContent: any[]
-): Promise<string> {
+): Promise<AICallResult> {
   switch (provider) {
     case 'openai':
       return callOpenAI(apiKey, systemPrompt, userContent);
@@ -527,6 +577,8 @@ serve(async (req) => {
     const userHint: string | undefined = body.userHint;
     const imageHash: string | undefined = body.imageHash;
     const requestedProvider: AIProvider | undefined = body.provider;
+    const userId: string | undefined = body.userId;
+    const isCorrection: boolean = body.isCorrection || false;
     
     if (userHint) {
       console.log('[identify-component] User provided hint:', userHint);
@@ -675,9 +727,9 @@ serve(async (req) => {
     }
 
     // Call the selected AI provider
-    let aiResponse: string;
+    let aiResult: AICallResult;
     try {
-      aiResponse = await callAI(selectedProvider, apiKey, systemPrompt, userContent);
+      aiResult = await callAI(selectedProvider, apiKey, systemPrompt, userContent);
     } catch (error) {
       console.error(`[${selectedProvider}] API call failed:`, error);
       return new Response(
@@ -688,6 +740,10 @@ serve(async (req) => {
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
+
+    const aiResponse = aiResult.content;
+    const costUsd = calculateCost(selectedProvider, aiResult.inputTokens, aiResult.outputTokens);
+    console.log(`[identify-component] Cost: $${costUsd.toFixed(6)} (${aiResult.inputTokens} input, ${aiResult.outputTokens} output tokens)`);
 
     if (!aiResponse) {
       console.error('No response content from AI');
@@ -715,6 +771,13 @@ serve(async (req) => {
           partial_detection: partialInfo,
           message: 'Full breakdown failed, but here is what was detected.',
           raw_response: aiResponse,
+          cost: {
+            provider: selectedProvider,
+            model: aiResult.model,
+            input_tokens: aiResult.inputTokens,
+            output_tokens: aiResult.outputTokens,
+            cost_usd: costUsd
+          }
         }),
         { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
@@ -746,6 +809,29 @@ serve(async (req) => {
     }
     console.log('==============================');
 
+    // Save cost to database if user is authenticated
+    if (userId) {
+      console.log('[identify-component] Saving cost for user:', userId);
+      supabase
+        .from('scan_costs')
+        .insert({
+          user_id: userId,
+          provider: selectedProvider,
+          model: aiResult.model,
+          input_tokens: aiResult.inputTokens,
+          output_tokens: aiResult.outputTokens,
+          cost_usd: costUsd,
+          is_correction: isCorrection
+        })
+        .then(({ error }) => {
+          if (error) {
+            console.error('[identify-component] Failed to save cost:', error.message);
+          } else {
+            console.log('[identify-component] Cost saved successfully');
+          }
+        });
+    }
+
     // Cache the result if we have a hash (save for 7 days)
     if (imageHash && parsedResponse.items?.length > 0) {
       console.log('[identify-component] Caching result for hash:', imageHash);
@@ -765,6 +851,15 @@ serve(async (req) => {
           }
         });
     }
+
+    // Add cost info to response
+    parsedResponse.cost = {
+      provider: selectedProvider,
+      model: aiResult.model,
+      input_tokens: aiResult.inputTokens,
+      output_tokens: aiResult.outputTokens,
+      cost_usd: costUsd
+    };
 
     return new Response(
       JSON.stringify(parsedResponse),

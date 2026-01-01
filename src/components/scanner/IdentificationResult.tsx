@@ -1,22 +1,23 @@
 /**
  * IDENTIFICATION RESULT COMPONENT
  * 
- * Displays AI identification results with confidence score.
+ * Displays AI identification results with confidence score and cost.
  * Allows user to confirm, edit, or reject identification.
  */
 
-import { Check, Edit2, X, Star, CircleDollarSign, AlertCircle } from 'lucide-react';
+import { Check, Edit2, X, Star, CircleDollarSign, AlertCircle, Cpu } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { IdentifiedItem } from '@/types';
+import { IdentifiedItem, ScanCostInfo } from '@/types';
 import { cn } from '@/lib/utils';
 import { useSounds } from '@/hooks/useSounds';
 
 interface IdentificationResultProps {
   result: IdentifiedItem;
   imageUrl?: string;
+  cost?: ScanCostInfo;
   onConfirm: () => void;
   onEdit: () => void;
   onReject: () => void;
@@ -36,6 +37,7 @@ const categoryColors: Record<string, string> = {
 export function IdentificationResult({ 
   result, 
   imageUrl,
+  cost,
   onConfirm, 
   onEdit, 
   onReject,
@@ -157,6 +159,23 @@ export function IdentificationResult({
           </div>
         )}
         
+        {/* Cost info */}
+        {cost && (
+          <div className="bg-muted/30 rounded-lg p-3 border border-border/50">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2 text-muted-foreground">
+                <Cpu className="w-4 h-4" />
+                <span className="text-xs">Analysis Cost</span>
+              </div>
+              <div className="text-right">
+                <span className="font-mono text-sm font-medium">${cost.cost_usd.toFixed(4)}</span>
+                <span className="text-xs text-muted-foreground ml-2">
+                  ({cost.model})
+                </span>
+              </div>
+            </div>
+          </div>
+        )}
         {/* Action buttons */}
         <div className="flex gap-2 pt-2">
           <Button 
