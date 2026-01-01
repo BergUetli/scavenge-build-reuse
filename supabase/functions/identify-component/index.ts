@@ -270,13 +270,25 @@ For EACH salvageable component inside the object, provide:
    - datasheet_url: Link to datasheet if you know it (e.g., ti.com, st.com, microchip.com datasheets)
    - purchase_url: Where to buy (Digi-Key, Mouser, LCSC)
 6. reusability_score: 1-10 based on how useful for DIY projects (10 = Arduino, ESP32, OLED displays; 1 = proprietary chips)
-7. market_value_low: Estimated low value in USD for the quantity
-8. market_value_high: Estimated high value in USD for the quantity
-9. condition: New, Good, Fair, or For Parts
-10. confidence: Your confidence in identification (0.0 to 1.0)
-11. description: What this component does and why it's useful for makers
-12. common_uses: Array of 3-5 project ideas this could enable
-13. quantity: Estimated count (number, use 1 if single item)
+7. estimated_age_years: ESTIMATE the age of the device based on its design, connectors, chip dates, wear. Use clues like:
+   - USB Micro = likely 4-10 years old
+   - USB-C = likely 0-5 years old  
+   - Mini USB = likely 8-15 years old
+   - Physical wear, yellowing = older
+   - Modern styling = newer
+   If unsure, assume 3-5 years for consumer electronics.
+8. market_value_new: Estimated NEW/retail value in USD for this component quantity
+9. depreciation_rate: Annual depreciation rate (0.10 = 10% per year). Use:
+   - 0.15-0.20 for fast-depreciating items (phones, laptops, batteries)
+   - 0.10-0.15 for standard electronics (speakers, displays, modules)
+   - 0.05-0.10 for slow-depreciating items (passive components, connectors, motors)
+10. market_value_low: RESALE value LOW = market_value_new × (1 - depreciation_rate × estimated_age_years) × 0.3. Never below $0.01.
+11. market_value_high: RESALE value HIGH = market_value_new × (1 - depreciation_rate × estimated_age_years) × 0.7. Never below market_value_low.
+12. condition: New, Good, Fair, or For Parts (factor this into value - Fair items get 70% of calculated value, For Parts gets 40%)
+13. confidence: Your confidence in identification (0.0 to 1.0)
+14. description: What this component does and why it's useful for makers
+15. common_uses: Array of 3-5 project ideas this could enable
+16. quantity: Estimated count (number, use 1 if single item)
 
 CRITICAL FOR TECHNICAL SPECS - READ THIS CAREFULLY:
 - For ICs/Chips: ALWAYS try to identify the part_number! Look at chip markings, read any text on the IC package
@@ -298,6 +310,7 @@ ALSO PROVIDE DISASSEMBLY INSTRUCTIONS for the parent object:
 ALWAYS respond with valid JSON:
 {
   "parent_object": "string (what the main object is, e.g., 'Bose SoundLink Mini Bluetooth Speaker')",
+  "estimated_device_age_years": number (your best guess at device age based on clues),
   "items": [
     {
       "component_name": "string",
@@ -314,8 +327,11 @@ ALWAYS respond with valid JSON:
         "purchase_url": "string or null"
       },
       "reusability_score": number,
-      "market_value_low": number,
-      "market_value_high": number,
+      "estimated_age_years": number,
+      "market_value_new": number,
+      "depreciation_rate": number,
+      "market_value_low": number (depreciated resale value low),
+      "market_value_high": number (depreciated resale value high),
       "condition": "string",
       "confidence": number,
       "description": "string",
@@ -323,8 +339,8 @@ ALWAYS respond with valid JSON:
       "quantity": number
     }
   ],
-  "total_estimated_value_low": number,
-  "total_estimated_value_high": number,
+  "total_estimated_value_low": number (sum of all depreciated market_value_low),
+  "total_estimated_value_high": number (sum of all depreciated market_value_high),
   "salvage_difficulty": "Easy | Medium | Hard",
   "tools_needed": ["string array of tools needed to disassemble"],
   "disassembly": {
