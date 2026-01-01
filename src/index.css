@@ -524,8 +524,9 @@
     animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1);
   }
 
+  /* NOTE: Use the Tailwind-defined keyframes (pulse-soft) to avoid conflicts */
   .animate-pulse-soft {
-    animation: pulseSoft 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    animation: pulse-soft 12s ease-in-out infinite;
   }
 
   .animate-scan-line {
@@ -565,15 +566,6 @@
     }
     to { 
       transform: translateY(0);
-    }
-  }
-
-  @keyframes pulseSoft {
-    0%, 100% {
-      opacity: 1;
-    }
-    50% {
-      opacity: 0.6;
     }
   }
 
