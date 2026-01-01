@@ -181,6 +181,17 @@ export interface IdentifiedItem {
 }
 
 /**
+ * Cost information from AI scan
+ */
+export interface ScanCostInfo {
+  provider: string;
+  model: string;
+  input_tokens: number;
+  output_tokens: number;
+  cost_usd: number;
+}
+
+/**
  * AI identification response with full breakdown
  */
 export interface AIIdentificationResponse {
@@ -194,21 +205,8 @@ export interface AIIdentificationResponse {
   message?: string;
   raw_response?: string;
   partial_detection?: Record<string, string | null>;
-}
-
-/**
- * AI identification response with full breakdown
- */
-export interface AIIdentificationResponse {
-  parent_object?: string;
-  items: IdentifiedItem[];
-  salvage_difficulty?: 'Easy' | 'Medium' | 'Hard';
-  tools_needed?: string[];
-  total_estimated_value_low?: number;
-  total_estimated_value_high?: number;
-  message?: string;
-  raw_response?: string;
-  partial_detection?: Record<string, string | null>;
+  cost?: ScanCostInfo;
+  cached?: boolean;
 }
 
 /**

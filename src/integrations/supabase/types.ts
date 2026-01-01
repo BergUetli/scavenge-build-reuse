@@ -292,6 +292,53 @@ export type Database = {
         }
         Relationships: []
       }
+      scan_costs: {
+        Row: {
+          cost_usd: number
+          created_at: string
+          id: string
+          input_tokens: number
+          is_correction: boolean
+          model: string
+          output_tokens: number
+          provider: string
+          scan_id: string | null
+          user_id: string
+        }
+        Insert: {
+          cost_usd?: number
+          created_at?: string
+          id?: string
+          input_tokens?: number
+          is_correction?: boolean
+          model: string
+          output_tokens?: number
+          provider: string
+          scan_id?: string | null
+          user_id: string
+        }
+        Update: {
+          cost_usd?: number
+          created_at?: string
+          id?: string
+          input_tokens?: number
+          is_correction?: boolean
+          model?: string
+          output_tokens?: number
+          provider?: string
+          scan_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "scan_costs_scan_id_fkey"
+            columns: ["scan_id"]
+            isOneToOne: false
+            referencedRelation: "scan_history"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       scan_history: {
         Row: {
           ai_response: Json | null
