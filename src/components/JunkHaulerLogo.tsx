@@ -1,104 +1,139 @@
 /**
  * JunkHauler Logo Component
- * Blue on white outline style - industrial salvage aesthetic
+ * Industrial wordmark with junk hauler spaceship
+ * Glitch effect on hover
  */
 
 import { cn } from '@/lib/utils';
+import junkHaulerShip from '@/assets/junk-hauler-ship.png';
 
 interface JunkHaulerLogoProps {
   className?: string;
-  size?: number;
+  size?: 'sm' | 'md' | 'lg';
+  showText?: boolean;
 }
 
-export const JunkHaulerLogo = ({ className, size = 48 }: JunkHaulerLogoProps) => {
+export const JunkHaulerLogo = ({ 
+  className, 
+  size = 'md',
+  showText = true 
+}: JunkHaulerLogoProps) => {
+  const sizeClasses = {
+    sm: 'h-8',
+    md: 'h-10',
+    lg: 'h-14',
+  };
+
+  const textSizeClasses = {
+    sm: 'text-lg',
+    md: 'text-xl',
+    lg: 'text-3xl',
+  };
+
   return (
-    <svg
-      width={size}
-      height={size}
-      viewBox="0 0 48 48"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-      className={cn("", className)}
-    >
-      {/* Background circle with white fill */}
-      <circle 
-        cx="24" 
-        cy="24" 
-        r="22" 
-        fill="white" 
-        stroke="hsl(199, 89%, 48%)" 
-        strokeWidth="2.5"
-      />
-      
-      {/* Truck body - main hauler shape */}
-      <path
-        d="M10 28V22C10 20.8954 10.8954 20 12 20H26L30 24V28"
-        stroke="hsl(199, 89%, 48%)"
-        strokeWidth="2.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        fill="none"
-      />
-      
-      {/* Truck cab */}
-      <path
-        d="M30 24H35C36.1046 24 37 24.8954 37 26V28"
-        stroke="hsl(199, 89%, 48%)"
-        strokeWidth="2.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        fill="none"
-      />
-      
-      {/* Truck bed base */}
-      <line
-        x1="10"
-        y1="28"
-        x2="37"
-        y2="28"
-        stroke="hsl(199, 89%, 48%)"
-        strokeWidth="2.5"
-        strokeLinecap="round"
-      />
-      
-      {/* Front wheel */}
-      <circle 
-        cx="15" 
-        cy="31" 
-        r="3" 
-        stroke="hsl(199, 89%, 48%)" 
-        strokeWidth="2"
-        fill="white"
-      />
-      
-      {/* Rear wheel */}
-      <circle 
-        cx="32" 
-        cy="31" 
-        r="3" 
-        stroke="hsl(199, 89%, 48%)" 
-        strokeWidth="2"
-        fill="white"
-      />
-      
-      {/* Junk/cargo pile on truck - circuit board pattern */}
-      <path
-        d="M12 20V16L14 14H22L24 16V20"
-        stroke="hsl(199, 89%, 48%)"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        fill="none"
-      />
-      
-      {/* Circuit details on cargo */}
-      <circle cx="15" cy="17" r="1" fill="hsl(199, 89%, 48%)" />
-      <circle cx="18" cy="15" r="1" fill="hsl(199, 89%, 48%)" />
-      <circle cx="21" cy="17" r="1" fill="hsl(199, 89%, 48%)" />
-      
-      {/* Connection lines */}
-      <line x1="15" y1="17" x2="18" y2="15" stroke="hsl(199, 89%, 48%)" strokeWidth="1" />
-      <line x1="18" y1="15" x2="21" y2="17" stroke="hsl(199, 89%, 48%)" strokeWidth="1" />
-    </svg>
+    <div className={cn(
+      "group flex items-center gap-2 select-none cursor-pointer",
+      className
+    )}>
+      {/* Ship Icon */}
+      <div className="relative">
+        <img 
+          src={junkHaulerShip} 
+          alt="JunkHauler" 
+          className={cn(
+            sizeClasses[size],
+            "w-auto object-contain transition-all duration-200",
+            "group-hover:brightness-110"
+          )}
+        />
+        {/* Glitch overlay on hover */}
+        <img 
+          src={junkHaulerShip} 
+          alt="" 
+          aria-hidden="true"
+          className={cn(
+            sizeClasses[size],
+            "absolute inset-0 w-auto object-contain opacity-0",
+            "group-hover:opacity-50 group-hover:animate-pulse",
+            "mix-blend-screen hue-rotate-[20deg]",
+            "transition-opacity duration-150"
+          )}
+          style={{ 
+            clipPath: 'inset(30% 0 40% 0)',
+            transform: 'translateX(2px)'
+          }}
+        />
+      </div>
+
+      {/* Wordmark */}
+      {showText && (
+        <div className="relative overflow-hidden">
+          {/* Main text */}
+          <span className={cn(
+            textSizeClasses[size],
+            "font-heading font-black tracking-tight uppercase",
+            "text-foreground transition-all duration-200",
+            "group-hover:tracking-wide"
+          )}>
+            <span className="relative inline-block group-hover:animate-[glitch-1_0.3s_ease-in-out]">
+              Junk
+            </span>
+            <span className="text-warning relative inline-block group-hover:animate-[glitch-2_0.3s_ease-in-out_0.05s]">
+              Hauler
+            </span>
+          </span>
+
+          {/* Glitch layers - visible on hover */}
+          <span 
+            aria-hidden="true"
+            className={cn(
+              textSizeClasses[size],
+              "absolute inset-0 font-heading font-black tracking-tight uppercase",
+              "text-primary/60 opacity-0",
+              "group-hover:opacity-100 group-hover:animate-[glitch-clip_0.3s_ease-in-out]",
+              "pointer-events-none"
+            )}
+            style={{ clipPath: 'inset(20% 0 50% 0)', transform: 'translateX(-2px)' }}
+          >
+            <span>Junk</span>
+            <span className="text-warning/60">Hauler</span>
+          </span>
+
+          <span 
+            aria-hidden="true"
+            className={cn(
+              textSizeClasses[size],
+              "absolute inset-0 font-heading font-black tracking-tight uppercase",
+              "text-warning/40 opacity-0",
+              "group-hover:opacity-100 group-hover:animate-[glitch-clip-2_0.3s_ease-in-out]",
+              "pointer-events-none"
+            )}
+            style={{ clipPath: 'inset(60% 0 10% 0)', transform: 'translateX(2px)' }}
+          >
+            <span>Junk</span>
+            <span className="text-warning/40">Hauler</span>
+          </span>
+
+          {/* Scan line */}
+          <div className={cn(
+            "absolute left-0 right-0 h-px bg-warning/50",
+            "opacity-0 group-hover:opacity-100",
+            "group-hover:animate-[scanline_0.4s_ease-in-out]",
+            "pointer-events-none"
+          )} />
+        </div>
+      )}
+    </div>
   );
 };
+
+// Icon-only variant for compact spaces
+export const JunkHaulerIcon = ({ className, size = 32 }: { className?: string; size?: number }) => (
+  <img 
+    src={junkHaulerShip} 
+    alt="JunkHauler" 
+    width={size}
+    height={size}
+    className={cn("object-contain", className)}
+  />
+);

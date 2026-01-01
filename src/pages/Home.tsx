@@ -60,20 +60,10 @@ export default function Home() {
               </button>
 
               {/* Logo & Title */}
-              <div className="flex items-center gap-3.5 mb-5">
-                <div className="relative">
-                  <JunkHaulerLogo size={48} className="drop-shadow-lg" />
-                  {/* Status indicator */}
-                  <div className="absolute -top-1 -right-1 w-3 h-3 bg-success rounded-full border-2 border-background animate-pulse" />
-                </div>
-                <div>
-                  <h1 className="text-3xl sm:text-4xl font-bold text-white tracking-tight">
-                    JunkHauler
-                  </h1>
-                  <p className="text-primary/80 text-xs sm:text-sm font-mono tracking-widest uppercase">
-                    Salvage // Build // Repeat
-                  </p>
-                </div>
+              <div className="relative mb-5 inline-block">
+                <JunkHaulerLogo size="lg" className="drop-shadow-lg" />
+                {/* Status indicator */}
+                <div className="absolute top-0 right-0 w-3 h-3 bg-success rounded-full border-2 border-background animate-pulse" />
               </div>
               
               {/* Tagline */}
