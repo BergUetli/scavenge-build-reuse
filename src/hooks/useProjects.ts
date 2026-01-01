@@ -12,7 +12,50 @@ import { toast } from '@/hooks/use-toast';
 
 // Type guard for difficulty level
 const isValidDifficulty = (level: string): level is DifficultyLevel => {
-  return ['Beginner', 'Intermediate', 'Advanced'].includes(level);
+  return ['Novice', 'Easy', 'Beginner', 'Intermediate', 'Advanced', 'Expert'].includes(level);
+};
+
+// Component aliases for smart matching - maps generic terms to specific components
+const componentAliases: Record<string, string[]> = {
+  'microcontroller': ['arduino', 'esp32', 'esp8266', 'atmega', 'pic', 'stm32', 'teensy', 'nano', 'uno', 'mega', 'raspberry pi pico'],
+  'arduino': ['microcontroller', 'atmega', 'uno', 'nano', 'mega', 'leonardo', 'micro'],
+  'esp32': ['microcontroller', 'esp', 'wifi module', 'bluetooth module'],
+  'raspberry pi': ['single board computer', 'sbc', 'linux board'],
+  'motor': ['dc motor', 'stepper motor', 'servo motor', 'brushless motor'],
+  'dc motor': ['motor', 'small motor'],
+  'led': ['light', 'indicator', 'diode'],
+  'capacitor': ['cap', 'electrolytic', 'ceramic capacitor'],
+  'resistor': ['resistance', 'fixed resistor'],
+  'sensor': ['detector', 'transducer'],
+  'switch': ['button', 'toggle', 'push button'],
+  'wire': ['jumper wire', 'cable', 'conductor', 'hookup wire'],
+  'battery': ['cell', 'power cell', '18650', 'lipo', 'li-ion'],
+  'display': ['screen', 'lcd', 'oled', 'led matrix'],
+  'speaker': ['buzzer', 'audio output', 'piezo'],
+};
+
+// Check if inventory item matches a required component using aliases
+const componentsMatch = (inventoryName: string, requiredName: string): boolean => {
+  const invLower = inventoryName.toLowerCase();
+  const reqLower = requiredName.toLowerCase();
+  
+  // Direct match (substring in either direction)
+  if (invLower.includes(reqLower) || reqLower.includes(invLower)) {
+    return true;
+  }
+  
+  // Check aliases for inventory item
+  for (const [key, aliases] of Object.entries(componentAliases)) {
+    // If inventory item matches a key or its aliases
+    if (invLower.includes(key) || aliases.some(a => invLower.includes(a))) {
+      // Check if required component matches the same key or aliases
+      if (reqLower.includes(key) || aliases.some(a => reqLower.includes(a))) {
+        return true;
+      }
+    }
+  }
+  
+  return false;
 };
 
 /**
@@ -84,15 +127,15 @@ export function useProjects() {
 
   // Calculate which projects can be built with current inventory
   const getProjectCompatibility = (project: Project) => {
-    const inventoryNames = inventory.map(i => i.component_name.toLowerCase());
+    const inventoryNames = inventory.map(i => i.component_name);
     const required = project.required_components || [];
     
     const haveComponents = required.filter(comp => 
-      inventoryNames.some(name => name.includes(comp.name.toLowerCase()) || comp.name.toLowerCase().includes(name))
+      inventoryNames.some(name => componentsMatch(name, comp.name))
     );
     
     const missingComponents = required.filter(comp =>
-      !inventoryNames.some(name => name.includes(comp.name.toLowerCase()) || comp.name.toLowerCase().includes(name))
+      !inventoryNames.some(name => componentsMatch(name, comp.name))
     );
 
     const matchPercentage = required.length > 0 
