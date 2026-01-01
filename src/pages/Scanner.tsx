@@ -17,10 +17,11 @@ import { useScanHistory } from '@/hooks/useScanHistory';
 import { useAuth } from '@/contexts/AuthContext';
 import { IdentifiedItem, AIIdentificationResponse } from '@/types';
 import { toast } from '@/hooks/use-toast';
+import { Button } from '@/components/ui/button';
 
 export default function Scanner() {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, isGuest } = useAuth();
   const { addItem } = useInventory();
   const { addScan } = useScanHistory();
   
@@ -43,13 +44,13 @@ export default function Scanner() {
   const [showResult, setShowResult] = useState(false);
   const [fullResult, setFullResult] = useState<AIIdentificationResponse | null>(null);
 
-  // Start camera on mount
+  // Start camera on mount (allow for both users and guests)
   useEffect(() => {
-    if (user) {
+    if (user || isGuest) {
       startCamera();
     }
     return () => stopCamera();
-  }, [user, startCamera, stopCamera]);
+  }, [user, isGuest, startCamera, stopCamera]);
 
   // Handle image capture (just adds to captured images)
   const handleCapture = useCallback(() => {
@@ -84,7 +85,23 @@ export default function Scanner() {
 
   // Handle adding a single component to inventory
   const handleAddComponent = useCallback(async (item: IdentifiedItem) => {
-    if (!user) return;
+    // Check if user is authenticated (not guest)
+    if (!user) {
+      toast({
+        title: 'Sign Up Required',
+        description: 'Create an account to save components to your Cargo Hold.',
+        action: (
+          <Button 
+            size="sm" 
+            onClick={() => navigate('/auth?mode=signup')}
+            className="bg-primary hover:bg-primary/90"
+          >
+            Sign Up
+          </Button>
+        ),
+      });
+      return;
+    }
 
     try {
       await addItem.mutateAsync({
@@ -120,11 +137,29 @@ export default function Scanner() {
         variant: 'destructive',
       });
     }
-  }, [user, addItem, addScan, capturedImage, fullResult]);
+  }, [user, addItem, addScan, capturedImage, fullResult, navigate]);
 
   // Handle adding all components
   const handleAddAll = useCallback(async () => {
-    if (!user || !fullResult?.items) return;
+    // Check if user is authenticated (not guest)
+    if (!user) {
+      toast({
+        title: 'Sign Up Required',
+        description: 'Create an account to save components to your Cargo Hold.',
+        action: (
+          <Button 
+            size="sm" 
+            onClick={() => navigate('/auth?mode=signup')}
+            className="bg-primary hover:bg-primary/90"
+          >
+            Sign Up
+          </Button>
+        ),
+      });
+      return;
+    }
+    
+    if (!fullResult?.items) return;
 
     let savedCount = 0;
     for (const item of fullResult.items) {
@@ -152,8 +187,8 @@ export default function Scanner() {
     startCamera();
   }, [reset, startCamera]);
 
-  // Require auth
-  if (!user) {
+  // Require auth or guest mode
+  if (!user && !isGuest) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background p-4">
         <div className="text-center">
@@ -161,12 +196,12 @@ export default function Scanner() {
           <p className="text-muted-foreground mb-4">
             Please sign in to use the scanner.
           </p>
-          <button
+          <Button
             onClick={() => navigate('/auth')}
-            className="text-primary underline"
+            className="bg-primary hover:bg-primary/90"
           >
             Go to Sign In
-          </button>
+          </Button>
         </div>
       </div>
     );
