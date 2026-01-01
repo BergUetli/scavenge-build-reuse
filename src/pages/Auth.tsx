@@ -14,7 +14,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from '@/hooks/use-toast';
-import { JunkHaulerLogo } from '@/components/JunkHaulerLogo';
+import { KabariLogo } from '@/components/KabariLogo';
 import { useSounds } from '@/hooks/useSounds';
 
 export default function Auth() {
@@ -190,10 +190,10 @@ export default function Auth() {
       <Card className="w-full max-w-sm">
         <CardHeader className="text-center">
           <div className="flex items-center justify-center mb-2">
-            <JunkHaulerLogo size="lg" />
+            <KabariLogo size="lg" />
           </div>
           <CardDescription>
-            Salvage. Build. Repeat.
+            Scan. Salvage. Build.
           </CardDescription>
         </CardHeader>
 

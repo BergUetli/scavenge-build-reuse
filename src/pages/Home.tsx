@@ -1,12 +1,12 @@
 /**
- * HOME PAGE - JunkHauler
- * Futuristic salvage tool for the junker community
+ * HOME PAGE - Kabari
+ * Scan salvage, identify components, build epic projects
  */
 
 import { useNavigate } from 'react-router-dom';
 import { ChevronRight, Zap, Crosshair } from 'lucide-react';
 import { UsageIndicator } from '@/components/scanner/UsageIndicator';
-import { JunkHaulerLogo } from '@/components/JunkHaulerLogo';
+import { KabariLogo } from '@/components/KabariLogo';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { AppLayout } from '@/components/layout/AppLayout';
@@ -63,7 +63,7 @@ export default function Home() {
 
               {/* Logo & Title */}
               <div className="relative mb-5 inline-block">
-                <JunkHaulerLogo size="lg" className="drop-shadow-lg" />
+                <KabariLogo size="lg" className="drop-shadow-lg" />
                 {/* Status indicator */}
                 <div className="absolute top-0 right-0 w-3 h-3 bg-success rounded-full border-2 border-background animate-pulse" />
               </div>
@@ -71,7 +71,7 @@ export default function Home() {
               {/* Tagline */}
               <div className="space-y-1">
                 <p className="text-white/60 text-base sm:text-lg font-medium">
-                  Welcome back, Junker.
+                  Welcome back, Kabari.
                 </p>
                 <p className="text-white/90 text-lg sm:text-xl font-semibold leading-relaxed">
                   Take stuff apart, build something epic, or flip parts for profit.
