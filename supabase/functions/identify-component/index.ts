@@ -1,12 +1,14 @@
 /**
  * SCAVENGER AI IDENTIFICATION EDGE FUNCTION
  * 
- * This function uses Lovable AI (Gemini 2.5 Flash) with vision capabilities
+ * This function uses OpenAI GPT-4o with vision capabilities
  * to identify components and materials from images.
  * 
  * Supports multiple images for better identification accuracy.
+ * Uses your own OpenAI API key for direct billing.
  */
 
+import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
 const corsHeaders = {
@@ -307,16 +309,16 @@ serve(async (req) => {
       console.log(`[identify-component] Image ${i + 1}: ${img.mimeType}, ${img.imageBase64.length} chars`);
     }
 
-    const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
-    if (!LOVABLE_API_KEY) {
-      console.error('LOVABLE_API_KEY not configured');
+    const OPENAI_API_KEY = Deno.env.get('OPENAI_API_KEY');
+    if (!OPENAI_API_KEY) {
+      console.error('OPENAI_API_KEY not configured');
       return new Response(
-        JSON.stringify({ error: 'AI service not configured' }),
+        JSON.stringify({ error: 'OpenAI API key not configured. Add your key in Settings → Cloud → Secrets.' }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    console.log(`Sending ${images.length} image(s) to Lovable AI for identification...`);
+    console.log(`Sending ${images.length} image(s) to OpenAI GPT-4o for identification...`);
 
     // Build content array with all images
     let promptText = `I'm providing ${images.length} image(s) of the same object from different angles. Analyze ALL images together to identify the object and its salvageable components. Return ONLY valid JSON (no markdown, no code fences). If unsure, set confidence lower and still return a complete JSON object. Keep tools_needed to <= 8 items and common_uses to <= 4.`;
@@ -326,31 +328,32 @@ serve(async (req) => {
       promptText += `\n\nIMPORTANT USER CONTEXT: The user has provided the following hint about this object: "${userHint}". Use this information to improve your identification accuracy.`;
     }
     
-    const userContent: Array<{ type: string; text?: string; image_url?: { url: string } }> = [
+    const userContent: Array<{ type: string; text?: string; image_url?: { url: string; detail?: string } }> = [
       {
         type: 'text',
         text: promptText
       }
     ];
 
-    // Add all images
+    // Add all images with high detail for better component recognition
     for (const img of images) {
       userContent.push({
         type: 'image_url',
         image_url: {
-          url: `data:${img.mimeType};base64,${img.imageBase64}`
+          url: `data:${img.mimeType};base64,${img.imageBase64}`,
+          detail: 'high'
         }
       });
     }
 
-    const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${LOVABLE_API_KEY}`,
+        'Authorization': `Bearer ${OPENAI_API_KEY}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'google/gemini-2.5-flash',
+        model: 'gpt-4o',
         messages: [
           {
             role: 'system',
@@ -367,24 +370,32 @@ serve(async (req) => {
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('AI Gateway error:', response.status, errorText);
+      console.error('OpenAI API error:', response.status, errorText);
       
       if (response.status === 429) {
         return new Response(
-          JSON.stringify({ error: 'Rate limit exceeded. Please try again in a moment.' }),
+          JSON.stringify({ error: 'OpenAI rate limit exceeded. Please try again in a moment.' }),
           { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
       
-      if (response.status === 402) {
+      if (response.status === 401) {
         return new Response(
-          JSON.stringify({ error: 'AI credits exhausted. Please add funds to continue.' }),
+          JSON.stringify({ error: 'Invalid OpenAI API key. Please check your key in Settings → Cloud → Secrets.' }),
+          { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+      
+      if (response.status === 402 || response.status === 400) {
+        // OpenAI returns 400 for billing issues sometimes
+        return new Response(
+          JSON.stringify({ error: 'OpenAI billing issue. Please check your OpenAI account has credits.' }),
           { status: 402, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
       
       return new Response(
-        JSON.stringify({ error: 'AI identification failed' }),
+        JSON.stringify({ error: `OpenAI API error: ${response.status}` }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
