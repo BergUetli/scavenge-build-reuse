@@ -47,16 +47,17 @@ export default function Home() {
               {/* User Avatar - Top Right */}
               <button 
                 onClick={() => navigate('/profile')}
-                className="absolute top-12 right-6 safe-area-pt group"
+                className="absolute top-12 right-6 safe-area-pt group focus-ring rounded-xl"
+                aria-label="Go to profile"
               >
-                <div className="w-11 h-11 rounded-xl overflow-hidden border-2 border-primary/50 shadow-lg group-hover:border-primary group-active:scale-95 transition-all">
+                <div className="w-11 h-11 rounded-xl overflow-hidden border-2 border-primary/50 shadow-lg group-hover:border-primary group-hover:shadow-[0_0_16px_hsl(199_89%_58%/0.3)] group-active:scale-95 transition-all">
                   <img 
                     src={defaultAvatar} 
-                    alt="Profile" 
+                    alt="Your profile avatar" 
                     className="w-full h-full object-cover"
                   />
                 </div>
-                <div className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-success rounded-full border-2 border-background" />
+                <div className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-success rounded-full border-2 border-background" aria-hidden="true" />
               </button>
 
               {/* Logo & Title */}
@@ -91,10 +92,11 @@ export default function Home() {
           <div className="grid grid-cols-2 gap-3 animate-fade-up" style={{ animationDelay: '0.15s' }}>
             <button
               onClick={() => navigate('/inventory')}
-              className="group card-industrial p-5 text-left tap-highlight active:scale-[0.98] transition-all duration-150 corner-accent touch-target"
+              className="group card-industrial p-5 text-left tap-highlight active:scale-[0.98] transition-all duration-150 corner-accent touch-target focus-ring hover:shadow-[0_0_24px_hsl(199_89%_58%/0.15)]"
+              aria-label={`Cargo Hold: ${stats.totalItems} units`}
             >
               <div className="w-11 h-11 rounded-lg bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center mb-4 group-active:scale-95 transition-transform border border-primary/30">
-                <Package className="w-5 h-5 text-primary" />
+                <Package className="w-5 h-5 text-primary" aria-hidden="true" />
               </div>
               <p className="font-bold text-base sm:text-[15px] text-foreground mb-1">Cargo Hold</p>
               <p className="text-sm sm:text-xs text-muted-foreground font-mono tracking-wide">
@@ -104,10 +106,11 @@ export default function Home() {
             
             <button
               onClick={() => navigate('/projects')}
-              className="group card-industrial p-5 text-left tap-highlight active:scale-[0.98] transition-all duration-150 corner-accent touch-target"
+              className="group card-industrial p-5 text-left tap-highlight active:scale-[0.98] transition-all duration-150 corner-accent touch-target focus-ring hover:shadow-[0_0_24px_hsl(25_95%_53%/0.15)]"
+              aria-label="Schematics: Browse builds"
             >
               <div className="w-11 h-11 rounded-lg bg-gradient-to-br from-accent/20 to-accent/5 flex items-center justify-center mb-4 group-active:scale-95 transition-transform border border-accent/30">
-                <Lightbulb className="w-5 h-5 text-accent" />
+                <Lightbulb className="w-5 h-5 text-accent" aria-hidden="true" />
               </div>
               <p className="font-bold text-base sm:text-[15px] text-foreground mb-1">Schematics</p>
               <p className="text-sm sm:text-xs text-muted-foreground">Browse builds</p>

@@ -11,6 +11,7 @@ import { useNavigate } from 'react-router-dom';
 import { Loader2 } from 'lucide-react';
 import { CameraView } from '@/components/scanner/CameraView';
 import { ComponentBreakdown } from '@/components/scanner/ComponentBreakdown';
+import { SuccessSparks } from '@/components/effects/ParticleEffect';
 import { useScanner } from '@/hooks/useScanner';
 import { useInventory } from '@/hooks/useInventory';
 import { useScanHistory } from '@/hooks/useScanHistory';
@@ -44,6 +45,7 @@ export default function Scanner() {
   const [showResult, setShowResult] = useState(false);
   const [fullResult, setFullResult] = useState<AIIdentificationResponse | null>(null);
   const [userHint, setUserHint] = useState('');
+  const [showSuccessSparks, setShowSuccessSparks] = useState(false);
 
   // Start camera on mount (allow for both users and guests)
   useEffect(() => {
@@ -224,13 +226,25 @@ export default function Scanner() {
   // Show result view with full breakdown
   if (showResult && fullResult) {
     return (
-      <div className="min-h-screen bg-background p-4 safe-area-pt safe-area-pb overflow-y-auto">
+      <div className="min-h-screen bg-background p-4 safe-area-pt safe-area-pb overflow-y-auto relative">
+        {/* Success particles */}
+        <SuccessSparks 
+          trigger={showSuccessSparks} 
+          onComplete={() => setShowSuccessSparks(false)} 
+        />
+        
         <div className="max-w-md mx-auto pt-4 pb-8">
           <ComponentBreakdown
             result={fullResult}
             imageUrl={capturedImage || undefined}
-            onAddComponent={handleAddComponent}
-            onAddAll={handleAddAll}
+            onAddComponent={(item) => {
+              handleAddComponent(item);
+              setShowSuccessSparks(true);
+            }}
+            onAddAll={() => {
+              handleAddAll();
+              setShowSuccessSparks(true);
+            }}
             onRescan={handleRescan}
             onUpdateComponent={handleUpdateComponent}
             isLoading={addItem.isPending}
@@ -240,16 +254,40 @@ export default function Scanner() {
     );
   }
 
-  // Show processing overlay
+  // Show processing overlay with glassmorphism
   if (isProcessing) {
     return (
-      <div className="fixed inset-0 z-50 bg-black flex items-center justify-center">
-        <div className="text-center text-white">
-          <Loader2 className="w-12 h-12 animate-spin mx-auto mb-4" />
-          <p className="text-lg font-medium">Analyzing {capturedImages.length} photo{capturedImages.length !== 1 ? 's' : ''}...</p>
-          <p className="text-sm text-white/70 mt-1">
-            Identifying components with AI
+      <div className="fixed inset-0 z-50 bg-background/90 backdrop-blur-xl flex items-center justify-center">
+        <div className="text-center relative">
+          {/* Glow background */}
+          <div className="absolute inset-0 -m-16 bg-gradient-radial-glow animate-pulse-soft" />
+          
+          {/* Scanning ring */}
+          <div className="relative w-24 h-24 mx-auto mb-6">
+            <div className="absolute inset-0 rounded-full border-2 border-primary/30 animate-ping" />
+            <div className="absolute inset-2 rounded-full border-2 border-primary/50 animate-ping" style={{ animationDelay: '0.3s' }} />
+            <div className="absolute inset-4 rounded-full bg-primary/10 backdrop-blur flex items-center justify-center">
+              <Loader2 className="w-10 h-10 animate-spin text-primary" />
+            </div>
+          </div>
+          
+          <p className="text-lg font-semibold text-foreground">
+            Analyzing {capturedImages.length} photo{capturedImages.length !== 1 ? 's' : ''}...
           </p>
+          <p className="text-sm text-muted-foreground mt-2">
+            Identifying salvageable components
+          </p>
+          
+          {/* Animated dots */}
+          <div className="flex justify-center gap-1.5 mt-4">
+            {[0, 1, 2].map((i) => (
+              <div 
+                key={i}
+                className="w-2 h-2 rounded-full bg-primary animate-bounce"
+                style={{ animationDelay: `${i * 0.15}s` }}
+              />
+            ))}
+          </div>
         </div>
       </div>
     );
