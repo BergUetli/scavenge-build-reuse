@@ -189,10 +189,9 @@ export default function Auth() {
     <div className="min-h-screen bg-gradient-subtle flex items-center justify-center p-4 safe-area-pt safe-area-pb">
       <Card className="w-full max-w-sm">
         <CardHeader className="text-center">
-          <div className="flex items-center justify-center gap-2 mb-2">
-            <JunkHaulerLogo size={48} />
+          <div className="flex items-center justify-center mb-2">
+            <JunkHaulerLogo size="lg" />
           </div>
-          <CardTitle className="text-2xl">JunkHauler</CardTitle>
           <CardDescription>
             Salvage. Build. Repeat.
           </CardDescription>

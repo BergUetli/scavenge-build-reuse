@@ -118,6 +118,38 @@ export default {
           "10%, 90%": { opacity: "1" },
           "50%": { transform: "translateY(100%)" },
         },
+        "glitch-1": {
+          "0%, 100%": { transform: "translateX(0)" },
+          "20%": { transform: "translateX(-2px)" },
+          "40%": { transform: "translateX(2px)" },
+          "60%": { transform: "translateX(-1px)" },
+          "80%": { transform: "translateX(1px)" },
+        },
+        "glitch-2": {
+          "0%, 100%": { transform: "translateX(0)" },
+          "25%": { transform: "translateX(2px)" },
+          "50%": { transform: "translateX(-2px)" },
+          "75%": { transform: "translateX(1px)" },
+        },
+        "glitch-clip": {
+          "0%, 100%": { transform: "translateX(-2px)", opacity: "0" },
+          "20%": { transform: "translateX(2px)", opacity: "0.7" },
+          "40%": { transform: "translateX(-1px)", opacity: "0.5" },
+          "60%": { transform: "translateX(1px)", opacity: "0.6" },
+          "80%": { transform: "translateX(-2px)", opacity: "0.4" },
+        },
+        "glitch-clip-2": {
+          "0%, 100%": { transform: "translateX(2px)", opacity: "0" },
+          "30%": { transform: "translateX(-2px)", opacity: "0.5" },
+          "50%": { transform: "translateX(1px)", opacity: "0.4" },
+          "70%": { transform: "translateX(-1px)", opacity: "0.6" },
+        },
+        scanline: {
+          "0%": { top: "0%", opacity: "0" },
+          "10%": { opacity: "1" },
+          "90%": { opacity: "1" },
+          "100%": { top: "100%", opacity: "0" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
