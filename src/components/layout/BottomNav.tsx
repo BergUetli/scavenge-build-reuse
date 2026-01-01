@@ -26,7 +26,7 @@ export function BottomNav() {
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 glass border-t border-primary/10 safe-area-pb">
-      <div className="flex items-center justify-around h-[58px] max-w-lg mx-auto">
+      <div className="flex items-center justify-around h-[64px] sm:h-[58px] max-w-lg mx-auto">
         {navItems.map(({ to, icon: Icon, label }) => (
           <NavLink
             key={to}
@@ -34,7 +34,7 @@ export function BottomNav() {
             onClick={playClick}
             className={({ isActive }) =>
               cn(
-                'flex flex-col items-center justify-center gap-1 min-w-[72px] py-2',
+                'flex flex-col items-center justify-center gap-1 min-w-[76px] sm:min-w-[72px] py-2 touch-target',
                 'transition-all duration-200 ease-out',
                 isActive 
                   ? 'text-primary' 
@@ -45,12 +45,12 @@ export function BottomNav() {
             {({ isActive }) => (
               <>
                 <div className={cn(
-                  'relative flex items-center justify-center w-8 h-8 transition-all duration-200 rounded-lg',
+                  'relative flex items-center justify-center w-9 h-9 sm:w-8 sm:h-8 transition-all duration-200 rounded-lg',
                   isActive && 'bg-primary/10'
                 )}>
                   <Icon 
                     className={cn(
-                      'w-5 h-5 transition-all duration-200',
+                      'w-6 h-6 sm:w-5 sm:h-5 transition-all duration-200',
                       isActive ? 'stroke-[2.5px]' : 'stroke-[1.75px]'
                     )} 
                   />
@@ -59,7 +59,7 @@ export function BottomNav() {
                   )}
                 </div>
                 <span className={cn(
-                  'text-[10px] tracking-wide transition-all duration-200 uppercase',
+                  'text-[11px] sm:text-[10px] tracking-wide transition-all duration-200 uppercase',
                   isActive ? 'font-bold' : 'font-medium'
                 )}>
                   {label}
