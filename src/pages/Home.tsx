@@ -4,7 +4,7 @@
  */
 
 import { useNavigate } from 'react-router-dom';
-import { Package, Lightbulb, ChevronRight, Zap, Crosshair } from 'lucide-react';
+import { ChevronRight, Zap, Crosshair } from 'lucide-react';
 import { UsageIndicator } from '@/components/scanner/UsageIndicator';
 import { JunkHaulerLogo } from '@/components/JunkHaulerLogo';
 import { Button } from '@/components/ui/button';
@@ -90,34 +90,6 @@ export default function Home() {
             <UsageIndicator used={3} total={10} resetDays={23} />
           </div>
 
-          {/* Quick Actions */}
-          <div className="grid grid-cols-2 gap-3 animate-fade-up" style={{ animationDelay: '0.15s' }}>
-            <button
-              onClick={() => navigate('/inventory')}
-              className="group card-industrial p-5 text-left tap-highlight active:scale-[0.98] transition-all duration-150 corner-accent touch-target focus-ring hover:shadow-[0_0_24px_hsl(199_89%_58%/0.15)]"
-              aria-label={`Cargo Hold: ${stats.totalItems} units`}
-            >
-              <div className="w-11 h-11 rounded-lg bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center mb-4 group-active:scale-95 transition-transform border border-primary/30">
-                <Package className="w-5 h-5 text-primary" aria-hidden="true" />
-              </div>
-              <p className="font-bold text-base sm:text-[15px] text-foreground mb-1">Cargo Hold</p>
-              <p className="text-sm sm:text-xs text-muted-foreground font-mono tracking-wide">
-                {stats.totalItems} <span className="text-primary/70">UNITS</span>
-              </p>
-            </button>
-            
-            <button
-              onClick={() => navigate('/projects')}
-              className="group card-industrial p-5 text-left tap-highlight active:scale-[0.98] transition-all duration-150 corner-accent touch-target focus-ring hover:shadow-[0_0_24px_hsl(25_95%_53%/0.15)]"
-              aria-label="Schematics: Browse builds"
-            >
-              <div className="w-11 h-11 rounded-lg bg-gradient-to-br from-accent/20 to-accent/5 flex items-center justify-center mb-4 group-active:scale-95 transition-transform border border-accent/30">
-                <Lightbulb className="w-5 h-5 text-accent" aria-hidden="true" />
-              </div>
-              <p className="font-bold text-base sm:text-[15px] text-foreground mb-1">Schematics</p>
-              <p className="text-sm sm:text-xs text-muted-foreground">Browse builds</p>
-            </button>
-          </div>
 
           {/* Mission Brief Card */}
           <Card className="border border-primary/20 bg-gradient-to-br from-primary/10 via-primary/5 to-transparent shadow-premium-lg overflow-hidden animate-fade-up" style={{ animationDelay: '0.25s' }}>
