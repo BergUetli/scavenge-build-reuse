@@ -5,7 +5,7 @@
  */
 
 import { useNavigate } from 'react-router-dom';
-import { User, LogOut, Settings, HelpCircle, Shield, Leaf } from 'lucide-react';
+import { User, LogOut, Settings, HelpCircle, Shield, Leaf, Cpu } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -15,6 +15,7 @@ import { ImpactStats } from '@/components/stats/ImpactStats';
 import { useAuth } from '@/contexts/AuthContext';
 import { useInventory } from '@/hooks/useInventory';
 import { useScanHistory } from '@/hooks/useScanHistory';
+import { useScanCosts } from '@/hooks/useScanCosts';
 import { toast } from '@/hooks/use-toast';
 
 export default function Profile() {
@@ -22,6 +23,7 @@ export default function Profile() {
   const { user, signOut } = useAuth();
   const { inventory, stats } = useInventory();
   const { history } = useScanHistory();
+  const { totalCost, totalScans, totalCorrections, isLoading: costsLoading } = useScanCosts();
 
   // Impact stats
   const impactStats = {
@@ -125,6 +127,34 @@ export default function Profile() {
                     {cat}
                   </span>
                 ))}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* AI Usage Costs */}
+          <Card className="mb-6">
+            <CardContent className="p-4">
+              <div className="flex items-start gap-3">
+                <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0">
+                  <Cpu className="w-5 h-5 text-primary" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="font-medium text-foreground">AI Usage</h3>
+                  <div className="grid grid-cols-3 gap-2 mt-2">
+                    <div>
+                      <p className="text-lg font-bold text-primary">{totalScans}</p>
+                      <p className="text-xs text-muted-foreground">Scans</p>
+                    </div>
+                    <div>
+                      <p className="text-lg font-bold text-amber-500">{totalCorrections}</p>
+                      <p className="text-xs text-muted-foreground">Corrections</p>
+                    </div>
+                    <div>
+                      <p className="text-lg font-bold font-mono">${totalCost.toFixed(4)}</p>
+                      <p className="text-xs text-muted-foreground">Total Cost</p>
+                    </div>
+                  </div>
+                </div>
               </div>
             </CardContent>
           </Card>
