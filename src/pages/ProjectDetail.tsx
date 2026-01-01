@@ -17,11 +17,11 @@ import {
   ChevronDown,
   ChevronUp,
   Zap,
-  Shield,
   Target,
   BookOpen,
   Recycle,
-  ShoppingCart
+  ShoppingCart,
+  ChevronRight
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -32,7 +32,9 @@ import { AppLayout } from '@/components/layout/AppLayout';
 import { useProjects } from '@/hooks/useProjects';
 import { useInventory } from '@/hooks/useInventory';
 import { cn } from '@/lib/utils';
-import { DifficultyLevel } from '@/types';
+import { DifficultyLevel, RequiredComponent } from '@/types';
+import { ComponentDetailSheet } from '@/components/project/ComponentDetailSheet';
+import { BuildInstructions, BuildStep } from '@/components/project/BuildInstructions';
 
 // Difficulty configuration with colors and descriptions
 const difficultyConfig: Record<string, { 
@@ -86,8 +88,10 @@ export default function ProjectDetail() {
   const { inventory } = useInventory();
 
   const [expandedSections, setExpandedSections] = useState<Set<string>>(
-    new Set(['components', 'tools', 'skills'])
+    new Set(['components', 'tools', 'skills', 'instructions'])
   );
+  const [selectedComponent, setSelectedComponent] = useState<RequiredComponent | null>(null);
+  const [componentSheetOpen, setComponentSheetOpen] = useState(false);
 
   const project = useMemo(() => 
     projects.find((p) => p.id === id), 
@@ -99,6 +103,95 @@ export default function ProjectDetail() {
     [project, getProjectCompatibility]
   );
 
+  // Generate build steps from project data (or use stored ones)
+  const buildSteps = useMemo((): BuildStep[] => {
+    if (!project) return [];
+    
+    // Generate basic build steps based on project components and skills
+    const steps: BuildStep[] = [];
+    let stepNum = 1;
+
+    // Step 1: Gather materials
+    steps.push({
+      step_number: stepNum++,
+      title: 'Gather All Components',
+      description: `Collect all ${project.required_components?.length || 0} required components. Check your Cargo Hold for parts you already have.`,
+      tips: ['Organize components in separate containers', 'Verify quantities before starting'],
+    });
+
+    // Step 2: Prepare tools
+    if (project.required_tools && project.required_tools.length > 0) {
+      steps.push({
+        step_number: stepNum++,
+        title: 'Prepare Your Tools',
+        description: `Set up your workspace with: ${project.required_tools.join(', ')}.`,
+        tips: ['Ensure good lighting', 'Work on a clean, static-free surface'],
+        warnings: project.required_tools.some(t => t.toLowerCase().includes('solder')) 
+          ? ['Soldering iron gets very hot - use caution'] 
+          : undefined,
+      });
+    }
+
+    // Add skill-based steps
+    if (project.skills_needed) {
+      if (project.skills_needed.some(s => s.toLowerCase().includes('solder'))) {
+        steps.push({
+          step_number: stepNum++,
+          title: 'Solder Components',
+          description: 'Carefully solder each component to the PCB according to the circuit diagram. Start with smaller components first.',
+          tips: ['Heat the pad and component lead together', 'Apply solder to the joint, not the iron'],
+          warnings: ['Work in a ventilated area', 'Let solder joints cool before moving'],
+        });
+      }
+
+      if (project.skills_needed.some(s => s.toLowerCase().includes('program') || s.toLowerCase().includes('code'))) {
+        steps.push({
+          step_number: stepNum++,
+          title: 'Upload the Code',
+          description: 'Connect your microcontroller to your computer and upload the program using the appropriate IDE.',
+          tips: ['Install required libraries first', 'Select the correct board and port'],
+        });
+      }
+
+      if (project.skills_needed.some(s => s.toLowerCase().includes('wire') || s.toLowerCase().includes('wiring'))) {
+        steps.push({
+          step_number: stepNum++,
+          title: 'Wire the Components',
+          description: 'Connect all components using jumper wires or by soldering. Follow the wiring diagram carefully.',
+          tips: ['Use color-coded wires for easy identification', 'Double-check connections before powering on'],
+          warnings: ['Incorrect wiring can damage components'],
+        });
+      }
+    }
+
+    // Assembly step
+    steps.push({
+      step_number: stepNum++,
+      title: 'Assemble the Project',
+      description: 'Put together all the components according to the design. Secure loose parts and organize wiring.',
+      tips: ['Take photos during assembly for reference', 'Test fit components before final assembly'],
+    });
+
+    // Testing step
+    steps.push({
+      step_number: stepNum++,
+      title: 'Test Your Build',
+      description: 'Power on your project and verify all functions work correctly. Debug any issues.',
+      tips: ['Start with low voltage if possible', 'Check for shorts before powering on'],
+      warnings: ['Disconnect power immediately if you smell burning or see smoke'],
+    });
+
+    // Final step
+    steps.push({
+      step_number: stepNum++,
+      title: 'Finalize & Enjoy',
+      description: 'Make any final adjustments, add an enclosure if needed, and enjoy your completed project!',
+      tips: ['Document your build for future reference', 'Share your creation with the community'],
+    });
+
+    return steps;
+  }, [project]);
+
   const toggleSection = (section: string) => {
     setExpandedSections((prev) => {
       const next = new Set(prev);
@@ -109,6 +202,15 @@ export default function ProjectDetail() {
       }
       return next;
     });
+  };
+
+  const handleComponentClick = (comp: RequiredComponent) => {
+    setSelectedComponent(comp);
+    setComponentSheetOpen(true);
+  };
+
+  const isComponentOwned = (compName: string): boolean => {
+    return compatibility?.haveComponents.some(c => c.name === compName) || false;
   };
 
   if (!project) {
@@ -261,18 +363,22 @@ export default function ProjectDetail() {
                       </h4>
                       <div className="space-y-2">
                         {compatibility.haveComponents.map((comp, idx) => (
-                          <div 
+                          <button 
                             key={idx}
-                            className="flex items-center justify-between p-3 rounded-lg border bg-eco/5 border-eco/20"
+                            className="w-full flex items-center justify-between p-3 rounded-lg border bg-eco/5 border-eco/20 hover:bg-eco/10 transition-colors text-left"
+                            onClick={() => handleComponentClick(comp)}
                           >
-                            <div className="flex items-center gap-2">
-                              <CheckCircle2 className="w-4 h-4 text-eco" />
-                              <span className="text-sm font-medium">{comp.name}</span>
+                            <div className="flex items-center gap-2 flex-1 min-w-0">
+                              <CheckCircle2 className="w-4 h-4 text-eco shrink-0" />
+                              <span className="text-sm font-medium truncate">{comp.name}</span>
                             </div>
-                            <Badge variant="outline" className="text-xs text-eco border-eco/30">
-                              x{comp.quantity}
-                            </Badge>
-                          </div>
+                            <div className="flex items-center gap-2 shrink-0">
+                              <Badge variant="outline" className="text-xs text-eco border-eco/30">
+                                x{comp.quantity}
+                              </Badge>
+                              <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                            </div>
+                          </button>
                         ))}
                       </div>
                     </div>
@@ -296,9 +402,10 @@ export default function ProjectDetail() {
                           const isBuyRecommended = buyCategories.some(cat => nameLower.includes(cat));
                           
                           return (
-                            <div 
+                            <button 
                               key={idx}
-                              className="flex items-center justify-between p-3 rounded-lg border bg-muted/30 border-border/50"
+                              className="w-full flex items-center justify-between p-3 rounded-lg border bg-muted/30 border-border/50 hover:bg-muted/50 transition-colors text-left"
+                              onClick={() => handleComponentClick(comp)}
                             >
                               <div className="flex items-center gap-2 flex-1 min-w-0">
                                 <XCircle className="w-4 h-4 text-muted-foreground shrink-0" />
@@ -317,30 +424,11 @@ export default function ProjectDetail() {
                                     Buy
                                   </Badge>
                                 )}
-                                {!isSalvageable && !isBuyRecommended && (
-                                  <Badge variant="outline" className="text-xs">
-                                    x{comp.quantity}
-                                  </Badge>
-                                )}
+                                <ChevronRight className="w-4 h-4 text-muted-foreground" />
                               </div>
-                            </div>
+                            </button>
                           );
                         })}
-                      </div>
-                      
-                      {/* Salvage tips */}
-                      <div className="mt-4 p-3 rounded-lg bg-muted/50 border border-border/50">
-                        <h5 className="text-xs font-medium text-foreground mb-2">💡 Tips</h5>
-                        <ul className="text-xs text-muted-foreground space-y-1">
-                          <li className="flex items-start gap-2">
-                            <Recycle className="w-3 h-3 text-amber-500 mt-0.5 shrink-0" />
-                            <span><strong>Salvage:</strong> Common in old electronics, appliances, toys</span>
-                          </li>
-                          <li className="flex items-start gap-2">
-                            <ShoppingCart className="w-3 h-3 text-blue-500 mt-0.5 shrink-0" />
-                            <span><strong>Buy:</strong> Specialized parts worth buying new for reliability</span>
-                          </li>
-                        </ul>
                       </div>
                     </div>
                   )}
@@ -442,17 +530,49 @@ export default function ProjectDetail() {
             </Collapsible>
           )}
 
-          {/* Tutorial Link */}
-          {project.tutorial_url && (
-            <Button
-              className="w-full h-14 text-base font-bold bg-gradient-primary hover:opacity-90"
-              onClick={() => window.open(project.tutorial_url!, '_blank')}
-            >
-              <BookOpen className="w-5 h-5 mr-2" />
-              View Full Tutorial
-              <ExternalLink className="w-4 h-4 ml-2" />
-            </Button>
-          )}
+          {/* Build Instructions - Inline */}
+          <Collapsible 
+            open={expandedSections.has('instructions')}
+            onOpenChange={() => toggleSection('instructions')}
+          >
+            <Card className="border-primary/30">
+              <CollapsibleTrigger asChild>
+                <CardHeader className="cursor-pointer hover:bg-muted/30 transition-colors p-4">
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="text-base flex items-center gap-2">
+                      <BookOpen className="w-4 h-4 text-primary" />
+                      Build Instructions
+                      <Badge variant="outline" className="ml-2 bg-primary/10 text-primary border-primary/30">
+                        {buildSteps.length} steps
+                      </Badge>
+                    </CardTitle>
+                    {expandedSections.has('instructions') ? (
+                      <ChevronUp className="w-4 h-4 text-muted-foreground" />
+                    ) : (
+                      <ChevronDown className="w-4 h-4 text-muted-foreground" />
+                    )}
+                  </div>
+                </CardHeader>
+              </CollapsibleTrigger>
+              <CollapsibleContent>
+                <CardContent className="pt-0 px-4 pb-4">
+                  <BuildInstructions steps={buildSteps} />
+                  
+                  {/* External tutorial link if available */}
+                  {project.tutorial_url && (
+                    <Button
+                      variant="outline"
+                      className="w-full mt-4 justify-center gap-2"
+                      onClick={() => window.open(project.tutorial_url!, '_blank')}
+                    >
+                      <ExternalLink className="w-4 h-4" />
+                      View Full External Tutorial
+                    </Button>
+                  )}
+                </CardContent>
+              </CollapsibleContent>
+            </Card>
+          </Collapsible>
 
           {/* Category Badge */}
           <div className="text-center pt-2">
@@ -461,6 +581,14 @@ export default function ProjectDetail() {
             </Badge>
           </div>
         </div>
+
+        {/* Component Detail Sheet */}
+        <ComponentDetailSheet
+          component={selectedComponent}
+          open={componentSheetOpen}
+          onOpenChange={setComponentSheetOpen}
+          isOwned={selectedComponent ? isComponentOwned(selectedComponent.name) : false}
+        />
       </div>
     </AppLayout>
   );
