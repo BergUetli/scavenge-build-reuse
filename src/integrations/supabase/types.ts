@@ -156,6 +156,7 @@ export type Database = {
       }
       profiles: {
         Row: {
+          ai_provider: string
           avatar_url: string | null
           co2_saved: number | null
           created_at: string
@@ -167,6 +168,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          ai_provider?: string
           avatar_url?: string | null
           co2_saved?: number | null
           created_at?: string
@@ -178,6 +180,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          ai_provider?: string
           avatar_url?: string | null
           co2_saved?: number | null
           created_at?: string

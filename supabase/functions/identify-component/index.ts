@@ -1,17 +1,16 @@
 /**
  * SCAVENGER AI IDENTIFICATION EDGE FUNCTION
  * 
- * This function uses OpenAI GPT-4o-mini with vision capabilities
- * to identify components and materials from images.
+ * Multi-provider AI component identification with vision capabilities.
+ * Supports: OpenAI (gpt-4o-mini), Google Gemini, Anthropic Claude
  * 
  * Cost optimizations:
- * - Uses gpt-4o-mini (much cheaper than gpt-4o)
+ * - Uses cheaper models by default (gpt-4o-mini, gemini-1.5-flash, claude-3-haiku)
  * - Caches results by image hash (scan_cache table)
  * - Uses 'low' detail for pre-compressed images
  * - Reduced max_tokens
  * 
  * Supports multiple images for better identification accuracy.
- * Uses your own OpenAI API key for direct billing.
  */
 
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
@@ -22,6 +21,200 @@ const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
+
+// Supported AI providers
+type AIProvider = 'openai' | 'gemini' | 'claude';
+
+interface ProviderConfig {
+  apiKey: string | undefined;
+  envVar: string;
+  name: string;
+}
+
+function getProviderConfigs(): Record<AIProvider, ProviderConfig> {
+  return {
+    openai: {
+      apiKey: Deno.env.get('OPENAI_API_KEY'),
+      envVar: 'OPENAI_API_KEY',
+      name: 'OpenAI GPT-4o-mini'
+    },
+    gemini: {
+      apiKey: Deno.env.get('GOOGLE_AI_API_KEY'),
+      envVar: 'GOOGLE_AI_API_KEY', 
+      name: 'Google Gemini 1.5 Flash'
+    },
+    claude: {
+      apiKey: Deno.env.get('ANTHROPIC_API_KEY'),
+      envVar: 'ANTHROPIC_API_KEY',
+      name: 'Anthropic Claude 3 Haiku'
+    }
+  };
+}
+
+// Get the first available provider
+function getAvailableProvider(): { provider: AIProvider; config: ProviderConfig } | null {
+  const configs = getProviderConfigs();
+  
+  // Check in order of preference (cheapest first)
+  const preferenceOrder: AIProvider[] = ['gemini', 'openai', 'claude'];
+  
+  for (const provider of preferenceOrder) {
+    if (configs[provider].apiKey) {
+      return { provider, config: configs[provider] };
+    }
+  }
+  return null;
+}
+
+// Call OpenAI API
+async function callOpenAI(apiKey: string, systemPrompt: string, userContent: any[]): Promise<string> {
+  console.log('[OpenAI] Calling GPT-4o-mini...');
+  
+  const response = await fetch('https://api.openai.com/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${apiKey}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      model: 'gpt-4o-mini',
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: userContent }
+      ],
+      max_tokens: 6000,
+    }),
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    console.error('[OpenAI] API error:', response.status, errorText);
+    throw new Error(`OpenAI error: ${response.status}`);
+  }
+
+  const data = await response.json();
+  return data.choices?.[0]?.message?.content || '';
+}
+
+// Call Google Gemini API
+async function callGemini(apiKey: string, systemPrompt: string, userContent: any[]): Promise<string> {
+  console.log('[Gemini] Calling Gemini 1.5 Flash...');
+  
+  // Build Gemini-formatted content
+  const parts: any[] = [{ text: systemPrompt + '\n\n' + userContent[0].text }];
+  
+  // Add images
+  for (let i = 1; i < userContent.length; i++) {
+    if (userContent[i].type === 'image_url') {
+      const imageUrl = userContent[i].image_url.url;
+      const base64Match = imageUrl.match(/^data:([^;]+);base64,(.*)$/);
+      if (base64Match) {
+        parts.push({
+          inline_data: {
+            mime_type: base64Match[1],
+            data: base64Match[2]
+          }
+        });
+      }
+    }
+  }
+
+  const response = await fetch(
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: [{ parts }],
+        generationConfig: {
+          maxOutputTokens: 6000,
+          temperature: 0.2
+        }
+      }),
+    }
+  );
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    console.error('[Gemini] API error:', response.status, errorText);
+    throw new Error(`Gemini error: ${response.status}`);
+  }
+
+  const data = await response.json();
+  return data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+}
+
+// Call Anthropic Claude API
+async function callClaude(apiKey: string, systemPrompt: string, userContent: any[]): Promise<string> {
+  console.log('[Claude] Calling Claude 3 Haiku...');
+  
+  // Build Claude-formatted content
+  const content: any[] = [];
+  
+  // Add text
+  content.push({ type: 'text', text: userContent[0].text });
+  
+  // Add images
+  for (let i = 1; i < userContent.length; i++) {
+    if (userContent[i].type === 'image_url') {
+      const imageUrl = userContent[i].image_url.url;
+      const base64Match = imageUrl.match(/^data:([^;]+);base64,(.*)$/);
+      if (base64Match) {
+        content.push({
+          type: 'image',
+          source: {
+            type: 'base64',
+            media_type: base64Match[1],
+            data: base64Match[2]
+          }
+        });
+      }
+    }
+  }
+
+  const response = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'x-api-key': apiKey,
+      'anthropic-version': '2023-06-01',
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      model: 'claude-3-haiku-20240307',
+      max_tokens: 6000,
+      system: systemPrompt,
+      messages: [{ role: 'user', content }]
+    }),
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    console.error('[Claude] API error:', response.status, errorText);
+    throw new Error(`Claude error: ${response.status}`);
+  }
+
+  const data = await response.json();
+  return data.content?.[0]?.text || '';
+}
+
+// Main AI call dispatcher
+async function callAI(
+  provider: AIProvider,
+  apiKey: string,
+  systemPrompt: string,
+  userContent: any[]
+): Promise<string> {
+  switch (provider) {
+    case 'openai':
+      return callOpenAI(apiKey, systemPrompt, userContent);
+    case 'gemini':
+      return callGemini(apiKey, systemPrompt, userContent);
+    case 'claude':
+      return callClaude(apiKey, systemPrompt, userContent);
+    default:
+      throw new Error(`Unknown provider: ${provider}`);
+  }
+}
 
 const IDENTIFICATION_PROMPT = `You are Scavenger AI, an expert at identifying salvageable components from electronics, devices, and materials.
 
@@ -288,9 +481,14 @@ serve(async (req) => {
     let images: Array<{ imageBase64: string; mimeType: string }> = [];
     const userHint: string | undefined = body.userHint;
     const imageHash: string | undefined = body.imageHash;
+    const requestedProvider: AIProvider | undefined = body.provider;
     
     if (userHint) {
       console.log('[identify-component] User provided hint:', userHint);
+    }
+    
+    if (requestedProvider) {
+      console.log('[identify-component] Requested provider:', requestedProvider);
     }
     
     // Check cache first if we have a hash
@@ -352,18 +550,35 @@ serve(async (req) => {
       console.log(`[identify-component] Image ${i + 1}: ${img.mimeType}, ${img.imageBase64.length} chars`);
     }
 
-    const OPENAI_API_KEY = Deno.env.get('OPENAI_API_KEY');
-    if (!OPENAI_API_KEY) {
-      console.error('OPENAI_API_KEY not configured');
-      return new Response(
-        JSON.stringify({ error: 'OpenAI API key not configured. Add your key in Settings → Cloud → Secrets.' }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+    // Determine which AI provider to use
+    const configs = getProviderConfigs();
+    let selectedProvider: AIProvider;
+    let apiKey: string;
+    
+    if (requestedProvider && configs[requestedProvider].apiKey) {
+      // Use the requested provider if available
+      selectedProvider = requestedProvider;
+      apiKey = configs[requestedProvider].apiKey!;
+    } else {
+      // Fall back to first available provider
+      const available = getAvailableProvider();
+      if (!available) {
+        console.error('No AI provider configured');
+        return new Response(
+          JSON.stringify({ 
+            error: 'No AI provider configured. Add an API key for OpenAI, Google Gemini, or Anthropic Claude in Settings → Cloud → Secrets.',
+            configuredProviders: Object.entries(configs)
+              .filter(([_, c]) => c.apiKey)
+              .map(([p]) => p)
+          }),
+          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+      selectedProvider = available.provider;
+      apiKey = available.config.apiKey!;
     }
 
-    // Use gpt-4o-mini for cost efficiency (significantly cheaper than gpt-4o)
-    // gpt-4o-mini still has excellent vision capabilities
-    console.log(`Sending ${images.length} image(s) to OpenAI GPT-4o-mini for identification...`);
+    console.log(`[identify-component] Using provider: ${configs[selectedProvider].name}`);
 
     // Build content array with all images
     let promptText = `I'm providing ${images.length} image(s) of the same object from different angles. Analyze ALL images together to identify the object and its salvageable components. Return ONLY valid JSON (no markdown, no code fences). If unsure, set confidence lower and still return a complete JSON object. Keep tools_needed to <= 8 items and common_uses to <= 4.`;
@@ -380,73 +595,31 @@ serve(async (req) => {
       }
     ];
 
-    // Add all images with 'low' detail since they're pre-compressed (saves tokens/cost)
+    // Add all images
     for (const img of images) {
       userContent.push({
         type: 'image_url',
         image_url: {
           url: `data:${img.mimeType};base64,${img.imageBase64}`,
-          detail: 'low'  // Use 'low' for pre-compressed images (65 tokens vs 85-170 for 'high')
+          detail: 'low'
         }
       });
     }
 
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${OPENAI_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'gpt-4o-mini',  // Much cheaper than gpt-4o (~$0.15/$0.60 vs $5/$15 per 1M tokens)
-        messages: [
-          {
-            role: 'system',
-            content: IDENTIFICATION_PROMPT
-          },
-          {
-            role: 'user',
-            content: userContent
-          }
-        ],
-        max_tokens: 6000,  // Reduced from 8000 - sufficient for most responses
-      }),
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('OpenAI API error:', response.status, errorText);
-      
-      if (response.status === 429) {
-        return new Response(
-          JSON.stringify({ error: 'OpenAI rate limit exceeded. Please try again in a moment.' }),
-          { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
-      }
-      
-      if (response.status === 401) {
-        return new Response(
-          JSON.stringify({ error: 'Invalid OpenAI API key. Please check your key in Settings → Cloud → Secrets.' }),
-          { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
-      }
-      
-      if (response.status === 402 || response.status === 400) {
-        // OpenAI returns 400 for billing issues sometimes
-        return new Response(
-          JSON.stringify({ error: 'OpenAI billing issue. Please check your OpenAI account has credits.' }),
-          { status: 402, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
-      }
-      
+    // Call the selected AI provider
+    let aiResponse: string;
+    try {
+      aiResponse = await callAI(selectedProvider, apiKey, IDENTIFICATION_PROMPT, userContent);
+    } catch (error) {
+      console.error(`[${selectedProvider}] API call failed:`, error);
       return new Response(
-        JSON.stringify({ error: `OpenAI API error: ${response.status}` }),
+        JSON.stringify({ 
+          error: `${configs[selectedProvider].name} error: ${error instanceof Error ? error.message : 'Unknown error'}`,
+          provider: selectedProvider
+        }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
-
-    const data = await response.json();
-    const aiResponse = data.choices?.[0]?.message?.content;
 
     if (!aiResponse) {
       console.error('No response content from AI');

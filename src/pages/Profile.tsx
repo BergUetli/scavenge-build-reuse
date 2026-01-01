@@ -156,7 +156,7 @@ export default function Profile() {
               <MenuItem
                 icon={Settings}
                 label="Settings"
-                onClick={() => toast({ title: 'Coming Soon', description: 'Settings page under development.' })}
+                onClick={() => navigate('/settings')}
               />
               <Separator />
               <MenuItem
