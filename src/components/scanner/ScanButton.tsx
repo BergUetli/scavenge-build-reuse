@@ -1,10 +1,11 @@
 /**
  * SCAN BUTTON - JunkHauler Style
- * Industrial, glowing, futuristic
+ * Industrial, glowing, futuristic with sound feedback
  */
 
 import { Crosshair, Scan } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useSounds } from '@/hooks/useSounds';
 
 interface ScanButtonProps {
   onClick: () => void;
@@ -14,10 +15,16 @@ interface ScanButtonProps {
 
 export function ScanButton({ onClick, size = 'large', className }: ScanButtonProps) {
   const isLarge = size === 'large';
+  const { playScan } = useSounds();
+
+  const handleClick = () => {
+    playScan();
+    onClick();
+  };
   
   return (
     <button
-      onClick={onClick}
+      onClick={handleClick}
       className={cn(
         'relative group',
         className

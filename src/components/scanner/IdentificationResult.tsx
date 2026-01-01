@@ -12,6 +12,7 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { IdentifiedItem } from '@/types';
 import { cn } from '@/lib/utils';
+import { useSounds } from '@/hooks/useSounds';
 
 interface IdentificationResultProps {
   result: IdentifiedItem;
@@ -40,6 +41,7 @@ export function IdentificationResult({
   onReject,
   isLoading = false
 }: IdentificationResultProps) {
+  const { playClick, playSuccess, playError } = useSounds();
   const confidencePercent = Math.round(result.confidence * 100);
   const colorClass = categoryColors[result.category] || categoryColors.Other;
   
@@ -158,17 +160,17 @@ export function IdentificationResult({
         {/* Action buttons */}
         <div className="flex gap-2 pt-2">
           <Button 
-            onClick={onConfirm} 
+            onClick={() => { playSuccess(); onConfirm(); }} 
             className="flex-1 bg-eco hover:bg-eco/90"
             disabled={isLoading}
           >
             <Check className="w-4 h-4 mr-2" />
             Add to Inventory
           </Button>
-          <Button variant="outline" size="icon" onClick={onEdit} disabled={isLoading}>
+          <Button variant="outline" size="icon" onClick={() => { playClick(); onEdit(); }} disabled={isLoading}>
             <Edit2 className="w-4 h-4" />
           </Button>
-          <Button variant="outline" size="icon" onClick={onReject} disabled={isLoading}>
+          <Button variant="outline" size="icon" onClick={() => { playError(); onReject(); }} disabled={isLoading}>
             <X className="w-4 h-4" />
           </Button>
         </div>

@@ -15,11 +15,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from '@/hooks/use-toast';
 import { JunkHaulerLogo } from '@/components/JunkHaulerLogo';
+import { useSounds } from '@/hooks/useSounds';
 
 export default function Auth() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { signIn, signUp, user, continueAsGuest } = useAuth();
+  const { playClick, playSuccess, playError, playWhoosh } = useSounds();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -45,8 +47,10 @@ export default function Auth() {
   // Handle sign in
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
+    playClick();
 
     if (!email || !password) {
+      playError();
       toast({
         title: 'Missing Fields',
         description: 'Please enter your email and password.',
@@ -56,6 +60,7 @@ export default function Auth() {
     }
 
     if (!isValidEmail(email)) {
+      playError();
       toast({
         title: 'Invalid Email',
         description: 'Please enter a valid email address.',
@@ -68,12 +73,14 @@ export default function Auth() {
     try {
       const { error } = await signIn(email, password);
       if (error) {
+        playError();
         toast({
           title: 'Sign In Failed',
           description: error.message,
           variant: 'destructive',
         });
       } else {
+        playSuccess();
         toast({
           title: 'Welcome Back!',
           description: 'You have signed in successfully.',
@@ -90,8 +97,10 @@ export default function Auth() {
   // Handle sign up
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
+    playClick();
 
     if (!email || !password || !confirmPassword) {
+      playError();
       toast({
         title: 'Missing Fields',
         description: 'Please fill in all fields.',
@@ -101,6 +110,7 @@ export default function Auth() {
     }
 
     if (!isValidEmail(email)) {
+      playError();
       toast({
         title: 'Invalid Email',
         description: 'Please enter a valid email address.',
@@ -110,6 +120,7 @@ export default function Auth() {
     }
 
     if (password.length < 6) {
+      playError();
       toast({
         title: 'Weak Password',
         description: 'Password must be at least 6 characters.',
@@ -119,6 +130,7 @@ export default function Auth() {
     }
 
     if (password !== confirmPassword) {
+      playError();
       toast({
         title: 'Passwords Don\'t Match',
         description: 'Please make sure your passwords match.',
@@ -131,6 +143,7 @@ export default function Auth() {
     try {
       const { error } = await signUp(email, password);
       if (error) {
+        playError();
         // Handle specific error cases
         if (error.message.includes('already registered')) {
           toast({
@@ -146,6 +159,7 @@ export default function Auth() {
           });
         }
       } else {
+        playSuccess();
         toast({
           title: 'Account Created!',
           description: 'Welcome to Scavenger. Start scanning!',
@@ -160,6 +174,7 @@ export default function Auth() {
   };
 
   const handleGuestMode = () => {
+    playWhoosh();
     continueAsGuest();
     toast({
       title: 'Guest Mode',
