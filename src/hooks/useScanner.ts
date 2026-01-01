@@ -189,7 +189,30 @@ export function useScanner() {
 
       if (error) {
         console.error('[Scanner] Edge function error:', error);
-        throw new Error(error.message || 'Identification failed');
+        
+        // Check for specific error types from the response
+        const errorMessage = error.message || 'Identification failed';
+        
+        // Handle credits exhausted error
+        if (errorMessage.includes('credits') || errorMessage.includes('402') || errorMessage.includes('payment')) {
+          throw new Error('AI credits exhausted. Please add funds in Settings → Workspace → Usage.');
+        }
+        
+        // Handle rate limiting
+        if (errorMessage.includes('rate') || errorMessage.includes('429')) {
+          throw new Error('Too many requests. Please wait a moment and try again.');
+        }
+        
+        throw new Error(errorMessage);
+      }
+      
+      // Also check if data contains an error (edge function returned error in body)
+      if (data?.error) {
+        console.error('[Scanner] Edge function returned error:', data.error);
+        if (data.error.includes('credits') || data.error.includes('payment')) {
+          throw new Error('AI credits exhausted. Please add funds in Settings → Workspace → Usage.');
+        }
+        throw new Error(data.error);
       }
 
       console.log('[Scanner] Edge function response:', data);
