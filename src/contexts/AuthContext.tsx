@@ -29,7 +29,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
   const [isGuest, setIsGuest] = useState(() => {
     // Check localStorage for guest mode on initial load
-    return localStorage.getItem('junkHauler_guestMode') === 'true';
+    return localStorage.getItem('kabari_guestMode') === 'true';
   });
 
   useEffect(() => {
@@ -43,7 +43,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         // Exit guest mode if user signs in
         if (session?.user) {
           setIsGuest(false);
-          localStorage.removeItem('junkHauler_guestMode');
+          localStorage.removeItem('kabari_guestMode');
         }
       }
     );
@@ -80,17 +80,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signOut = async () => {
     await supabase.auth.signOut();
     setIsGuest(false);
-    localStorage.removeItem('junkHauler_guestMode');
+    localStorage.removeItem('kabari_guestMode');
   };
 
   const continueAsGuest = () => {
     setIsGuest(true);
-    localStorage.setItem('junkHauler_guestMode', 'true');
+    localStorage.setItem('kabari_guestMode', 'true');
   };
 
   const exitGuestMode = () => {
     setIsGuest(false);
-    localStorage.removeItem('junkHauler_guestMode');
+    localStorage.removeItem('kabari_guestMode');
   };
 
   return (
