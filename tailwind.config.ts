@@ -178,8 +178,8 @@ export default {
         "slide-up": "slide-up 0.4s cubic-bezier(0.16, 1, 0.3, 1)",
         shimmer: "shimmer 2s infinite",
         "scan-line": "scan-line 3s ease-in-out infinite",
-        "scan-pulse": "scan-pulse 3.5s ease-in-out infinite",
-        "pulse-soft": "pulse-soft 4s ease-in-out infinite",
+        "scan-pulse": "scan-pulse 5s ease-in-out infinite",
+        "pulse-soft": "pulse-soft 6s ease-in-out infinite",
       },
       transitionTimingFunction: {
         "out-expo": "cubic-bezier(0.16, 1, 0.3, 1)",
