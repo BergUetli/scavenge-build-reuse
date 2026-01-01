@@ -71,7 +71,7 @@ export default function Home() {
               {/* Tagline */}
               <div className="space-y-1">
                 <p className="text-white/60 text-base sm:text-lg font-medium">
-                  Welcome back, Kabari.
+                  Welcome back, Junk Collector!
                 </p>
                 <p className="text-white/90 text-lg sm:text-xl font-semibold leading-relaxed">
                   Take stuff apart, build something epic, or flip parts for profit.
