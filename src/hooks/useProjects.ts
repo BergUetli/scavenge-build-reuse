@@ -6,7 +6,7 @@
 
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { Project, ProjectMatch, ProjectMatchResponse, RequiredComponent, DifficultyLevel } from '@/types';
+import { Project, ProjectMatch, ProjectMatchResponse, RequiredComponent, DifficultyLevel, InventoryItem } from '@/types';
 import { useInventory } from './useInventory';
 import { toast } from '@/hooks/use-toast';
 
@@ -34,20 +34,44 @@ const componentAliases: Record<string, string[]> = {
   'speaker': ['buzzer', 'audio output', 'piezo'],
 };
 
-// Check if inventory item matches a required component using aliases
-const componentsMatch = (inventoryName: string, requiredName: string): boolean => {
-  const invLower = inventoryName.toLowerCase();
-  const reqLower = requiredName.toLowerCase();
+// Get all searchable terms from an inventory item (name + part_number + description keywords)
+const getInventorySearchTerms = (item: InventoryItem): string[] => {
+  const terms: string[] = [item.component_name.toLowerCase()];
   
-  // Direct match (substring in either direction)
-  if (invLower.includes(reqLower) || reqLower.includes(invLower)) {
-    return true;
+  // Add part_number from technical_specs if available
+  const specs = item.technical_specs as Record<string, unknown> | null;
+  if (specs?.part_number && typeof specs.part_number === 'string') {
+    terms.push(specs.part_number.toLowerCase());
   }
   
-  // Check aliases for inventory item
+  // Add description keywords
+  if (item.description) {
+    terms.push(item.description.toLowerCase());
+  }
+  
+  return terms;
+};
+
+// Check if inventory item matches a required component using aliases and technical specs
+const inventoryItemMatchesComponent = (item: InventoryItem, requiredName: string): boolean => {
+  const searchTerms = getInventorySearchTerms(item);
+  const reqLower = requiredName.toLowerCase();
+  
+  // Check direct matches against all search terms
+  for (const term of searchTerms) {
+    if (term.includes(reqLower) || reqLower.includes(term)) {
+      return true;
+    }
+  }
+  
+  // Check aliases
   for (const [key, aliases] of Object.entries(componentAliases)) {
-    // If inventory item matches a key or its aliases
-    if (invLower.includes(key) || aliases.some(a => invLower.includes(a))) {
+    // If any of our search terms matches a key or its aliases
+    const itemMatchesAlias = searchTerms.some(term => 
+      term.includes(key) || aliases.some(a => term.includes(a))
+    );
+    
+    if (itemMatchesAlias) {
       // Check if required component matches the same key or aliases
       if (reqLower.includes(key) || aliases.some(a => reqLower.includes(a))) {
         return true;
@@ -127,15 +151,14 @@ export function useProjects() {
 
   // Calculate which projects can be built with current inventory
   const getProjectCompatibility = (project: Project) => {
-    const inventoryNames = inventory.map(i => i.component_name);
     const required = project.required_components || [];
     
     const haveComponents = required.filter(comp => 
-      inventoryNames.some(name => componentsMatch(name, comp.name))
+      inventory.some(item => inventoryItemMatchesComponent(item, comp.name))
     );
     
     const missingComponents = required.filter(comp =>
-      !inventoryNames.some(name => componentsMatch(name, comp.name))
+      !inventory.some(item => inventoryItemMatchesComponent(item, comp.name))
     );
 
     const matchPercentage = required.length > 0 
