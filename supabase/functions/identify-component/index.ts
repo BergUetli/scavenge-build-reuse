@@ -559,12 +559,17 @@ function extractPartialInfo(text: string): Record<string, string | null> {
 }
 
 serve(async (req) => {
+  const totalStart = Date.now();
+  console.log('[identify-component] ⏱️ START - Request received');
+  
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
+    const parseStart = Date.now();
     const body = await req.json();
+    console.log(`[identify-component] ⏱️ Body parsing took ${Date.now() - parseStart}ms`);
     console.log('[identify-component] Request body keys:', Object.keys(body));
     
     // Initialize Supabase client for cache operations
@@ -590,7 +595,8 @@ serve(async (req) => {
     
     // Check cache first if we have a hash
     if (imageHash) {
-      console.log('[identify-component] Checking cache for hash:', imageHash);
+      const cacheStart = Date.now();
+      console.log('[identify-component] ⏱️ Checking cache for hash:', imageHash);
       
       const { data: cachedResult, error: cacheError } = await supabase
         .from('scan_cache')
@@ -599,8 +605,10 @@ serve(async (req) => {
         .gt('expires_at', new Date().toISOString())
         .maybeSingle();
       
+      console.log(`[identify-component] ⏱️ Cache lookup took ${Date.now() - cacheStart}ms`);
+      
       if (cachedResult && !cacheError) {
-        console.log('[identify-component] CACHE HIT! Returning cached result (hit count:', cachedResult.hit_count + 1, ')');
+        console.log(`[identify-component] ⏱️ CACHE HIT! Total time: ${Date.now() - totalStart}ms (hit count: ${cachedResult.hit_count + 1})`);
         
         // Update hit count asynchronously
         supabase
@@ -678,6 +686,7 @@ serve(async (req) => {
     console.log(`[identify-component] Using provider: ${configs[selectedProvider].name}`);
 
     // Fetch component limit settings from database
+    const settingsStart = Date.now();
     let minComponents = 8;
     let maxComponents = 20;
     try {
@@ -687,6 +696,8 @@ serve(async (req) => {
         .eq('key', 'component_limit')
         .single();
       
+      console.log(`[identify-component] ⏱️ Settings fetch took ${Date.now() - settingsStart}ms`);
+      
       if (settingsData?.value) {
         const limits = settingsData.value as { min?: number; max?: number };
         if (limits.min) minComponents = limits.min;
@@ -694,11 +705,13 @@ serve(async (req) => {
         console.log(`[identify-component] Using component limits from settings: ${minComponents}-${maxComponents}`);
       }
     } catch (e) {
-      console.log('[identify-component] Using default component limits: 8-20');
+      console.log(`[identify-component] ⏱️ Settings fetch took ${Date.now() - settingsStart}ms (using defaults: 8-20)`);
     }
 
     // Generate the prompt with configured limits
+    const promptStart = Date.now();
     const systemPrompt = getIdentificationPrompt(minComponents, maxComponents);
+    console.log(`[identify-component] ⏱️ Prompt generation took ${Date.now() - promptStart}ms`);
 
     // Build content array with all images
     let promptText = `I'm providing ${images.length} image(s) of the same object from different angles. Analyze ALL images together to identify the object and its salvageable components. Return ONLY valid JSON (no markdown, no code fences). If unsure, set confidence lower and still return a complete JSON object. Keep tools_needed to <= 8 items and common_uses to <= 4. YOU MUST IDENTIFY AT LEAST ${minComponents} COMPONENTS.`;
@@ -727,11 +740,13 @@ serve(async (req) => {
     }
 
     // Call the selected AI provider
+    const aiCallStart = Date.now();
+    console.log(`[identify-component] ⏱️ Starting AI API call to ${selectedProvider}...`);
     let aiResult: AICallResult;
     try {
       aiResult = await callAI(selectedProvider, apiKey, systemPrompt, userContent);
     } catch (error) {
-      console.error(`[${selectedProvider}] API call failed:`, error);
+      console.error(`[${selectedProvider}] API call failed after ${Date.now() - aiCallStart}ms:`, error);
       return new Response(
         JSON.stringify({ 
           error: `${configs[selectedProvider].name} error: ${error instanceof Error ? error.message : 'Unknown error'}`,
@@ -740,6 +755,7 @@ serve(async (req) => {
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
+    console.log(`[identify-component] ⏱️ AI API call took ${Date.now() - aiCallStart}ms`);
 
     const aiResponse = aiResult.content;
     const costUsd = calculateCost(selectedProvider, aiResult.inputTokens, aiResult.outputTokens);
@@ -861,6 +877,8 @@ serve(async (req) => {
       cost_usd: costUsd
     };
 
+    console.log(`[identify-component] ⏱️ TOTAL TIME: ${Date.now() - totalStart}ms`);
+    
     return new Response(
       JSON.stringify(parsedResponse),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

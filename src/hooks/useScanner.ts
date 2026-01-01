@@ -186,7 +186,8 @@ export function useScanner() {
    * @param userHint - Optional user-provided context hint
    */
   const identifyFromImages = useCallback(async (images: string[], userHint?: string): Promise<AIIdentificationResponse | null> => {
-    console.log('[Scanner] identifyFromImages called with', images.length, 'images', userHint ? `and hint: "${userHint}"` : '');
+    const startTime = performance.now();
+    console.log('[Scanner] ⏱️ START - identifyFromImages called with', images.length, 'images', userHint ? `and hint: "${userHint}"` : '');
     
     if (images.length === 0) {
       toast({
@@ -202,14 +203,18 @@ export function useScanner() {
 
     try {
       // Step 1: Compress images for cost optimization (50-70% reduction)
-      console.log('[Scanner] Compressing images for API cost optimization...');
+      const compressionStart = performance.now();
+      console.log('[Scanner] ⏱️ Compressing images...');
       const compressedImages = await Promise.all(images.map(compressImage));
+      console.log(`[Scanner] ⏱️ Compression took ${(performance.now() - compressionStart).toFixed(0)}ms`);
       
       // Step 2: Generate hash for cache lookup (first image only for simplicity)
+      const hashStart = performance.now();
       const imageHash = await hashImage(compressedImages[0]);
-      console.log('[Scanner] Image hash:', imageHash);
+      console.log(`[Scanner] ⏱️ Hashing took ${(performance.now() - hashStart).toFixed(0)}ms - hash: ${imageHash}`);
       
       // Prepare images array with base64 and mime type
+      const prepStart = performance.now();
       const imagesData = compressedImages.map((imageDataUrl, index) => {
         console.log(`[Scanner] Compressed image ${index + 1}, length: ${imageDataUrl.length}`);
         const base64Match = imageDataUrl.match(/^data:image\/(.*?);base64,(.*)$/);
@@ -222,6 +227,7 @@ export function useScanner() {
           imageBase64: base64Match[2]
         };
       });
+      console.log(`[Scanner] ⏱️ Image prep took ${(performance.now() - prepStart).toFixed(0)}ms`);
 
       console.log('[Scanner] Sending', imagesData.length, 'compressed images to edge function');
       if (preferredProvider) {
@@ -229,6 +235,8 @@ export function useScanner() {
       }
 
       // Call edge function with compressed images, hint, hash, provider preference, and user ID
+      const edgeFnStart = performance.now();
+      console.log('[Scanner] ⏱️ Calling edge function...');
       const { data, error } = await supabase.functions.invoke('identify-component', {
         body: { 
           images: imagesData, 
@@ -238,6 +246,7 @@ export function useScanner() {
           userId: user?.id // For cost tracking
         }
       });
+      console.log(`[Scanner] ⏱️ Edge function call took ${(performance.now() - edgeFnStart).toFixed(0)}ms`);
 
       if (error) {
         console.error('[Scanner] Edge function error:', error);
@@ -284,6 +293,7 @@ export function useScanner() {
         });
       }
 
+      console.log(`[Scanner] ⏱️ TOTAL TIME: ${(performance.now() - startTime).toFixed(0)}ms`);
       return result;
 
     } catch (error) {
