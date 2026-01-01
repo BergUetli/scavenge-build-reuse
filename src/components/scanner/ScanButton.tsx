@@ -1,9 +1,10 @@
 /**
  * SCAN BUTTON - JunkHauler Style
- * Industrial, glowing, futuristic with sound feedback
+ * Huge glassmorphic button with animated gradient border
+ * and pulsing glow effect
  */
 
-import { Crosshair, Scan } from 'lucide-react';
+import { Camera } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useSounds } from '@/hooks/useSounds';
 
@@ -15,9 +16,10 @@ interface ScanButtonProps {
 
 export function ScanButton({ onClick, size = 'large', className }: ScanButtonProps) {
   const isLarge = size === 'large';
-  const { playScan } = useSounds();
+  const { playScan, hapticHeavy } = useSounds();
 
   const handleClick = () => {
+    hapticHeavy();
     playScan();
     onClick();
   };
@@ -26,65 +28,85 @@ export function ScanButton({ onClick, size = 'large', className }: ScanButtonPro
     <button
       onClick={handleClick}
       className={cn(
-        'relative group',
+        'relative group touch-target',
         className
       )}
     >
-      {/* Animated pulse rings */}
-      <div className="absolute inset-0 rounded-2xl bg-primary/25 pulse-scan" />
+      {/* Animated gradient border container */}
       <div 
-        className="absolute inset-0 rounded-2xl bg-primary/15 animate-pulse-soft" 
-        style={{ animationDelay: '0.5s' }}
+        className={cn(
+          'absolute -inset-[2px] rounded-3xl opacity-75',
+          'bg-gradient-to-r from-warning via-primary to-warning',
+          'animate-[spin_4s_linear_infinite] blur-[1px]',
+          isLarge && 'group-hover:opacity-100 transition-opacity duration-300'
+        )}
+        style={{
+          backgroundSize: '200% 200%',
+          animation: 'gradient-spin 3s linear infinite',
+        }}
+      />
+
+      {/* Pulsing glow */}
+      <div 
+        className={cn(
+          'absolute -inset-3 rounded-[28px] animate-pulse-soft',
+          isLarge 
+            ? 'bg-gradient-to-r from-warning/30 via-primary/30 to-warning/30 blur-xl' 
+            : 'bg-primary/20 blur-md'
+        )}
+        style={{ animationDuration: '2.5s' }}
       />
       
-      {/* Main button */}
+      {/* Secondary glow ring */}
+      {isLarge && (
+        <div 
+          className="absolute -inset-6 rounded-[36px] bg-gradient-to-r from-primary/15 to-warning/15 blur-2xl animate-pulse-soft"
+          style={{ animationDuration: '3.5s', animationDelay: '0.5s' }}
+        />
+      )}
+      
+      {/* Main button - Glassmorphism */}
       <div
         className={cn(
-          'relative flex flex-col items-center justify-center',
-          'bg-gradient-to-br from-primary via-primary to-primary/85',
-          'rounded-2xl shadow-premium-xl',
+          'relative flex flex-col items-center justify-center gap-3',
+          'bg-background/60 backdrop-blur-xl',
+          'rounded-3xl',
           'transition-all duration-300 ease-out-expo',
-          'group-hover:scale-105 group-active:scale-95',
-          'border border-primary-foreground/20',
-          isLarge ? 'w-[140px] h-[140px]' : 'w-14 h-14'
+          'group-hover:scale-[1.02] group-active:scale-95',
+          'border border-white/10',
+          isLarge 
+            ? 'w-[240px] h-[160px]' 
+            : 'w-16 h-16'
         )}
         style={{
           boxShadow: isLarge 
-            ? '0 0 40px hsl(199 89% 48% / 0.4), 0 16px 48px hsl(199 89% 48% / 0.25), inset 0 1px 0 rgba(255,255,255,0.2)' 
-            : undefined
+            ? `
+              inset 0 1px 1px rgba(255,255,255,0.1),
+              inset 0 -1px 1px rgba(0,0,0,0.1),
+              0 8px 32px rgba(0,0,0,0.3)
+            `
+            : 'inset 0 1px 1px rgba(255,255,255,0.1)',
         }}
       >
-        {/* Inner glow */}
-        <div className="absolute inset-[2px] rounded-[14px] bg-gradient-to-br from-white/25 via-white/5 to-transparent" />
+        {/* Inner gradient overlay */}
+        <div className="absolute inset-0 rounded-3xl bg-gradient-to-br from-white/5 via-transparent to-black/10 pointer-events-none" />
         
-        {/* Corner brackets for targeting effect */}
+        {/* Icon */}
+        <Camera 
+          className={cn(
+            'relative text-white drop-shadow-lg transition-transform duration-300',
+            'group-hover:scale-110',
+            isLarge ? 'w-16 h-16' : 'w-7 h-7'
+          )} 
+          strokeWidth={isLarge ? 1.5 : 2} 
+        />
+        
+        {/* Text */}
         {isLarge && (
-          <>
-            <div className="absolute top-3 left-3 w-4 h-4 border-t-2 border-l-2 border-primary-foreground/50 rounded-tl" />
-            <div className="absolute top-3 right-3 w-4 h-4 border-t-2 border-r-2 border-primary-foreground/50 rounded-tr" />
-            <div className="absolute bottom-3 left-3 w-4 h-4 border-b-2 border-l-2 border-primary-foreground/50 rounded-bl" />
-            <div className="absolute bottom-3 right-3 w-4 h-4 border-b-2 border-r-2 border-primary-foreground/50 rounded-br" />
-          </>
+          <span className="relative text-sm font-bold text-white/90 tracking-[0.25em] uppercase">
+            Tap to Scan
+          </span>
         )}
-        
-        {/* Icon container */}
-        <div className="relative flex flex-col items-center gap-2">
-          <div className={cn(
-            'relative',
-            isLarge ? 'mb-0' : ''
-          )}>
-            {isLarge ? (
-              <Crosshair className="w-12 h-12 text-primary-foreground drop-shadow-md" strokeWidth={1.5} />
-            ) : (
-              <Scan className="w-6 h-6 text-primary-foreground drop-shadow-sm" strokeWidth={2} />
-            )}
-          </div>
-          {isLarge && (
-            <span className="text-xs font-bold text-primary-foreground/90 tracking-[0.2em] uppercase">
-              Scan
-            </span>
-          )}
-        </div>
       </div>
     </button>
   );
