@@ -42,11 +42,11 @@ export function ScanButton({ onClick, isScanning = false, className }: ScanButto
         className={cn(
           'absolute -inset-1 rounded-full',
           'bg-[conic-gradient(from_0deg,hsl(var(--primary)),hsl(var(--accent)),hsl(var(--primary)))]',
-          isScanning ? 'animate-spin' : 'animate-[spin_8s_linear_infinite]',
+          isScanning ? 'animate-spin' : 'animate-[spin_24s_linear_infinite]',
           'opacity-80'
         )}
         style={{
-          animationDuration: isScanning ? '1s' : '8s',
+          animationDuration: isScanning ? '1s' : '24s',
         }}
       />
       
@@ -69,7 +69,7 @@ export function ScanButton({ onClick, isScanning = false, className }: ScanButto
       {/* Secondary ambient glow */}
       <div 
         className="absolute -inset-8 rounded-full bg-primary/20 blur-2xl animate-pulse-soft"
-        style={{ animationDuration: '12s' }}
+        style={{ animationDuration: '20s' }}
       />
       
       {/* Main button - Radial gradient */}
@@ -79,7 +79,7 @@ export function ScanButton({ onClick, isScanning = false, className }: ScanButto
           'w-[280px] h-[280px] rounded-full',
           'bg-[radial-gradient(circle,hsl(var(--primary))_0%,hsl(var(--accent))_100%)]',
           'transition-all duration-200 ease-out',
-          !isScanning && 'animate-[scan-pulse_14s_ease-in-out_infinite]'
+          !isScanning && 'animate-[scan-pulse_24s_ease-in-out_infinite]'
         )}
         style={{
           boxShadow: `
