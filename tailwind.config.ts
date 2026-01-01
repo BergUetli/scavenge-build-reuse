@@ -154,6 +154,20 @@ export default {
           "90%": { opacity: "1" },
           "100%": { top: "100%", opacity: "0" },
         },
+        "scan-pulse": {
+          "0%, 100%": {
+            transform: "scale(1)",
+            boxShadow: "0 0 40px rgba(255, 107, 53, 0.4), 0 20px 60px rgba(0, 0, 0, 0.5)",
+          },
+          "50%": {
+            transform: "scale(1.05)",
+            boxShadow: "0 0 60px rgba(255, 107, 53, 0.6), 0 20px 60px rgba(0, 0, 0, 0.5)",
+          },
+        },
+        "pulse-soft": {
+          "0%, 100%": { opacity: "0.6" },
+          "50%": { opacity: "1" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
@@ -164,6 +178,8 @@ export default {
         "slide-up": "slide-up 0.4s cubic-bezier(0.16, 1, 0.3, 1)",
         shimmer: "shimmer 2s infinite",
         "scan-line": "scan-line 3s ease-in-out infinite",
+        "scan-pulse": "scan-pulse 2s ease-in-out infinite",
+        "pulse-soft": "pulse-soft 2.5s ease-in-out infinite",
       },
       transitionTimingFunction: {
         "out-expo": "cubic-bezier(0.16, 1, 0.3, 1)",
