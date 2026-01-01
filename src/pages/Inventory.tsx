@@ -5,6 +5,8 @@
  */
 
 import { useState, useMemo } from 'react';
+import { ItemDetailSheet } from '@/components/inventory/ItemDetailSheet';
+import { InventoryItem } from '@/types';
 import { useNavigate } from 'react-router-dom';
 import { Search, Filter, Plus, Package, Trash2 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
@@ -44,6 +46,7 @@ export default function Inventory() {
 
   const [filters, setFilters] = useState<InventoryFilters>({});
   const [deleteItemId, setDeleteItemId] = useState<string | null>(null);
+  const [selectedItem, setSelectedItem] = useState<InventoryItem | null>(null);
 
   // Filter inventory based on search and category
   const filteredInventory = useMemo(() => {
@@ -162,9 +165,7 @@ export default function Inventory() {
                 <div key={item.id} className="relative group">
                   <ComponentCard
                     item={item}
-                    onClick={() => {
-                      // TODO: Navigate to detail view
-                    }}
+                    onClick={() => setSelectedItem(item)}
                   />
                   {/* Delete button */}
                   <Button
@@ -204,6 +205,13 @@ export default function Inventory() {
           )}
         </div>
       </div>
+
+      {/* Item detail sheet */}
+      <ItemDetailSheet 
+        item={selectedItem} 
+        open={!!selectedItem} 
+        onOpenChange={(open) => !open && setSelectedItem(null)} 
+      />
 
       {/* Delete confirmation dialog */}
       <AlertDialog open={!!deleteItemId} onOpenChange={() => setDeleteItemId(null)}>
