@@ -15,26 +15,95 @@ const isValidDifficulty = (level: string): level is DifficultyLevel => {
   return ['Novice', 'Easy', 'Beginner', 'Intermediate', 'Advanced', 'Expert'].includes(level);
 };
 
-// Component aliases for smart matching - maps generic terms to specific components
-const componentAliases: Record<string, string[]> = {
-  'microcontroller': ['arduino', 'esp32', 'esp8266', 'atmega', 'pic', 'stm32', 'teensy', 'nano', 'uno', 'mega', 'raspberry pi pico'],
-  'arduino': ['microcontroller', 'atmega', 'atmega32u4', 'atmega328', 'atmega2560', 'uno', 'nano', 'mega', 'leonardo', 'micro', 'pro micro'],
-  'atmega': ['arduino', 'microcontroller', 'atmega32u4', 'atmega328', 'atmega2560'],
-  'atmega32u4': ['arduino', 'arduino leonardo', 'arduino micro', 'pro micro', 'microcontroller'],
-  'atmega328': ['arduino', 'arduino uno', 'arduino nano', 'microcontroller'],
-  'esp32': ['microcontroller', 'esp', 'wifi module', 'bluetooth module'],
-  'raspberry pi': ['single board computer', 'sbc', 'linux board'],
-  'motor': ['dc motor', 'stepper motor', 'servo motor', 'brushless motor'],
-  'dc motor': ['motor', 'small motor'],
-  'led': ['light', 'indicator', 'diode'],
-  'capacitor': ['cap', 'electrolytic', 'ceramic capacitor'],
-  'resistor': ['resistance', 'fixed resistor'],
-  'sensor': ['detector', 'transducer'],
-  'switch': ['button', 'toggle', 'push button'],
-  'wire': ['jumper wire', 'cable', 'conductor', 'hookup wire', 'jumper'],
-  'battery': ['cell', 'power cell', '18650', 'lipo', 'li-ion'],
-  'display': ['screen', 'lcd', 'oled', 'led matrix'],
-  'speaker': ['buzzer', 'audio output', 'piezo'],
+/**
+ * COMPONENT COMPATIBILITY SYSTEM
+ * 
+ * Defines which components are truly interchangeable in projects.
+ * Each group contains components that can substitute for each other.
+ */
+const compatibilityGroups: string[][] = [
+  // ATmega32U4 family - native USB, NOT compatible with 328/2560
+  ['atmega32u4', 'arduino leonardo', 'arduino micro', 'pro micro', 'teensy 2.0'],
+  
+  // ATmega328P family - classic Arduino, compatible with each other
+  ['atmega328', 'atmega328p', 'arduino uno', 'arduino nano', 'arduino pro mini'],
+  
+  // ATmega2560 family - more pins/memory
+  ['atmega2560', 'arduino mega', 'arduino mega 2560'],
+  
+  // ESP32 family
+  ['esp32', 'esp32-wroom', 'esp32-wrover', 'esp32 devkit'],
+  
+  // ESP8266 family
+  ['esp8266', 'nodemcu', 'wemos d1', 'd1 mini'],
+  
+  // Raspberry Pi Pico family
+  ['rp2040', 'raspberry pi pico', 'pico'],
+  
+  // Generic passive components - truly interchangeable
+  ['led', 'light emitting diode', '5mm led', '3mm led'],
+  ['resistor', 'fixed resistor', 'carbon resistor', 'metal film resistor'],
+  ['capacitor', 'ceramic capacitor', 'electrolytic capacitor', 'cap'],
+  ['wire', 'jumper wire', 'hookup wire', 'jumper wires', 'connecting wire'],
+  ['switch', 'push button', 'tactile switch', 'button', 'momentary switch'],
+  
+  // Motor types - generally NOT interchangeable but similar enough for basic projects
+  ['dc motor', 'small dc motor', 'toy motor'],
+  ['servo', 'servo motor', 'sg90', 'mg90s', 'micro servo'],
+  ['stepper', 'stepper motor', 'nema17', '28byj-48'],
+  
+  // Displays
+  ['oled display', 'ssd1306', '0.96 oled', 'i2c oled'],
+  ['lcd', '16x2 lcd', 'lcd display', 'character lcd'],
+  ['led matrix', '8x8 led matrix', 'max7219 matrix', 'dot matrix'],
+  
+  // Sensors - group by function
+  ['temperature sensor', 'dht11', 'dht22', 'ds18b20', 'thermistor'],
+  ['ultrasonic sensor', 'hc-sr04', 'distance sensor'],
+  ['pir sensor', 'motion sensor', 'hc-sr501'],
+  
+  // Power
+  ['18650 battery', '18650', 'li-ion battery', 'lithium battery'],
+  ['coin cell', 'cr2032', 'button cell'],
+];
+
+/**
+ * Find which compatibility group a component belongs to
+ */
+const findCompatibilityGroup = (componentName: string): string[] | null => {
+  const nameLower = componentName.toLowerCase();
+  
+  for (const group of compatibilityGroups) {
+    if (group.some(term => nameLower.includes(term) || term.includes(nameLower))) {
+      return group;
+    }
+  }
+  return null;
+};
+
+/**
+ * Check if two components are compatible (can substitute for each other)
+ */
+const areComponentsCompatible = (inventoryTerm: string, requiredName: string): boolean => {
+  const invLower = inventoryTerm.toLowerCase();
+  const reqLower = requiredName.toLowerCase();
+  
+  // Direct match
+  if (invLower.includes(reqLower) || reqLower.includes(invLower)) {
+    return true;
+  }
+  
+  // Check if both belong to the same compatibility group
+  const invGroup = findCompatibilityGroup(invLower);
+  const reqGroup = findCompatibilityGroup(reqLower);
+  
+  if (invGroup && reqGroup) {
+    // They must be in the SAME group to be compatible
+    return invGroup === reqGroup || 
+           invGroup.some(term => reqGroup.includes(term));
+  }
+  
+  return false;
 };
 
 // Get all searchable terms from an inventory item (name + part_number + description keywords)
@@ -55,30 +124,14 @@ const getInventorySearchTerms = (item: InventoryItem): string[] => {
   return terms;
 };
 
-// Check if inventory item matches a required component using aliases and technical specs
+// Check if inventory item matches a required component using compatibility groups
 const inventoryItemMatchesComponent = (item: InventoryItem, requiredName: string): boolean => {
   const searchTerms = getInventorySearchTerms(item);
-  const reqLower = requiredName.toLowerCase();
   
-  // Check direct matches against all search terms
+  // Check each search term against the required component
   for (const term of searchTerms) {
-    if (term.includes(reqLower) || reqLower.includes(term)) {
+    if (areComponentsCompatible(term, requiredName)) {
       return true;
-    }
-  }
-  
-  // Check aliases
-  for (const [key, aliases] of Object.entries(componentAliases)) {
-    // If any of our search terms matches a key or its aliases
-    const itemMatchesAlias = searchTerms.some(term => 
-      term.includes(key) || aliases.some(a => term.includes(a))
-    );
-    
-    if (itemMatchesAlias) {
-      // Check if required component matches the same key or aliases
-      if (reqLower.includes(key) || aliases.some(a => reqLower.includes(a))) {
-        return true;
-      }
     }
   }
   
