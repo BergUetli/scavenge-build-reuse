@@ -1,8 +1,14 @@
 /**
  * SCAVENGER AI IDENTIFICATION EDGE FUNCTION
  * 
- * This function uses OpenAI GPT-4o with vision capabilities
+ * This function uses OpenAI GPT-4o-mini with vision capabilities
  * to identify components and materials from images.
+ * 
+ * Cost optimizations:
+ * - Uses gpt-4o-mini (much cheaper than gpt-4o)
+ * - Caches results by image hash (scan_cache table)
+ * - Uses 'low' detail for pre-compressed images
+ * - Reduced max_tokens
  * 
  * Supports multiple images for better identification accuracy.
  * Uses your own OpenAI API key for direct billing.
@@ -10,6 +16,7 @@
 
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -272,12 +279,48 @@ serve(async (req) => {
     const body = await req.json();
     console.log('[identify-component] Request body keys:', Object.keys(body));
     
+    // Initialize Supabase client for cache operations
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+    
     // Support both single image (legacy) and multiple images
     let images: Array<{ imageBase64: string; mimeType: string }> = [];
     const userHint: string | undefined = body.userHint;
+    const imageHash: string | undefined = body.imageHash;
     
     if (userHint) {
       console.log('[identify-component] User provided hint:', userHint);
+    }
+    
+    // Check cache first if we have a hash
+    if (imageHash) {
+      console.log('[identify-component] Checking cache for hash:', imageHash);
+      
+      const { data: cachedResult, error: cacheError } = await supabase
+        .from('scan_cache')
+        .select('scan_result, id, hit_count')
+        .eq('image_hash', imageHash)
+        .gt('expires_at', new Date().toISOString())
+        .maybeSingle();
+      
+      if (cachedResult && !cacheError) {
+        console.log('[identify-component] CACHE HIT! Returning cached result (hit count:', cachedResult.hit_count + 1, ')');
+        
+        // Update hit count asynchronously
+        supabase
+          .from('scan_cache')
+          .update({ hit_count: cachedResult.hit_count + 1 })
+          .eq('id', cachedResult.id)
+          .then(() => {});
+        
+        return new Response(
+          JSON.stringify({ ...cachedResult.scan_result, cached: true }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+      
+      console.log('[identify-component] Cache miss, proceeding with API call');
     }
     
     if (body.images && Array.isArray(body.images)) {
@@ -318,7 +361,9 @@ serve(async (req) => {
       );
     }
 
-    console.log(`Sending ${images.length} image(s) to OpenAI GPT-4o for identification...`);
+    // Use gpt-4o-mini for cost efficiency (significantly cheaper than gpt-4o)
+    // gpt-4o-mini still has excellent vision capabilities
+    console.log(`Sending ${images.length} image(s) to OpenAI GPT-4o-mini for identification...`);
 
     // Build content array with all images
     let promptText = `I'm providing ${images.length} image(s) of the same object from different angles. Analyze ALL images together to identify the object and its salvageable components. Return ONLY valid JSON (no markdown, no code fences). If unsure, set confidence lower and still return a complete JSON object. Keep tools_needed to <= 8 items and common_uses to <= 4.`;
@@ -335,13 +380,13 @@ serve(async (req) => {
       }
     ];
 
-    // Add all images with high detail for better component recognition
+    // Add all images with 'low' detail since they're pre-compressed (saves tokens/cost)
     for (const img of images) {
       userContent.push({
         type: 'image_url',
         image_url: {
           url: `data:${img.mimeType};base64,${img.imageBase64}`,
-          detail: 'high'
+          detail: 'low'  // Use 'low' for pre-compressed images (65 tokens vs 85-170 for 'high')
         }
       });
     }
@@ -353,7 +398,7 @@ serve(async (req) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-4o',
+        model: 'gpt-4o-mini',  // Much cheaper than gpt-4o (~$0.15/$0.60 vs $5/$15 per 1M tokens)
         messages: [
           {
             role: 'system',
@@ -364,7 +409,7 @@ serve(async (req) => {
             content: userContent
           }
         ],
-        max_tokens: 8000,
+        max_tokens: 6000,  // Reduced from 8000 - sufficient for most responses
       }),
     });
 
@@ -459,6 +504,26 @@ serve(async (req) => {
       });
     }
     console.log('==============================');
+
+    // Cache the result if we have a hash (save for 7 days)
+    if (imageHash && parsedResponse.items?.length > 0) {
+      console.log('[identify-component] Caching result for hash:', imageHash);
+      supabase
+        .from('scan_cache')
+        .upsert({
+          image_hash: imageHash,
+          scan_result: parsedResponse,
+          expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+          hit_count: 0
+        }, { onConflict: 'image_hash' })
+        .then(({ error }) => {
+          if (error) {
+            console.error('[identify-component] Failed to cache result:', error.message);
+          } else {
+            console.log('[identify-component] Result cached successfully');
+          }
+        });
+    }
 
     return new Response(
       JSON.stringify(parsedResponse),

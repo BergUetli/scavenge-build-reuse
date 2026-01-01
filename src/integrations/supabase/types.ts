@@ -235,6 +235,33 @@ export type Database = {
         }
         Relationships: []
       }
+      scan_cache: {
+        Row: {
+          created_at: string
+          expires_at: string
+          hit_count: number
+          id: string
+          image_hash: string
+          scan_result: Json
+        }
+        Insert: {
+          created_at?: string
+          expires_at?: string
+          hit_count?: number
+          id?: string
+          image_hash: string
+          scan_result: Json
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string
+          hit_count?: number
+          id?: string
+          image_hash?: string
+          scan_result?: Json
+        }
+        Relationships: []
+      }
       scan_history: {
         Row: {
           ai_response: Json | null
