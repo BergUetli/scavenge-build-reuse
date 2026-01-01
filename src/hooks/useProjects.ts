@@ -18,7 +18,10 @@ const isValidDifficulty = (level: string): level is DifficultyLevel => {
 // Component aliases for smart matching - maps generic terms to specific components
 const componentAliases: Record<string, string[]> = {
   'microcontroller': ['arduino', 'esp32', 'esp8266', 'atmega', 'pic', 'stm32', 'teensy', 'nano', 'uno', 'mega', 'raspberry pi pico'],
-  'arduino': ['microcontroller', 'atmega', 'uno', 'nano', 'mega', 'leonardo', 'micro'],
+  'arduino': ['microcontroller', 'atmega', 'atmega32u4', 'atmega328', 'atmega2560', 'uno', 'nano', 'mega', 'leonardo', 'micro', 'pro micro'],
+  'atmega': ['arduino', 'microcontroller', 'atmega32u4', 'atmega328', 'atmega2560'],
+  'atmega32u4': ['arduino', 'arduino leonardo', 'arduino micro', 'pro micro', 'microcontroller'],
+  'atmega328': ['arduino', 'arduino uno', 'arduino nano', 'microcontroller'],
   'esp32': ['microcontroller', 'esp', 'wifi module', 'bluetooth module'],
   'raspberry pi': ['single board computer', 'sbc', 'linux board'],
   'motor': ['dc motor', 'stepper motor', 'servo motor', 'brushless motor'],
@@ -28,7 +31,7 @@ const componentAliases: Record<string, string[]> = {
   'resistor': ['resistance', 'fixed resistor'],
   'sensor': ['detector', 'transducer'],
   'switch': ['button', 'toggle', 'push button'],
-  'wire': ['jumper wire', 'cable', 'conductor', 'hookup wire'],
+  'wire': ['jumper wire', 'cable', 'conductor', 'hookup wire', 'jumper'],
   'battery': ['cell', 'power cell', '18650', 'lipo', 'li-ion'],
   'display': ['screen', 'lcd', 'oled', 'led matrix'],
   'speaker': ['buzzer', 'audio output', 'piezo'],
