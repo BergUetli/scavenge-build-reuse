@@ -147,9 +147,11 @@ export function useScanner() {
 
   /**
    * Process multiple images with AI identification
+   * @param images - Array of base64 image data URLs
+   * @param userHint - Optional user-provided context hint
    */
-  const identifyFromImages = useCallback(async (images: string[]): Promise<AIIdentificationResponse | null> => {
-    console.log('[Scanner] identifyFromImages called with', images.length, 'images');
+  const identifyFromImages = useCallback(async (images: string[], userHint?: string): Promise<AIIdentificationResponse | null> => {
+    console.log('[Scanner] identifyFromImages called with', images.length, 'images', userHint ? `and hint: "${userHint}"` : '');
     
     if (images.length === 0) {
       toast({
@@ -180,9 +182,9 @@ export function useScanner() {
 
       console.log('[Scanner] Sending', imagesData.length, 'images to edge function');
 
-      // Call edge function with multiple images
+      // Call edge function with multiple images and optional hint
       const { data, error } = await supabase.functions.invoke('identify-component', {
-        body: { images: imagesData }
+        body: { images: imagesData, userHint: userHint?.trim() || undefined }
       });
 
       if (error) {
@@ -225,11 +227,11 @@ export function useScanner() {
   }, []);
 
   /**
-   * Analyze all captured images
+   * Analyze all captured images with optional user hint
    */
-  const analyzeAllImages = useCallback(async (): Promise<AIIdentificationResponse | null> => {
+  const analyzeAllImages = useCallback(async (userHint?: string): Promise<AIIdentificationResponse | null> => {
     stopCamera();
-    return identifyFromImages(capturedImages);
+    return identifyFromImages(capturedImages, userHint);
   }, [capturedImages, identifyFromImages, stopCamera]);
 
   /**

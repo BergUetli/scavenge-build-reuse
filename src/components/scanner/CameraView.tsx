@@ -3,12 +3,13 @@
  * 
  * Full-screen camera interface for scanning components.
  * Supports multi-photo capture with thumbnail strip.
- * Includes sound feedback for actions.
+ * Includes sound feedback for actions and pre-scan hints.
  */
 
 import { useRef, useState, useCallback } from 'react';
-import { Camera, X, ImagePlus, Trash2, Send } from 'lucide-react';
+import { Camera, X, ImagePlus, Send, MessageSquare } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 import { useSounds } from '@/hooks/useSounds';
 
@@ -16,6 +17,8 @@ interface CameraViewProps {
   videoRef: React.RefObject<HTMLVideoElement>;
   isStreaming: boolean;
   capturedImages: string[];
+  userHint: string;
+  onHintChange: (hint: string) => void;
   onCapture: () => void;
   onUpload: (file: File) => void;
   onRemoveImage: (index: number) => void;
@@ -27,6 +30,8 @@ export function CameraView({
   videoRef, 
   isStreaming,
   capturedImages,
+  userHint,
+  onHintChange,
   onCapture, 
   onUpload,
   onRemoveImage,
@@ -35,6 +40,7 @@ export function CameraView({
 }: CameraViewProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [flash, setFlash] = useState(false);
+  const [showHintInput, setShowHintInput] = useState(false);
   const { playClick, playScan, playWhoosh } = useSounds();
 
   const handleFileChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
@@ -123,13 +129,47 @@ export function CameraView({
         )}
       </div>
       
-      {/* Hint text */}
-      <div className="absolute top-20 left-0 right-0 text-center safe-area-pt">
-        <p className="text-white/80 text-sm bg-black/30 backdrop-blur-sm inline-block px-4 py-2 rounded-full">
-          {hasImages 
-            ? 'Take more angles or tap Analyze'
-            : 'Position component within the frame'}
-        </p>
+      {/* Hint text and input */}
+      <div className="absolute top-20 left-0 right-0 text-center safe-area-pt px-4">
+        {showHintInput ? (
+          <div className="flex items-center gap-2 max-w-sm mx-auto bg-black/50 backdrop-blur-sm rounded-full px-3 py-2">
+            <MessageSquare className="w-4 h-4 text-white/70 flex-shrink-0" />
+            <Input
+              value={userHint}
+              onChange={(e) => onHintChange(e.target.value)}
+              placeholder="e.g., JBL wireless headset"
+              className="bg-transparent border-none text-white placeholder:text-white/50 text-sm h-auto py-0 focus-visible:ring-0"
+              maxLength={100}
+            />
+            <button 
+              onClick={() => {
+                playClick();
+                setShowHintInput(false);
+              }}
+              className="text-white/70 hover:text-white"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        ) : (
+          <div className="flex flex-col items-center gap-2">
+            <p className="text-white/80 text-sm bg-black/30 backdrop-blur-sm inline-block px-4 py-2 rounded-full">
+              {hasImages 
+                ? 'Take more angles or tap Analyze'
+                : 'Position component within the frame'}
+            </p>
+            <button
+              onClick={() => {
+                playClick();
+                setShowHintInput(true);
+              }}
+              className="text-primary text-xs bg-black/40 backdrop-blur-sm px-3 py-1.5 rounded-full flex items-center gap-1.5 hover:bg-black/50 transition-colors"
+            >
+              <MessageSquare className="w-3 h-3" />
+              {userHint ? `Hint: "${userHint.substring(0, 20)}${userHint.length > 20 ? '...' : ''}"` : 'Add hint (optional)'}
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Captured images thumbnail strip */}

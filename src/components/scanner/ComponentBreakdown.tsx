@@ -36,12 +36,16 @@ import {
   Play,
   ShoppingCart,
   Link2,
-  X
+  X,
+  Edit3,
+  Save
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { 
   Popover,
   PopoverContent,
@@ -50,6 +54,7 @@ import {
 import { AIIdentificationResponse, IdentifiedItem, TechnicalSpecs, DisassemblyInfo, SourceInfo } from '@/types';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
+import { useSounds } from '@/hooks/useSounds';
 
 interface ComponentBreakdownProps {
   result: AIIdentificationResponse;
@@ -57,6 +62,7 @@ interface ComponentBreakdownProps {
   onAddComponent: (item: IdentifiedItem) => void;
   onAddAll: () => void;
   onRescan: () => void;
+  onUpdateComponent?: (index: number, updates: Partial<IdentifiedItem>) => void;
   isLoading?: boolean;
 }
 
@@ -104,6 +110,7 @@ export function ComponentBreakdown({
   onAddComponent,
   onAddAll,
   onRescan,
+  onUpdateComponent,
   isLoading = false
 }: ComponentBreakdownProps) {
   const [viewMode, setViewMode] = useState<ViewMode>('main');
@@ -111,6 +118,9 @@ export function ComponentBreakdown({
   const [addedItems, setAddedItems] = useState<Set<string>>(new Set());
   const [componentImages, setComponentImages] = useState<Record<string, string>>({});
   const [loadingImages, setLoadingImages] = useState<Set<string>>(new Set());
+  const [editingIndex, setEditingIndex] = useState<number | null>(null);
+  const [editForm, setEditForm] = useState<Partial<IdentifiedItem>>({});
+  const { playClick, playSuccess } = useSounds();
 
   // Generate image for a component
   const generateImage = async (componentName: string, category: string) => {
@@ -164,9 +174,45 @@ export function ComponentBreakdown({
     }
   }, [selectedComponent]);
 
+  // Sync selected component with result when it changes (after edit)
+  useEffect(() => {
+    if (selectedComponent && result.items) {
+      const currentIndex = result.items.findIndex(i => i.component_name === selectedComponent.component_name);
+      if (currentIndex >= 0) {
+        setSelectedComponent(result.items[currentIndex]);
+      }
+    }
+  }, [result.items]);
+
   const handleAddComponent = (item: IdentifiedItem) => {
     onAddComponent(item);
     setAddedItems(prev => new Set(prev).add(item.component_name));
+  };
+
+  const startEditing = (index: number, item: IdentifiedItem) => {
+    playClick();
+    setEditingIndex(index);
+    setEditForm({
+      component_name: item.component_name,
+      category: item.category,
+      condition: item.condition,
+      description: item.description,
+    });
+  };
+
+  const saveEdit = () => {
+    if (editingIndex !== null && onUpdateComponent) {
+      playSuccess();
+      onUpdateComponent(editingIndex, editForm);
+      setEditingIndex(null);
+      setEditForm({});
+    }
+  };
+
+  const cancelEdit = () => {
+    playClick();
+    setEditingIndex(null);
+    setEditForm({});
   };
 
   const hasComponents = result.items && result.items.length > 0;

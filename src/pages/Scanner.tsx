@@ -43,6 +43,7 @@ export default function Scanner() {
 
   const [showResult, setShowResult] = useState(false);
   const [fullResult, setFullResult] = useState<AIIdentificationResponse | null>(null);
+  const [userHint, setUserHint] = useState('');
 
   // Start camera on mount (allow for both users and guests)
   useEffect(() => {
@@ -62,9 +63,9 @@ export default function Scanner() {
     await addUploadedImage(file);
   }, [addUploadedImage]);
 
-  // Handle analyze button - sends all images to AI
+  // Handle analyze button - sends all images to AI with optional hint
   const handleAnalyze = useCallback(async () => {
-    const result = await analyzeAllImages();
+    const result = await analyzeAllImages(userHint);
     
     if (!result) {
       setFullResult({ items: [], message: 'Analysis failed. Please try again.' });
@@ -75,7 +76,7 @@ export default function Scanner() {
     console.log('[Scanner] Full AI result:', result);
     setFullResult(result);
     setShowResult(true);
-  }, [analyzeAllImages]);
+  }, [analyzeAllImages, userHint]);
 
   // Handle closing scanner
   const handleClose = useCallback(() => {
@@ -183,9 +184,22 @@ export default function Scanner() {
   const handleRescan = useCallback(() => {
     setShowResult(false);
     setFullResult(null);
+    setUserHint('');
     reset();
     startCamera();
   }, [reset, startCamera]);
+
+  // Handle updating a component's data (user corrections)
+  const handleUpdateComponent = useCallback((index: number, updates: Partial<IdentifiedItem>) => {
+    if (!fullResult?.items) return;
+    
+    setFullResult(prev => {
+      if (!prev?.items) return prev;
+      const newItems = [...prev.items];
+      newItems[index] = { ...newItems[index], ...updates };
+      return { ...prev, items: newItems };
+    });
+  }, [fullResult]);
 
   // Require auth or guest mode
   if (!user && !isGuest) {
@@ -218,6 +232,7 @@ export default function Scanner() {
             onAddComponent={handleAddComponent}
             onAddAll={handleAddAll}
             onRescan={handleRescan}
+            onUpdateComponent={handleUpdateComponent}
             isLoading={addItem.isPending}
           />
         </div>
@@ -246,6 +261,8 @@ export default function Scanner() {
       videoRef={videoRef}
       isStreaming={isCapturing}
       capturedImages={capturedImages}
+      userHint={userHint}
+      onHintChange={setUserHint}
       onCapture={handleCapture}
       onUpload={handleUpload}
       onRemoveImage={removeImage}
