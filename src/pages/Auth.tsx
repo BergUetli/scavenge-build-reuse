@@ -4,9 +4,9 @@
  * Handles user sign in and sign up with email/password.
  */
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Leaf, Mail, Lock, Eye, EyeOff, Loader2 } from 'lucide-react';
+import { Mail, Lock, Eye, EyeOff, Loader2, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -14,11 +14,12 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from '@/hooks/use-toast';
+import { JunkHaulerLogo } from '@/components/JunkHaulerLogo';
 
 export default function Auth() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { signIn, signUp, user } = useAuth();
+  const { signIn, signUp, user, continueAsGuest } = useAuth();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -30,10 +31,11 @@ export default function Auth() {
   const [activeTab, setActiveTab] = useState(initialMode);
 
   // Redirect if already signed in
-  if (user) {
-    navigate('/');
-    return null;
-  }
+  useEffect(() => {
+    if (user) {
+      navigate('/');
+    }
+  }, [user, navigate]);
 
   // Validate email
   const isValidEmail = (email: string) => {
@@ -157,18 +159,27 @@ export default function Auth() {
     }
   };
 
+  const handleGuestMode = () => {
+    continueAsGuest();
+    toast({
+      title: 'Guest Mode',
+      description: 'Browsing as guest. Sign up to save your finds!',
+    });
+    navigate('/');
+  };
+
+  if (user) return null;
+
   return (
     <div className="min-h-screen bg-gradient-subtle flex items-center justify-center p-4 safe-area-pt safe-area-pb">
       <Card className="w-full max-w-sm">
         <CardHeader className="text-center">
           <div className="flex items-center justify-center gap-2 mb-2">
-            <div className="w-10 h-10 rounded-full bg-gradient-primary flex items-center justify-center">
-              <Leaf className="w-5 h-5 text-white" />
-            </div>
+            <JunkHaulerLogo size={48} />
           </div>
-          <CardTitle className="text-2xl">Scavenger</CardTitle>
+          <CardTitle className="text-2xl">JunkHauler</CardTitle>
           <CardDescription>
-            Transform discarded items into amazing projects
+            Salvage. Build. Repeat.
           </CardDescription>
         </CardHeader>
 
@@ -316,8 +327,28 @@ export default function Auth() {
             </TabsContent>
           </Tabs>
 
-          <p className="text-center text-xs text-muted-foreground mt-6">
-            By continuing, you agree to our Terms of Service and Privacy Policy.
+          {/* Divider */}
+          <div className="relative my-6">
+            <div className="absolute inset-0 flex items-center">
+              <span className="w-full border-t border-border" />
+            </div>
+            <div className="relative flex justify-center text-xs uppercase">
+              <span className="bg-card px-2 text-muted-foreground">Or</span>
+            </div>
+          </div>
+
+          {/* Continue as Guest */}
+          <Button 
+            variant="outline" 
+            className="w-full" 
+            onClick={handleGuestMode}
+          >
+            <User className="w-4 h-4 mr-2" />
+            Continue as Guest
+          </Button>
+
+          <p className="text-center text-xs text-muted-foreground mt-4">
+            Guest mode lets you explore. Sign up to save your finds!
           </p>
         </CardContent>
       </Card>

@@ -237,124 +237,123 @@ export function ComponentBreakdown({
               className="w-full h-full object-cover"
             />
             <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/80 to-transparent">
-              <div className="flex items-center justify-between">
-                <p className="text-white/80 text-sm">
-                  {difficulty ? `${difficulty.label} to salvage` : 'Tap below to see parts'}
-                </p>
-                {/* Disassembly Info Button */}
-                {result.disassembly && (
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <button className="w-8 h-8 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center hover:bg-white/30 transition-colors">
-                        <Info className="w-4 h-4 text-white" />
-                      </button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-80 p-0" align="end">
-                      <div className="p-4 space-y-3">
-                        <div className="flex items-center justify-between">
-                          <h4 className="font-semibold text-sm">How to Disassemble</h4>
-                          <Badge variant="outline" className="text-xs">
-                            <Clock className="w-3 h-3 mr-1" />
-                            {result.disassembly.time_estimate || 'Unknown'}
-                          </Badge>
-                        </div>
+              <p className="text-white/80 text-sm">
+                {difficulty ? `${difficulty.label} to salvage` : 'Tap below to see parts'}
+              </p>
+            </div>
+          </div>
+        )}
 
-                        {/* Risk Indicators */}
-                        <div className="grid grid-cols-2 gap-2">
-                          <div className={cn(
-                            "rounded-lg p-2 text-center",
-                            result.disassembly.injury_risk === 'High' ? 'bg-destructive/10 border border-destructive/20' :
-                            result.disassembly.injury_risk === 'Medium' ? 'bg-warning/10 border border-warning/20' :
-                            'bg-eco/10 border border-eco/20'
-                          )}>
-                            <p className="text-[10px] uppercase tracking-wide text-muted-foreground mb-0.5">Injury Risk</p>
-                            <p className={cn(
-                              "text-xs font-bold",
-                              result.disassembly.injury_risk === 'High' ? 'text-destructive' :
-                              result.disassembly.injury_risk === 'Medium' ? 'text-warning' :
-                              'text-eco'
-                            )}>
-                              {result.disassembly.injury_risk || 'Unknown'}
-                            </p>
-                          </div>
-                          <div className={cn(
-                            "rounded-lg p-2 text-center",
-                            result.disassembly.damage_risk === 'High' ? 'bg-destructive/10 border border-destructive/20' :
-                            result.disassembly.damage_risk === 'Medium' ? 'bg-warning/10 border border-warning/20' :
-                            'bg-eco/10 border border-eco/20'
-                          )}>
-                            <p className="text-[10px] uppercase tracking-wide text-muted-foreground mb-0.5">Damage Risk</p>
-                            <p className={cn(
-                              "text-xs font-bold",
-                              result.disassembly.damage_risk === 'High' ? 'text-destructive' :
-                              result.disassembly.damage_risk === 'Medium' ? 'text-warning' :
-                              'text-eco'
-                            )}>
-                              {result.disassembly.damage_risk || 'Unknown'}
-                            </p>
-                          </div>
-                        </div>
-                        
-                        {/* Steps */}
-                        <div className="space-y-2">
-                          {result.disassembly.steps?.slice(0, 5).map((step, idx) => (
-                            <div key={idx} className="flex gap-2 text-xs">
-                              <span className="font-bold text-primary">{idx + 1}.</span>
-                              <span className="text-muted-foreground">{step}</span>
-                            </div>
-                          ))}
-                          {(result.disassembly.steps?.length || 0) > 5 && (
-                            <p className="text-xs text-muted-foreground italic">
-                              +{result.disassembly.steps!.length - 5} more steps...
-                            </p>
-                          )}
-                        </div>
-
-                        {/* Safety Warnings */}
-                        {result.disassembly.safety_warnings && result.disassembly.safety_warnings.length > 0 && (
-                          <div className="rounded-lg bg-warning/10 border border-warning/20 p-2">
-                            <div className="flex items-center gap-1.5 text-warning mb-1">
-                              <AlertTriangle className="w-3 h-3" />
-                              <span className="text-xs font-medium">Safety</span>
-                            </div>
-                            <ul className="text-xs text-muted-foreground space-y-0.5">
-                              {result.disassembly.safety_warnings.map((warn, idx) => (
-                                <li key={idx}>• {warn}</li>
-                              ))}
-                            </ul>
-                          </div>
-                        )}
-
-                        {/* External Links */}
-                        <div className="flex gap-2 pt-1">
-                          {result.disassembly.tutorial_url && (
-                            <a 
-                              href={result.disassembly.tutorial_url}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="flex items-center gap-1 text-xs text-primary hover:underline"
-                            >
-                              <BookOpen className="w-3 h-3" />
-                              Guide
-                            </a>
-                          )}
-                          {result.disassembly.video_url && (
-                            <a 
-                              href={result.disassembly.video_url}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="flex items-center gap-1 text-xs text-primary hover:underline"
-                            >
-                              <Play className="w-3 h-3" />
-                              Video
-                            </a>
-                          )}
-                        </div>
-                      </div>
-                    </PopoverContent>
-                  </Popover>
-                )}
+        {/* Disassembly Section - Inline on Main View */}
+        {result.disassembly && (
+          <div className="rounded-2xl bg-muted/50 border border-border/50 overflow-hidden">
+            <div className="p-4 border-b border-border/30 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Wrench className="w-5 h-5 text-primary" />
+                <h3 className="font-semibold text-foreground">How to Disassemble</h3>
               </div>
+              <Badge variant="outline" className="text-xs">
+                <Clock className="w-3 h-3 mr-1" />
+                {result.disassembly.time_estimate || 'Unknown'}
+              </Badge>
+            </div>
+
+            <div className="p-4 space-y-4">
+              {/* Risk Indicators */}
+              <div className="grid grid-cols-2 gap-3">
+                <div className={cn(
+                  "rounded-xl p-3 text-center",
+                  result.disassembly.injury_risk === 'High' ? 'bg-destructive/10 border border-destructive/20' :
+                  result.disassembly.injury_risk === 'Medium' ? 'bg-warning/10 border border-warning/20' :
+                  'bg-eco/10 border border-eco/20'
+                )}>
+                  <p className="text-[10px] uppercase tracking-wide text-muted-foreground mb-1">Injury Risk</p>
+                  <p className={cn(
+                    "text-sm font-bold",
+                    result.disassembly.injury_risk === 'High' ? 'text-destructive' :
+                    result.disassembly.injury_risk === 'Medium' ? 'text-warning' :
+                    'text-eco'
+                  )}>
+                    {result.disassembly.injury_risk || 'Unknown'}
+                  </p>
+                </div>
+                <div className={cn(
+                  "rounded-xl p-3 text-center",
+                  result.disassembly.damage_risk === 'High' ? 'bg-destructive/10 border border-destructive/20' :
+                  result.disassembly.damage_risk === 'Medium' ? 'bg-warning/10 border border-warning/20' :
+                  'bg-eco/10 border border-eco/20'
+                )}>
+                  <p className="text-[10px] uppercase tracking-wide text-muted-foreground mb-1">Damage Risk</p>
+                  <p className={cn(
+                    "text-sm font-bold",
+                    result.disassembly.damage_risk === 'High' ? 'text-destructive' :
+                    result.disassembly.damage_risk === 'Medium' ? 'text-warning' :
+                    'text-eco'
+                  )}>
+                    {result.disassembly.damage_risk || 'Unknown'}
+                  </p>
+                </div>
+              </div>
+
+              {/* Safety Warnings */}
+              {result.disassembly.safety_warnings && result.disassembly.safety_warnings.length > 0 && (
+                <div className="rounded-xl bg-warning/10 border border-warning/20 p-3">
+                  <div className="flex items-center gap-1.5 text-warning mb-2">
+                    <AlertTriangle className="w-4 h-4" />
+                    <span className="text-sm font-medium">Safety Warnings</span>
+                  </div>
+                  <ul className="text-sm text-muted-foreground space-y-1">
+                    {result.disassembly.safety_warnings.map((warn, idx) => (
+                      <li key={idx}>• {warn}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {/* Steps */}
+              <div>
+                <p className="text-xs font-medium tracking-widest text-muted-foreground uppercase mb-2">
+                  Steps
+                </p>
+                <div className="space-y-2">
+                  {result.disassembly.steps?.map((step, idx) => (
+                    <div key={idx} className="flex gap-3 text-sm">
+                      <span className="flex-shrink-0 w-6 h-6 rounded-full bg-primary/10 text-primary font-bold flex items-center justify-center text-xs">
+                        {idx + 1}
+                      </span>
+                      <span className="text-foreground pt-0.5">{step}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* External Links */}
+              {(result.disassembly.tutorial_url || result.disassembly.video_url) && (
+                <div className="flex gap-3 pt-2">
+                  {result.disassembly.tutorial_url && (
+                    <a 
+                      href={result.disassembly.tutorial_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-1.5 text-sm text-primary hover:underline"
+                    >
+                      <BookOpen className="w-4 h-4" />
+                      View Guide
+                    </a>
+                  )}
+                  {result.disassembly.video_url && (
+                    <a 
+                      href={result.disassembly.video_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-1.5 text-sm text-primary hover:underline"
+                    >
+                      <Play className="w-4 h-4" />
+                      Watch Video
+                    </a>
+                  )}
+                </div>
+              )}
             </div>
           </div>
         )}
