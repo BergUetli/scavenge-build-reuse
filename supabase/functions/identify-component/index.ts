@@ -272,6 +272,11 @@ serve(async (req) => {
     
     // Support both single image (legacy) and multiple images
     let images: Array<{ imageBase64: string; mimeType: string }> = [];
+    const userHint: string | undefined = body.userHint;
+    
+    if (userHint) {
+      console.log('[identify-component] User provided hint:', userHint);
+    }
     
     if (body.images && Array.isArray(body.images)) {
       console.log('[identify-component] Received images array with', body.images.length, 'items');
@@ -314,10 +319,17 @@ serve(async (req) => {
     console.log(`Sending ${images.length} image(s) to Lovable AI for identification...`);
 
     // Build content array with all images
+    let promptText = `I'm providing ${images.length} image(s) of the same object from different angles. Analyze ALL images together to identify the object and its salvageable components. Return ONLY valid JSON (no markdown, no code fences). If unsure, set confidence lower and still return a complete JSON object. Keep tools_needed to <= 8 items and common_uses to <= 4.`;
+    
+    // Add user hint if provided
+    if (userHint) {
+      promptText += `\n\nIMPORTANT USER CONTEXT: The user has provided the following hint about this object: "${userHint}". Use this information to improve your identification accuracy.`;
+    }
+    
     const userContent: Array<{ type: string; text?: string; image_url?: { url: string } }> = [
       {
         type: 'text',
-        text: `I'm providing ${images.length} image(s) of the same object from different angles. Analyze ALL images together to identify the object and its salvageable components. Return ONLY valid JSON (no markdown, no code fences). If unsure, set confidence lower and still return a complete JSON object. Keep tools_needed to <= 8 items and common_uses to <= 4.`
+        text: promptText
       }
     ];
 
