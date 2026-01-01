@@ -1,7 +1,7 @@
 /**
  * SCAN BUTTON - JunkHauler Style
- * Huge glassmorphic button with animated gradient border
- * and pulsing glow effect
+ * Giant circular button (280px) with radial gradient,
+ * animated rotating border, and pulsing glow
  */
 
 import { Camera } from 'lucide-react';
@@ -10,15 +10,15 @@ import { useSounds } from '@/hooks/useSounds';
 
 interface ScanButtonProps {
   onClick: () => void;
-  size?: 'default' | 'large';
+  isScanning?: boolean;
   className?: string;
 }
 
-export function ScanButton({ onClick, size = 'large', className }: ScanButtonProps) {
-  const isLarge = size === 'large';
+export function ScanButton({ onClick, isScanning = false, className }: ScanButtonProps) {
   const { playScan, hapticHeavy } = useSounds();
 
   const handleClick = () => {
+    if (isScanning) return;
     hapticHeavy();
     playScan();
     onClick();
@@ -27,86 +27,91 @@ export function ScanButton({ onClick, size = 'large', className }: ScanButtonPro
   return (
     <button
       onClick={handleClick}
+      disabled={isScanning}
       className={cn(
-        'relative group touch-target',
+        'relative group touch-target focus-ring rounded-full',
+        'transition-transform duration-200 ease-out',
+        !isScanning && 'hover:scale-[1.08] active:scale-95',
+        isScanning && 'cursor-wait',
         className
       )}
+      aria-label={isScanning ? 'Analyzing component' : 'Tap to scan'}
     >
-      {/* Animated gradient border container */}
+      {/* Animated rotating gradient border */}
       <div 
         className={cn(
-          'absolute -inset-[2px] rounded-3xl opacity-75',
-          'bg-gradient-to-r from-warning via-primary to-warning',
-          'animate-[spin_4s_linear_infinite] blur-[1px]',
-          isLarge && 'group-hover:opacity-100 transition-opacity duration-300'
+          'absolute -inset-1 rounded-full',
+          'bg-[conic-gradient(from_0deg,hsl(var(--primary)),hsl(var(--accent)),hsl(var(--primary)))]',
+          isScanning ? 'animate-spin' : 'animate-[spin_8s_linear_infinite]',
+          'opacity-80'
         )}
         style={{
-          backgroundSize: '200% 200%',
-          animation: 'gradient-spin 3s linear infinite',
+          animationDuration: isScanning ? '1s' : '8s',
         }}
       />
+      
+      {/* Border mask - creates the border effect */}
+      <div className="absolute -inset-1 rounded-full bg-background" style={{ margin: '4px' }} />
 
-      {/* Pulsing glow */}
+      {/* Outer glow */}
       <div 
         className={cn(
-          'absolute -inset-3 rounded-[28px] animate-pulse-soft',
-          isLarge 
-            ? 'bg-gradient-to-r from-warning/30 via-primary/30 to-warning/30 blur-xl' 
-            : 'bg-primary/20 blur-md'
+          'absolute -inset-4 rounded-full blur-xl transition-opacity duration-300',
+          'bg-gradient-to-r from-primary/40 via-accent/30 to-primary/40',
+          !isScanning && 'group-hover:opacity-100 opacity-70',
+          isScanning && 'opacity-100 animate-pulse'
         )}
-        style={{ animationDuration: '2.5s' }}
+        style={{
+          boxShadow: '0 0 40px rgba(255, 107, 53, 0.4)',
+        }}
       />
       
-      {/* Secondary glow ring */}
-      {isLarge && (
-        <div 
-          className="absolute -inset-6 rounded-[36px] bg-gradient-to-r from-primary/15 to-warning/15 blur-2xl animate-pulse-soft"
-          style={{ animationDuration: '3.5s', animationDelay: '0.5s' }}
-        />
-      )}
+      {/* Secondary ambient glow */}
+      <div 
+        className="absolute -inset-8 rounded-full bg-primary/20 blur-2xl animate-pulse-soft"
+        style={{ animationDuration: '3s' }}
+      />
       
-      {/* Main button - Glassmorphism */}
+      {/* Main button - Radial gradient */}
       <div
         className={cn(
           'relative flex flex-col items-center justify-center gap-3',
-          'bg-background/60 backdrop-blur-xl',
-          'rounded-3xl',
-          'transition-all duration-300 ease-out-expo',
-          'group-hover:scale-[1.02] group-active:scale-95',
-          'border border-white/10',
-          isLarge 
-            ? 'w-[240px] h-[160px]' 
-            : 'w-16 h-16'
+          'w-[280px] h-[280px] rounded-full',
+          'bg-[radial-gradient(circle,hsl(var(--primary))_0%,hsl(var(--accent))_100%)]',
+          'transition-all duration-200 ease-out',
+          !isScanning && 'animate-[scan-pulse_2s_ease-in-out_infinite]'
         )}
         style={{
-          boxShadow: isLarge 
-            ? `
-              inset 0 1px 1px rgba(255,255,255,0.1),
-              inset 0 -1px 1px rgba(0,0,0,0.1),
-              0 8px 32px rgba(0,0,0,0.3)
-            `
-            : 'inset 0 1px 1px rgba(255,255,255,0.1)',
+          boxShadow: `
+            0 0 40px rgba(255, 107, 53, 0.4),
+            0 20px 60px rgba(0, 0, 0, 0.5),
+            inset 0 2px 4px rgba(255, 255, 255, 0.2),
+            inset 0 -2px 4px rgba(0, 0, 0, 0.2)
+          `,
         }}
       >
-        {/* Inner gradient overlay */}
-        <div className="absolute inset-0 rounded-3xl bg-gradient-to-br from-white/5 via-transparent to-black/10 pointer-events-none" />
+        {/* Inner highlight */}
+        <div className="absolute inset-4 rounded-full bg-gradient-to-b from-white/20 via-transparent to-black/10 pointer-events-none" />
         
         {/* Icon */}
         <Camera 
           className={cn(
             'relative text-white drop-shadow-lg transition-transform duration-300',
-            'group-hover:scale-110',
-            isLarge ? 'w-16 h-16' : 'w-7 h-7'
+            'w-[72px] h-[72px]',
+            !isScanning && 'group-hover:scale-110',
+            isScanning && 'animate-pulse'
           )} 
-          strokeWidth={isLarge ? 1.5 : 2} 
+          strokeWidth={1.5}
+          aria-hidden="true"
         />
         
         {/* Text */}
-        {isLarge && (
-          <span className="relative text-sm font-bold text-white/90 tracking-[0.25em] uppercase">
-            Tap to Scan
-          </span>
-        )}
+        <span className={cn(
+          'relative text-sm font-bold text-white tracking-[0.25em] uppercase',
+          'drop-shadow-md'
+        )}>
+          {isScanning ? 'Analyzing...' : 'Tap to Scan'}
+        </span>
       </div>
     </button>
   );

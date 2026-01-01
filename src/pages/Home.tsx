@@ -5,6 +5,7 @@
 
 import { useNavigate } from 'react-router-dom';
 import { Package, Lightbulb, ChevronRight, Zap, Crosshair } from 'lucide-react';
+import { UsageIndicator } from '@/components/scanner/UsageIndicator';
 import { JunkHaulerLogo } from '@/components/JunkHaulerLogo';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -84,8 +85,9 @@ export default function Home() {
         <div className="px-5 -mt-16 pb-8 max-w-lg mx-auto space-y-5">
           
           {/* Scan Button */}
-          <div className="flex justify-center animate-fade-up" style={{ animationDelay: '0.1s' }}>
+          <div className="flex flex-col items-center gap-5 animate-fade-up" style={{ animationDelay: '0.1s' }}>
             <ScanButton onClick={() => navigate('/scan')} />
+            <UsageIndicator used={3} total={10} resetDays={23} />
           </div>
 
           {/* Quick Actions */}
