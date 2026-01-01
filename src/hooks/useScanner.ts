@@ -10,16 +10,20 @@
  * - Uses gpt-4o-mini for cost efficiency
  */
 
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { AIIdentificationResponse, ScannerState } from '@/types';
 import { toast } from '@/hooks/use-toast';
 import { compressImage, hashImage } from '@/lib/imageUtils';
+import { useAuth } from '@/contexts/AuthContext';
+
+type AIProvider = 'openai' | 'gemini' | 'claude';
 
 /**
  * Hook for AI-powered component scanning with multi-image support
  */
 export function useScanner() {
+  const { user } = useAuth();
   const [state, setState] = useState<ScannerState>({
     isCapturing: false,
     isProcessing: false,
@@ -29,8 +33,33 @@ export function useScanner() {
   
   const [capturedImages, setCapturedImages] = useState<string[]>([]);
   const [identificationResult, setIdentificationResult] = useState<AIIdentificationResponse | null>(null);
+  const [preferredProvider, setPreferredProvider] = useState<AIProvider | null>(null);
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
+
+  // Load user's preferred AI provider
+  useEffect(() => {
+    if (!user) return;
+    
+    const loadProvider = async () => {
+      try {
+        const { data } = await supabase
+          .from('profiles')
+          .select('ai_provider')
+          .eq('user_id', user.id)
+          .maybeSingle();
+        
+        if (data?.ai_provider) {
+          setPreferredProvider(data.ai_provider as AIProvider);
+          console.log('[Scanner] Loaded preferred provider:', data.ai_provider);
+        }
+      } catch (error) {
+        console.error('[Scanner] Failed to load provider preference:', error);
+      }
+    };
+    
+    loadProvider();
+  }, [user]);
 
   /**
    * Start camera stream
@@ -195,13 +224,17 @@ export function useScanner() {
       });
 
       console.log('[Scanner] Sending', imagesData.length, 'compressed images to edge function');
+      if (preferredProvider) {
+        console.log('[Scanner] Using preferred provider:', preferredProvider);
+      }
 
-      // Call edge function with compressed images, hint, and hash for caching
+      // Call edge function with compressed images, hint, hash, and provider preference
       const { data, error } = await supabase.functions.invoke('identify-component', {
         body: { 
           images: imagesData, 
           userHint: userHint?.trim() || undefined,
-          imageHash // For server-side cache lookup
+          imageHash, // For server-side cache lookup
+          provider: preferredProvider // User's preferred AI provider
         }
       });
 
