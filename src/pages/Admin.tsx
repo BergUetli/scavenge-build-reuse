@@ -4,12 +4,12 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useAdmin } from '@/hooks/useAdmin';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Database, Upload, Settings, Shield } from 'lucide-react';
+import { Database, Upload, Settings, Shield, SlidersHorizontal } from 'lucide-react';
 import { ComponentInventoryTab } from '@/components/admin/ComponentInventoryTab';
 import { DataAgentTab } from '@/components/admin/DataAgentTab';
+import { SettingsTab } from '@/components/admin/SettingsTab';
 
 export default function Admin() {
   const { user, isLoading: authLoading } = useAuth();
@@ -68,14 +68,18 @@ export default function Admin() {
 
         {/* Tabs */}
         <Tabs defaultValue="inventory" className="space-y-6">
-          <TabsList className="grid w-full max-w-md grid-cols-2">
+          <TabsList className="grid w-full max-w-lg grid-cols-3">
             <TabsTrigger value="inventory" className="flex items-center gap-2">
               <Database className="h-4 w-4" />
-              Component Inventory
+              Components
             </TabsTrigger>
             <TabsTrigger value="data-agent" className="flex items-center gap-2">
               <Upload className="h-4 w-4" />
-              Scavenger Data
+              Data Agent
+            </TabsTrigger>
+            <TabsTrigger value="settings" className="flex items-center gap-2">
+              <SlidersHorizontal className="h-4 w-4" />
+              Settings
             </TabsTrigger>
           </TabsList>
 
@@ -85,6 +89,10 @@ export default function Admin() {
 
           <TabsContent value="data-agent">
             <DataAgentTab />
+          </TabsContent>
+
+          <TabsContent value="settings">
+            <SettingsTab />
           </TabsContent>
         </Tabs>
       </div>
