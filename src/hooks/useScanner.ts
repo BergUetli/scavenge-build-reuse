@@ -299,7 +299,7 @@ export function useScanner() {
     } finally {
       setState(prev => ({ ...prev, isProcessing: false }));
     }
-  }, []);
+  }, [preferredProvider, user]);
 
   /**
    * Analyze all captured images with optional user hint
