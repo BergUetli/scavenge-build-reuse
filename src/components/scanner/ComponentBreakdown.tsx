@@ -489,7 +489,7 @@ export function ComponentBreakdown({
         <div className="space-y-3 pt-4">
           <Button
             size="lg"
-            className="w-full h-14 text-lg font-semibold rounded-2xl bg-eco hover:bg-eco/90"
+            className="w-full h-14 text-lg font-semibold rounded-2xl bg-success hover:bg-success/90 text-success-foreground"
             onClick={onAddAll}
             disabled={isLoading || !hasComponents || addedItems.size === result.items.length}
           >
@@ -828,7 +828,7 @@ export function ComponentBreakdown({
           size="lg"
           className={cn(
             "w-full h-14 text-lg font-semibold rounded-2xl",
-            isAdded ? "bg-muted text-muted-foreground" : "bg-eco hover:bg-eco/90"
+            isAdded ? "bg-muted text-muted-foreground" : "bg-success hover:bg-success/90 text-success-foreground"
           )}
           disabled={isLoading || isAdded}
           onClick={() => handleAddComponent(selectedComponent)}

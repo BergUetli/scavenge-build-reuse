@@ -82,7 +82,7 @@ async function callOpenAI(apiKey: string, systemPrompt: string, userContent: any
         { role: 'system', content: systemPrompt },
         { role: 'user', content: userContent }
       ],
-      max_tokens: 6000,
+      max_tokens: 8000,
     }),
   });
 
@@ -220,22 +220,48 @@ const IDENTIFICATION_PROMPT = `You are Scavenger AI, an expert at identifying sa
 
 Your task is to analyze the provided image(s) and BREAK DOWN the object into its individual salvageable internal components.
 
+CRITICAL: IDENTIFY AS MANY COMPONENTS AS POSSIBLE!
+For a typical electronic device, you should identify 8-20+ components. Be THOROUGH - don't just list the obvious ones!
+
 IMPORTANT RULES:
 1. If multiple images are provided, they show the SAME OBJECT from different angles - combine the information
-2. If the image shows a device (keyboard, phone, laptop, appliance, etc.), list the INTERNAL components that could be harvested from it
+2. If the image shows a device (keyboard, phone, laptop, appliance, etc.), list ALL INTERNAL components that could be harvested
 3. IGNORE: plastic casing, screws, rubber feet, labels, packaging, structural plastic parts
-4. FOCUS ON: chips, ICs, capacitors, resistors, motors, switches, LEDs, displays, sensors, connectors, cables, PCBs, batteries, speakers, etc.
+4. FOCUS ON: chips, ICs, capacitors, resistors, motors, switches, LEDs, displays, sensors, connectors, cables, PCBs, batteries, speakers, antennas, etc.
 5. Estimate QUANTITIES for repeated components (e.g., "~50 mechanical switches" for a keyboard)
 6. Group similar components when there are many (e.g., "SMD Capacitors (various values)" rather than listing each)
 
+EXAMPLE - For a Bluetooth speaker, identify ALL of these:
+- Bluetooth/WiFi module (CSR, Qualcomm, etc.)
+- Audio amplifier IC (TI, Maxim, etc.)
+- Digital Signal Processor (DSP) chip
+- Main speaker driver(s)
+- Passive radiator(s)
+- Lithium-ion battery
+- Battery protection circuit/BMS
+- Battery charging IC
+- Power management IC
+- USB Type-C/Micro-USB charging port
+- AUX input jack (3.5mm)
+- Control buttons / tactile switches
+- LED indicators
+- Antenna (PCB or wire antenna)
+- Main PCB (with SMD components)
+- Electrolytic capacitors
+- SMD capacitors/resistors
+- Ribbon cables/connectors
+
 For EACH salvageable component inside the object, provide:
-1. component_name: Specific name with quantity if applicable (e.g., "Mechanical Key Switches (~87 pcs)", "USB Controller IC")
+1. component_name: Specific name with quantity if applicable (e.g., "Full-Range Speaker Driver (2 pcs)", "CSR8675 Bluetooth Audio Module")
 2. category: One of: ICs/Chips, Passive Components, Electromechanical, Connectors, Display/LEDs, Sensors, Power, PCB, Other
-3. specifications: Key specs as object (e.g., {"type": "Cherry MX Brown", "actuation": "45g"} or {"capacity": "1000μF", "voltage": "16V"})
+3. specifications: Key specs as object (e.g., {"type": "Class D Amplifier", "power": "10W"} or {"capacity": "1000mAh", "voltage": "3.7V"})
 4. technical_specs: CRITICAL - identify specific parts for lookup:
    - voltage: Operating voltage (e.g., "5V", "3.3V", "12V") - CRITICAL for rebuilding
    - power_rating: Power/current specs (e.g., "500mA", "10W", "2A") - CRITICAL for rebuilding  
-   - part_number: IC/chip part number - LOOK CAREFULLY at chip markings! Read text printed on ICs/chips. Examples: "STM32F103", "ATmega328P", "ESP32-WROOM", "NE555", "LM7805", "TPS54331", "SN74HC595". If text is too small or unclear, estimate likely chip based on device type (e.g., USB keyboard likely has "CY8C24794" or similar Cypress USB controller)
+   - part_number: IC/chip part number - LOOK CAREFULLY at chip markings! Read text printed on ICs/chips. If not visible, INFER likely parts based on device brand/type:
+     * Bose speakers: likely use TI TPA3116/TPA3118 amp, CSR8675 BT, BQ24195 charger
+     * JBL speakers: likely use Harman DSP, Qualcomm QCC series BT
+     * Sony speakers: likely use custom Sony chips
    - notes: One-line tip for reuse
 5. source_info: For user lookup:
    - datasheet_url: Link to datasheet if you know it (e.g., ti.com, st.com, microchip.com datasheets)
@@ -252,7 +278,7 @@ For EACH salvageable component inside the object, provide:
 CRITICAL FOR TECHNICAL SPECS - READ THIS CAREFULLY:
 - For ICs/Chips: ALWAYS try to identify the part_number! Look at chip markings, read any text on the IC package
 - Common ICs to look for: microcontrollers (STM32, ATmega, ESP32, PIC), USB controllers, audio codecs, power management ICs, LED drivers, motor drivers, Bluetooth/WiFi modules
-- If you recognize the device type, infer likely chips even if not directly visible (e.g., a Bluetooth speaker likely has CSR/Qualcomm BT chip, TI audio amp, Li-ion charger IC)
+- If you recognize the device brand/type, INFER likely chips even if not directly visible
 - For passive components: focus on voltage/current ratings
 - For source_info: include datasheet URLs from official sources (ti.com, st.com, microchip.com, analog.com, nxp.com, infineon.com)
 
@@ -268,7 +294,7 @@ ALSO PROVIDE DISASSEMBLY INSTRUCTIONS for the parent object:
 
 ALWAYS respond with valid JSON:
 {
-  "parent_object": "string (what the main object is, e.g., 'Mechanical Keyboard')",
+  "parent_object": "string (what the main object is, e.g., 'Bose SoundLink Mini Bluetooth Speaker')",
   "items": [
     {
       "component_name": "string",
@@ -310,7 +336,6 @@ ALWAYS respond with valid JSON:
   },
   "message": "string (optional tips or warnings)"
 }`;
-
 function extractJsonFromAI(aiResponse: string) {
   let text = aiResponse.trim();
   
