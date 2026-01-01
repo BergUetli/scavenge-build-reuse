@@ -1,11 +1,12 @@
 /**
  * BOTTOM NAVIGATION - JunkHauler Style
- * Industrial, clean, futuristic
+ * Industrial, clean, futuristic with sound feedback
  */
 
 import { Home, Package, Lightbulb, User } from 'lucide-react';
 import { NavLink } from 'react-router-dom';
 import { cn } from '@/lib/utils';
+import { useSounds } from '@/hooks/useSounds';
 
 interface NavItem {
   to: string;
@@ -21,6 +22,8 @@ const navItems: NavItem[] = [
 ];
 
 export function BottomNav() {
+  const { playClick } = useSounds();
+
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 glass border-t border-primary/10 safe-area-pb">
       <div className="flex items-center justify-around h-[58px] max-w-lg mx-auto">
@@ -28,6 +31,7 @@ export function BottomNav() {
           <NavLink
             key={to}
             to={to}
+            onClick={playClick}
             className={({ isActive }) =>
               cn(
                 'flex flex-col items-center justify-center gap-1 min-w-[72px] py-2',

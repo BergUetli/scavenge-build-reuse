@@ -3,12 +3,14 @@
  * 
  * Full-screen camera interface for scanning components.
  * Supports multi-photo capture with thumbnail strip.
+ * Includes sound feedback for actions.
  */
 
 import { useRef, useState, useCallback } from 'react';
 import { Camera, X, ImagePlus, Trash2, Send } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { useSounds } from '@/hooks/useSounds';
 
 interface CameraViewProps {
   videoRef: React.RefObject<HTMLVideoElement>;
@@ -33,21 +35,39 @@ export function CameraView({
 }: CameraViewProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [flash, setFlash] = useState(false);
+  const { playClick, playScan, playWhoosh } = useSounds();
 
   const handleFileChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (files) {
       Array.from(files).forEach(file => onUpload(file));
+      playClick();
     }
     // Reset input so same file can be selected again
     e.target.value = '';
-  }, [onUpload]);
+  }, [onUpload, playClick]);
 
   const triggerCapture = useCallback(() => {
     setFlash(true);
+    playScan();
     onCapture();
     setTimeout(() => setFlash(false), 150);
-  }, [onCapture]);
+  }, [onCapture, playScan]);
+
+  const handleAnalyze = useCallback(() => {
+    playWhoosh();
+    onAnalyze();
+  }, [onAnalyze, playWhoosh]);
+
+  const handleClose = useCallback(() => {
+    playClick();
+    onClose();
+  }, [onClose, playClick]);
+
+  const handleRemoveImage = useCallback((index: number) => {
+    playClick();
+    onRemoveImage(index);
+  }, [onRemoveImage, playClick]);
 
   const hasImages = capturedImages.length > 0;
 
@@ -90,7 +110,7 @@ export function CameraView({
           variant="ghost"
           size="icon"
           className="text-white bg-black/30 backdrop-blur-sm hover:bg-black/50"
-          onClick={onClose}
+          onClick={handleClose}
         >
           <X className="w-6 h-6" />
         </Button>
@@ -127,7 +147,7 @@ export function CameraView({
                   className="w-full h-full object-cover"
                 />
                 <button
-                  onClick={() => onRemoveImage(index)}
+                  onClick={() => handleRemoveImage(index)}
                   className="absolute -top-1 -right-1 w-5 h-5 bg-destructive text-destructive-foreground rounded-full flex items-center justify-center shadow-md"
                 >
                   <X className="w-3 h-3" />
@@ -149,7 +169,10 @@ export function CameraView({
             variant="ghost"
             size="icon"
             className="w-14 h-14 text-white bg-black/30 backdrop-blur-sm hover:bg-black/50 rounded-full"
-            onClick={() => fileInputRef.current?.click()}
+            onClick={() => {
+              playClick();
+              fileInputRef.current?.click();
+            }}
           >
             <ImagePlus className="w-6 h-6" />
           </Button>
@@ -173,7 +196,7 @@ export function CameraView({
             <Button
               size="icon"
               className="w-14 h-14 rounded-full bg-primary text-primary-foreground shadow-premium hover:bg-primary/90 active:scale-95"
-              onClick={onAnalyze}
+              onClick={handleAnalyze}
             >
               <Send className="w-6 h-6" />
             </Button>
