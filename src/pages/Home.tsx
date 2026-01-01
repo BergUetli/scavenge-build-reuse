@@ -4,7 +4,8 @@
  */
 
 import { useNavigate } from 'react-router-dom';
-import { Package, Lightbulb, ChevronRight, Zap, Crosshair, Container } from 'lucide-react';
+import { Package, Lightbulb, ChevronRight, Zap, Crosshair } from 'lucide-react';
+import { JunkHaulerLogo } from '@/components/JunkHaulerLogo';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { AppLayout } from '@/components/layout/AppLayout';
@@ -61,9 +62,7 @@ export default function Home() {
               {/* Logo & Title */}
               <div className="flex items-center gap-3.5 mb-5">
                 <div className="relative">
-                  <div className="w-12 h-12 bg-gradient-to-br from-primary to-primary/80 rounded-xl flex items-center justify-center shadow-lg glow-primary">
-                    <Container className="w-6 h-6 text-primary-foreground" strokeWidth={2} />
-                  </div>
+                  <JunkHaulerLogo size={48} className="drop-shadow-lg" />
                   {/* Status indicator */}
                   <div className="absolute -top-1 -right-1 w-3 h-3 bg-success rounded-full border-2 border-background animate-pulse" />
                 </div>
