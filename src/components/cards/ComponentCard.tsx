@@ -30,8 +30,11 @@ export function ComponentCard({ item, onClick, compact = false }: ComponentCardP
     <button
       onClick={onClick}
       className={cn(
-        'w-full text-left card-ios overflow-hidden',
-        'tap-highlight active:scale-[0.98] transition-transform duration-150'
+        'w-full text-left overflow-hidden',
+        'rounded-2xl border border-accent/20 bg-card/80 backdrop-blur-[10px]',
+        'shadow-[0_4px_24px_rgba(255,107,53,0.15)]',
+        'tap-highlight active:scale-[0.98] transition-all duration-150',
+        'hover:border-accent/40 hover:shadow-[0_4px_32px_rgba(255,107,53,0.25)]'
       )}
     >
       <div className={cn('flex items-center gap-3', compact ? 'p-3' : 'p-4')}>
