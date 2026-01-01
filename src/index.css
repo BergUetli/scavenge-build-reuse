@@ -206,7 +206,11 @@
 }
 
 @layer utilities {
-  /* Glass effect */
+  /* ==========================================
+     GLASSMORPHISM SYSTEM
+     ========================================== */
+  
+  /* Standard glass - for cards and containers */
   .glass {
     background: var(--glass-bg);
     backdrop-filter: saturate(180%) blur(20px);
@@ -214,6 +218,7 @@
     border: 1px solid var(--glass-border);
   }
 
+  /* Subtle glass - for overlays and backgrounds */
   .glass-subtle {
     background: hsla(210, 20%, 98%, 0.6);
     backdrop-filter: blur(12px);
@@ -224,7 +229,182 @@
     background: hsla(226, 57%, 10%, 0.6);
   }
 
-  /* Shadows */
+  /* Modal overlay glass */
+  .glass-modal {
+    background: hsla(226, 57%, 10%, 0.85);
+    backdrop-filter: saturate(180%) blur(16px);
+    -webkit-backdrop-filter: saturate(180%) blur(16px);
+  }
+
+  /* Industrial glass card - with accent border */
+  .glass-industrial {
+    background: hsla(226, 50%, 12%, 0.8);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid hsla(25, 95%, 53%, 0.2);
+    border-radius: 16px;
+    box-shadow: 0 0 30px hsla(25, 95%, 53%, 0.08);
+  }
+
+  /* Pro feature card glass */
+  .glass-pro {
+    background: linear-gradient(135deg, hsla(226, 50%, 14%, 0.9), hsla(226, 45%, 10%, 0.95));
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid hsla(199, 89%, 58%, 0.3);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .glass-pro::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, transparent, hsla(199, 89%, 58%, 0.1), transparent);
+    animation: shimmer-pro 3s ease-in-out infinite;
+  }
+
+  @keyframes shimmer-pro {
+    0%, 100% { transform: translateX(-100%); }
+    50% { transform: translateX(100%); }
+  }
+
+  /* ==========================================
+     GLOW EFFECTS SYSTEM
+     ========================================== */
+
+  /* Primary glow - teal/cyan */
+  .glow-primary {
+    box-shadow: 0 0 24px hsl(199 89% 48% / 0.4), 0 0 48px hsl(199 89% 48% / 0.2);
+  }
+
+  .glow-primary-intense {
+    box-shadow: 
+      0 0 16px hsl(199 89% 58% / 0.5),
+      0 0 32px hsl(199 89% 48% / 0.35),
+      0 0 64px hsl(199 89% 48% / 0.2);
+  }
+
+  /* Accent glow - orange */
+  .glow-accent {
+    box-shadow: 0 0 20px hsl(25 95% 53% / 0.35), 0 0 40px hsl(25 95% 53% / 0.15);
+  }
+
+  .glow-accent-intense {
+    box-shadow: 
+      0 0 16px hsl(25 95% 60% / 0.5),
+      0 0 32px hsl(25 95% 53% / 0.35),
+      0 0 64px hsl(25 95% 53% / 0.2);
+  }
+
+  /* Success glow - green */
+  .glow-success {
+    box-shadow: 0 0 20px hsl(142 76% 42% / 0.35), 0 0 40px hsl(142 76% 42% / 0.15);
+  }
+
+  /* Neon glow - for special emphasis */
+  .glow-neon {
+    box-shadow: 
+      0 0 8px hsl(199 89% 48% / 0.6), 
+      0 0 16px hsl(199 89% 48% / 0.3), 
+      0 0 32px hsl(199 89% 48% / 0.15);
+  }
+
+  /* Hover glow intensification */
+  .hover-glow-primary {
+    transition: box-shadow 0.3s ease;
+  }
+  .hover-glow-primary:hover {
+    box-shadow: 
+      0 0 24px hsl(199 89% 58% / 0.5),
+      0 0 48px hsl(199 89% 48% / 0.3);
+  }
+
+  .hover-glow-accent {
+    transition: box-shadow 0.3s ease;
+  }
+  .hover-glow-accent:hover {
+    box-shadow: 
+      0 0 24px hsl(25 95% 60% / 0.5),
+      0 0 48px hsl(25 95% 53% / 0.3);
+  }
+
+  /* Text glow */
+  .text-glow-primary {
+    text-shadow: 0 0 20px hsl(199 89% 58% / 0.5);
+  }
+
+  .text-glow-accent {
+    text-shadow: 0 0 20px hsl(25 95% 60% / 0.5);
+  }
+
+  /* ==========================================
+     GRADIENT BORDERS (Animated)
+     ========================================== */
+
+  .gradient-border {
+    position: relative;
+    background: hsl(var(--card));
+    border-radius: 16px;
+  }
+
+  .gradient-border::before {
+    content: '';
+    position: absolute;
+    inset: -2px;
+    border-radius: 18px;
+    background: linear-gradient(
+      90deg,
+      hsl(25 95% 53%),
+      hsl(199 89% 58%),
+      hsl(25 95% 53%)
+    );
+    background-size: 200% 100%;
+    animation: gradient-border-spin 3s linear infinite;
+    z-index: -1;
+  }
+
+  @keyframes gradient-border-spin {
+    0% { background-position: 0% 50%; }
+    100% { background-position: 200% 50%; }
+  }
+
+  /* Static gradient border */
+  .gradient-border-static {
+    border: 2px solid transparent;
+    background: 
+      linear-gradient(hsl(var(--card)), hsl(var(--card))) padding-box,
+      linear-gradient(135deg, hsl(25 95% 53%), hsl(199 89% 58%)) border-box;
+    border-radius: 16px;
+  }
+
+  /* ==========================================
+     ACCESSIBILITY - Focus States
+     ========================================== */
+
+  .focus-ring {
+    @apply focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background;
+  }
+
+  .focus-ring-accent {
+    @apply focus:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-background;
+  }
+
+  /* Skip link for screen readers */
+  .skip-link {
+    @apply sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50;
+    @apply bg-primary text-primary-foreground px-4 py-2 rounded-lg font-medium;
+  }
+
+  /* Screen reader only label */
+  .sr-label {
+    @apply sr-only;
+  }
+
+  /* ==========================================
+     SHADOWS
+     ========================================== */
+
   .shadow-premium-sm {
     box-shadow: var(--shadow-sm);
   }
@@ -241,7 +421,19 @@
     box-shadow: var(--shadow-xl);
   }
 
-  /* Industrial gradients */
+  /* Colored shadows */
+  .shadow-primary {
+    box-shadow: 0 4px 20px hsl(199 89% 48% / 0.25);
+  }
+
+  .shadow-accent {
+    box-shadow: 0 4px 20px hsl(25 95% 53% / 0.25);
+  }
+
+  /* ==========================================
+     INDUSTRIAL GRADIENTS
+     ========================================== */
+
   .bg-gradient-industrial {
     background: linear-gradient(180deg, hsl(var(--background)) 0%, hsl(215 20% 95%) 100%);
   }
@@ -262,17 +454,8 @@
     background: linear-gradient(135deg, hsl(199 89% 48%) 0%, hsl(280 80% 50%) 100%);
   }
 
-  /* Glow effects */
-  .glow-primary {
-    box-shadow: 0 0 24px hsl(199 89% 48% / 0.4), 0 0 48px hsl(199 89% 48% / 0.2);
-  }
-
-  .glow-accent {
-    box-shadow: 0 0 20px hsl(25 95% 53% / 0.35), 0 0 40px hsl(25 95% 53% / 0.15);
-  }
-
-  .glow-neon {
-    box-shadow: 0 0 8px hsl(199 89% 48% / 0.6), 0 0 16px hsl(199 89% 48% / 0.3), 0 0 32px hsl(199 89% 48% / 0.15);
+  .bg-gradient-radial-glow {
+    background: radial-gradient(ellipse at center, hsl(199 89% 48% / 0.15) 0%, transparent 70%);
   }
 
   /* Text hierarchy - Mobile optimized */
@@ -515,22 +698,122 @@
 }
 
 @layer components {
-  /* Button */
+  /* ==========================================
+     RESPONSIVE CONTAINERS
+     ========================================== */
+
+  .container-app {
+    @apply w-full max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8;
+  }
+
+  .container-narrow {
+    @apply w-full max-w-[640px] mx-auto px-4;
+  }
+
+  /* ==========================================
+     BUTTONS
+     ========================================== */
+
   .btn-cyber {
     @apply font-semibold tracking-wide transition-all duration-200;
     @apply active:scale-[0.97] active:opacity-90;
+    @apply focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background;
     text-transform: uppercase;
     letter-spacing: 0.05em;
   }
 
-  /* Input */
+  .btn-glow-primary {
+    @apply relative overflow-hidden;
+    @apply bg-primary text-primary-foreground;
+    @apply hover:shadow-[0_0_24px_hsl(199_89%_58%/0.5)];
+    @apply transition-shadow duration-300;
+  }
+
+  .btn-glow-accent {
+    @apply relative overflow-hidden;
+    @apply bg-accent text-accent-foreground;
+    @apply hover:shadow-[0_0_24px_hsl(25_95%_60%/0.5)];
+    @apply transition-shadow duration-300;
+  }
+
+  /* ==========================================
+     INPUTS
+     ========================================== */
+
   .input-industrial {
     @apply h-12 px-4 bg-muted/50 border border-border rounded-lg text-base;
     @apply focus:ring-2 focus:ring-primary/30 focus:border-primary/50 focus:bg-card;
+    @apply focus:outline-none;
   }
 
-  /* Badge */
+  /* ==========================================
+     BADGES
+     ========================================== */
+
   .badge-tech {
     @apply px-2.5 py-1 rounded-md text-xs font-bold tracking-wider uppercase;
+  }
+
+  .badge-glow {
+    @apply relative;
+    box-shadow: 0 0 12px hsl(var(--primary) / 0.3);
+  }
+
+  /* ==========================================
+     CARDS WITH EFFECTS
+     ========================================== */
+
+  .card-glow-primary {
+    @apply relative rounded-2xl bg-card border border-primary/20;
+    box-shadow: 0 0 30px hsl(199 89% 48% / 0.1);
+    transition: box-shadow 0.3s ease;
+  }
+
+  .card-glow-primary:hover {
+    box-shadow: 0 0 40px hsl(199 89% 48% / 0.2);
+  }
+
+  .card-glow-accent {
+    @apply relative rounded-2xl bg-card border border-accent/20;
+    box-shadow: 0 0 30px hsl(25 95% 53% / 0.1);
+    transition: box-shadow 0.3s ease;
+  }
+
+  .card-glow-accent:hover {
+    box-shadow: 0 0 40px hsl(25 95% 53% / 0.2);
+  }
+
+  /* ==========================================
+     LOADING SKELETONS
+     ========================================== */
+
+  .skeleton-glow {
+    @apply animate-pulse bg-gradient-to-r from-muted via-muted/50 to-muted;
+    background-size: 200% 100%;
+    animation: skeleton-shimmer 1.5s ease-in-out infinite;
+  }
+
+  @keyframes skeleton-shimmer {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+  }
+
+  /* ==========================================
+     SMOOTH SCROLL
+     ========================================== */
+
+  .scroll-smooth {
+    scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Hide scrollbar but keep functionality */
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
   }
 }
