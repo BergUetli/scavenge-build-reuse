@@ -74,7 +74,7 @@ export default function Home() {
                   Welcome back, Junk Collector!
                 </p>
                 <p className="text-white/90 text-lg sm:text-xl font-semibold leading-relaxed">
-                  Take stuff apart, build something epic, or flip parts for profit.
+                  Scan old junk for reusable components — add to your cargo hold.
                 </p>
               </div>
             </div>
