@@ -17,6 +17,8 @@ import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
+import { logger } from "../_shared/logger.ts";
+
 // ScrapGadget database lookup module
 import {
   quickIdentifyDevice,
@@ -92,7 +94,7 @@ interface AICallResult {
 
 // Call OpenAI API
 async function callOpenAI(apiKey: string, systemPrompt: string, userContent: any[]): Promise<AICallResult> {
-  console.log('[OpenAI] Calling GPT-4o-mini...');
+  logger.info('Calling OpenAI GPT-4o-mini');
   
   const response = await fetch('https://api.openai.com/v1/chat/completions', {
     method: 'POST',
@@ -112,14 +114,14 @@ async function callOpenAI(apiKey: string, systemPrompt: string, userContent: any
 
   if (!response.ok) {
     const errorText = await response.text();
-    console.error('[OpenAI] API error:', response.status, errorText);
+    logger.error('OpenAI API error', new Error(errorText), { status: response.status });
     throw new Error(`OpenAI error: ${response.status}`);
   }
 
   const data = await response.json();
   const inputTokens = data.usage?.prompt_tokens || 0;
   const outputTokens = data.usage?.completion_tokens || 0;
-  console.log(`[OpenAI] Tokens used - input: ${inputTokens}, output: ${outputTokens}`);
+  logger.info('OpenAI tokens', { input: inputTokens, output: outputTokens });
   
   return {
     content: data.choices?.[0]?.message?.content || '',
@@ -131,7 +133,7 @@ async function callOpenAI(apiKey: string, systemPrompt: string, userContent: any
 
 // Call Google Gemini API
 async function callGemini(apiKey: string, systemPrompt: string, userContent: any[]): Promise<AICallResult> {
-  console.log('[Gemini] Calling Gemini 1.5 Flash...');
+  logger.info('Calling Google Gemini 1.5 Flash');
   
   // Build Gemini-formatted content
   const parts: any[] = [{ text: systemPrompt + '\n\n' + userContent[0].text }];
@@ -169,7 +171,7 @@ async function callGemini(apiKey: string, systemPrompt: string, userContent: any
 
   if (!response.ok) {
     const errorText = await response.text();
-    console.error('[Gemini] API error:', response.status, errorText);
+    logger.error('Gemini API error', new Error(errorText), { status: response.status });
     throw new Error(`Gemini error: ${response.status}`);
   }
 
@@ -177,7 +179,7 @@ async function callGemini(apiKey: string, systemPrompt: string, userContent: any
   // Gemini returns token count in usageMetadata
   const inputTokens = data.usageMetadata?.promptTokenCount || 0;
   const outputTokens = data.usageMetadata?.candidatesTokenCount || 0;
-  console.log(`[Gemini] Tokens used - input: ${inputTokens}, output: ${outputTokens}`);
+  logger.info('Gemini tokens', { input: inputTokens, output: outputTokens });
   
   return {
     content: data.candidates?.[0]?.content?.parts?.[0]?.text || '',
@@ -189,7 +191,7 @@ async function callGemini(apiKey: string, systemPrompt: string, userContent: any
 
 // Call Anthropic Claude API
 async function callClaude(apiKey: string, systemPrompt: string, userContent: any[]): Promise<AICallResult> {
-  console.log('[Claude] Calling Claude 3 Haiku...');
+  logger.info('Calling Anthropic Claude 3 Haiku');
   
   // Build Claude-formatted content
   const content: any[] = [];
@@ -232,7 +234,7 @@ async function callClaude(apiKey: string, systemPrompt: string, userContent: any
 
   if (!response.ok) {
     const errorText = await response.text();
-    console.error('[Claude] API error:', response.status, errorText);
+    logger.error('Claude API error', new Error(errorText), { status: response.status });
     throw new Error(`Claude error: ${response.status}`);
   }
 
@@ -240,7 +242,7 @@ async function callClaude(apiKey: string, systemPrompt: string, userContent: any
   // Claude returns usage.input_tokens and usage.output_tokens
   const inputTokens = data.usage?.input_tokens || 0;
   const outputTokens = data.usage?.output_tokens || 0;
-  console.log(`[Claude] Tokens used - input: ${inputTokens}, output: ${outputTokens}`);
+  logger.info('Claude tokens', { input: inputTokens, output: outputTokens });
   
   return {
     content: data.content?.[0]?.text || '',
@@ -426,7 +428,7 @@ function extractJsonFromAI(aiResponse: string) {
   try {
     return JSON.parse(text);
   } catch (e1) {
-    console.log('[JSON] Initial parse failed, attempting repair...');
+    logger.debug('JSON parse failed, attempting repair');
     
     // Find the JSON object boundaries
     const firstBrace = text.indexOf('{');
@@ -441,7 +443,7 @@ function extractJsonFromAI(aiResponse: string) {
       return JSON.parse(candidate);
     } catch (e2) {
       // Attempt to repair truncated JSON
-      console.log('[JSON] Attempting to repair truncated JSON...');
+      logger.debug('Repairing truncated JSON');
       candidate = repairTruncatedJson(candidate);
       return JSON.parse(candidate);
     }
@@ -511,7 +513,7 @@ function repairTruncatedJson(json: string): string {
   for (let i = 0; i < openBrackets; i++) closing += ']';
   for (let i = 0; i < openBraces; i++) closing += '}';
   
-  console.log(`[JSON] Repaired by closing ${openBrackets} brackets and ${openBraces} braces`);
+  logger.debug('JSON repaired', { brackets: openBrackets, braces: openBraces });
   return json + closing;
 }
 
@@ -531,7 +533,7 @@ function extractPartialInfo(text: string): Record<string, string | null> {
     const match = text.match(pattern);
     if (match) {
       partialInfo.brand = match[1].trim();
-      console.log('[PARTIAL] Brand detected:', partialInfo.brand);
+      logger.debug('Partial brand detected', { brand: partialInfo.brand });
       break;
     }
   }
@@ -546,7 +548,7 @@ function extractPartialInfo(text: string): Record<string, string | null> {
     const match = text.match(pattern);
     if (match) {
       partialInfo.object_type = match[1].trim();
-      console.log('[PARTIAL] Object type detected:', partialInfo.object_type);
+      logger.debug('Partial object type', { type: partialInfo.object_type });
       break;
     }
   }
@@ -555,14 +557,14 @@ function extractPartialInfo(text: string): Record<string, string | null> {
   const categoryMatch = text.match(/category[:\s]+["']?(Electronics|Wood|Metal|Fabric|Mechanical|ICs\/Chips|Passive Components|Electromechanical|Connectors|Display\/LEDs|Sensors|Power|PCB|Other)["']?/i);
   if (categoryMatch) {
     partialInfo.category = categoryMatch[1];
-    console.log('[PARTIAL] Category detected:', partialInfo.category);
+    logger.debug('Partial category', { category: partialInfo.category });
   }
   
   // Try to detect condition
   const conditionMatch = text.match(/condition[:\s]+["']?(New|Good|Fair|For Parts|Poor)["']?/i);
   if (conditionMatch) {
     partialInfo.condition = conditionMatch[1];
-    console.log('[PARTIAL] Condition detected:', partialInfo.condition);
+    logger.debug('Partial condition', { condition: partialInfo.condition });
   }
   
   return partialInfo;
@@ -570,7 +572,7 @@ function extractPartialInfo(text: string): Record<string, string | null> {
 
 serve(async (req) => {
   const totalStart = Date.now();
-  console.log('[identify-component] ⏱️ START - Request received');
+  logger.info('Request started');
   
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -579,8 +581,8 @@ serve(async (req) => {
   try {
     const parseStart = Date.now();
     const body = await req.json();
-    console.log(`[identify-component] ⏱️ Body parsing took ${Date.now() - parseStart}ms`);
-    console.log('[identify-component] Request body keys:', Object.keys(body));
+    logger.timing('Body parsing', Date.now() - parseStart);
+    logger.debug('Request body keys', { keys: Object.keys(body) });
     
     // Initialize Supabase client for cache operations
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
@@ -596,17 +598,17 @@ serve(async (req) => {
     const isCorrection: boolean = body.isCorrection || false;
     
     if (userHint) {
-      console.log('[identify-component] User provided hint:', userHint);
+      logger.debug('User hint provided', { hint: userHint });
     }
     
     if (requestedProvider) {
-      console.log('[identify-component] Requested provider:', requestedProvider);
+      logger.debug('Requested provider', { provider: requestedProvider });
     }
     
     // Check cache first if we have a hash
     if (imageHash) {
       const cacheStart = Date.now();
-      console.log('[identify-component] ⏱️ Checking cache for hash:', imageHash);
+      logger.debug('Checking cache', { hash: imageHash });
       
       const { data: cachedResult, error: cacheError } = await supabase
         .from('scan_cache')
@@ -615,10 +617,10 @@ serve(async (req) => {
         .gt('expires_at', new Date().toISOString())
         .maybeSingle();
       
-      console.log(`[identify-component] ⏱️ Cache lookup took ${Date.now() - cacheStart}ms`);
+      logger.timing('Cache lookup', Date.now() - cacheStart);
       
       if (cachedResult && !cacheError) {
-        console.log(`[identify-component] ⏱️ CACHE HIT! Total time: ${Date.now() - totalStart}ms (hit count: ${cachedResult.hit_count + 1})`);
+        logger.info('Cache hit', { totalTime: Date.now() - totalStart, hitCount: cachedResult.hit_count + 1 });
         
         // Update hit count asynchronously
         supabase
@@ -633,7 +635,7 @@ serve(async (req) => {
         );
       }
       
-      console.log('[identify-component] Cache miss, proceeding with API call');
+      logger.debug('Cache miss, proceeding with AI call');
     }
 
     // =============================================
@@ -641,20 +643,20 @@ serve(async (req) => {
     // Check database before expensive AI call
     // =============================================
     
-    console.log("[ScrapGadget] ===== DATABASE LOOKUP START =====");
+    logger.info('ScrapGadget database lookup started');
     const dbLookupStart = Date.now();
     
     // Setup for ScrapGadget lookup
     if (body.images && Array.isArray(body.images)) {
-      console.log('[identify-component] Received images array with', body.images.length, 'items');
+      logger.debug('Received images', { count: body.images.length });
       images = body.images;
     } else if (body.imageBase64) {
-      console.log('[identify-component] Received single image (legacy format)');
+      logger.debug('Received single image (legacy format)');
       images = [{ imageBase64: body.imageBase64, mimeType: body.mimeType || 'image/jpeg' }];
     }
 
     if (images.length === 0) {
-      console.error('[identify-component] No images found in request');
+      logger.error('No images in request');
       return new Response(
         JSON.stringify({ error: 'No images provided' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -672,7 +674,7 @@ serve(async (req) => {
     } else {
       const available = getAvailableProvider();
       if (!available) {
-        console.error('No AI provider configured');
+        logger.error('No AI provider configured');
         return new Response(
           JSON.stringify({ 
             error: 'No AI provider configured.',
@@ -687,12 +689,12 @@ serve(async (req) => {
       apiKey = available.config.apiKey!;
     }
     
-    console.log(`[identify-component] Using provider: ${configs[selectedProvider].name}`);
+    logger.info('Using provider', { provider: configs[selectedProvider].name });
     
     // Quick AI identification (cheap: ~$0.0001)
     let quickId: QuickIdentificationResult | null = null;
     try {
-      console.log('[ScrapGadget] Running quick device identification...');
+      logger.debug('Running quick device identification');
       quickId = await quickIdentifyDevice(
         callAI,
         selectedProvider,
@@ -701,14 +703,14 @@ serve(async (req) => {
         images[0].mimeType
       );
     } catch (error) {
-      console.error('[ScrapGadget] Quick ID failed:', error);
+      logger.error('Quick ID failed', error as Error);
       quickId = { brand: null, model: null, deviceName: null, confidence: 0 };
     }
     
     // Search database if we have brand info
     let dbResult: ScrapGadgetResult | null = null;
     if (quickId && quickId.confidence > 0.5) {
-      console.log(`[ScrapGadget] Searching for: ${quickId.brand} ${quickId.model || ''}`);
+      logger.debug('Searching ScrapGadget DB', { brand: quickId.brand, model: quickId.model || '' });
       dbResult = await searchScrapGadgetDB(
         supabase,
         quickId.brand,
@@ -721,7 +723,7 @@ serve(async (req) => {
     // DATABASE HIT - Return immediately!
     if (dbResult) {
       const dbTime = Date.now() - dbLookupStart;
-      console.log(`[ScrapGadget] ✅ DATABASE HIT! (${dbTime}ms, saved ~$0.005)`);
+      logger.info('ScrapGadget database HIT', { lookupTime: dbTime, savings: '$0.005' });
       
       const result = convertScrapGadgetToAIResponse(dbResult.gadget, dbResult.components);
       
@@ -755,8 +757,8 @@ serve(async (req) => {
           .then(() => {});
       }
       
-      console.log(`[identify-component] ⏱️ TOTAL: ${Date.now() - totalStart}ms (ScrapGadget DB)`);
-      console.log('[ScrapGadget] ===== DATABASE LOOKUP END (HIT) =====');
+      logger.timing('Total (ScrapGadget DB)', Date.now() - totalStart);
+      logger.info('ScrapGadget DB lookup complete (HIT)');
       
       return new Response(
         JSON.stringify(result),
@@ -765,9 +767,9 @@ serve(async (req) => {
     }
     
     // DATABASE MISS - Continue with full AI
-    console.log(`[ScrapGadget] ❌ Not in database (${Date.now() - dbLookupStart}ms)`);
-    console.log('[ScrapGadget] Proceeding with full AI analysis...');
-    console.log('[ScrapGadget] ===== DATABASE LOOKUP END (MISS) =====');
+    logger.debug('Not in ScrapGadget DB', { lookupTime: Date.now() - dbLookupStart });
+    logger.info('Proceeding with full AI analysis');
+    logger.info('ScrapGadget DB lookup complete (MISS)');
     
     // Fetch component limit settings from database
     const settingsStart = Date.now();
@@ -780,22 +782,22 @@ serve(async (req) => {
         .eq('key', 'component_limit')
         .single();
       
-      console.log(`[identify-component] ⏱️ Settings fetch took ${Date.now() - settingsStart}ms`);
+      logger.timing('Settings fetch', Date.now() - settingsStart);
       
       if (settingsData?.value) {
         const limits = settingsData.value as { min?: number; max?: number };
         if (limits.min) minComponents = limits.min;
         if (limits.max) maxComponents = limits.max;
-        console.log(`[identify-component] Using component limits from settings: ${minComponents}-${maxComponents}`);
+        logger.debug('Using component limits from settings', { min: minComponents, max: maxComponents });
       }
     } catch (e) {
-      console.log(`[identify-component] ⏱️ Settings fetch took ${Date.now() - settingsStart}ms (using defaults: 8-20)`);
+      logger.timing('Settings fetch (defaults)', Date.now() - settingsStart);
     }
 
     // Generate the prompt with configured limits
     const promptStart = Date.now();
     const systemPrompt = getIdentificationPrompt(minComponents, maxComponents);
-    console.log(`[identify-component] ⏱️ Prompt generation took ${Date.now() - promptStart}ms`);
+    logger.timing('Prompt generation', Date.now() - promptStart);
 
     // Build content array with all images
     let promptText = `I'm providing ${images.length} image(s) of the same object from different angles. Analyze ALL images together to identify the object and its salvageable components. Return ONLY valid JSON (no markdown, no code fences). If unsure, set confidence lower and still return a complete JSON object. Keep tools_needed to <= 8 items and common_uses to <= 4. YOU MUST IDENTIFY AT LEAST ${minComponents} COMPONENTS.`;
@@ -825,12 +827,12 @@ serve(async (req) => {
 
     // Call the selected AI provider
     const aiCallStart = Date.now();
-    console.log(`[identify-component] ⏱️ Starting AI API call to ${selectedProvider}...`);
+    logger.debug('Starting AI API call', { provider: selectedProvider });
     let aiResult: AICallResult;
     try {
       aiResult = await callAI(selectedProvider, apiKey, systemPrompt, userContent);
     } catch (error) {
-      console.error(`[${selectedProvider}] API call failed after ${Date.now() - aiCallStart}ms:`, error);
+      logger.error(`${selectedProvider} API call failed`, error as Error, { duration: Date.now() - aiCallStart });
       return new Response(
         JSON.stringify({ 
           error: `${configs[selectedProvider].name} error: ${error instanceof Error ? error.message : 'Unknown error'}`,
@@ -839,31 +841,31 @@ serve(async (req) => {
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
-    console.log(`[identify-component] ⏱️ AI API call took ${Date.now() - aiCallStart}ms`);
+    logger.timing('AI API call', Date.now() - aiCallStart);
 
     const aiResponse = aiResult.content;
     const costUsd = calculateCost(selectedProvider, aiResult.inputTokens, aiResult.outputTokens);
-    console.log(`[identify-component] Cost: $${costUsd.toFixed(6)} (${aiResult.inputTokens} input, ${aiResult.outputTokens} output tokens)`);
+    logger.info('AI cost', { cost: `$${costUsd.toFixed(6)}`, inputTokens: aiResult.inputTokens, outputTokens: aiResult.outputTokens });
 
     if (!aiResponse) {
-      console.error('No response content from AI');
+      logger.error('No response content from AI');
       return new Response(
         JSON.stringify({ error: 'No identification results' }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    console.log('AI Response received:', aiResponse.substring(0, 200) + '...');
+    logger.debug('AI response preview', { preview: aiResponse.substring(0, 200) });
 
     let parsedResponse;
     try {
       parsedResponse = extractJsonFromAI(aiResponse);
     } catch (parseError) {
-      console.error('Failed to parse AI response as JSON:', parseError);
+      logger.error('Failed to parse AI response', parseError as Error);
       
       // Try to extract partial information from the raw response
       const partialInfo = extractPartialInfo(aiResponse);
-      console.log('[identify-component] Partial info extracted:', partialInfo);
+      logger.debug('Partial info extracted', { info: partialInfo });
       
       return new Response(
         JSON.stringify({
@@ -884,34 +886,34 @@ serve(async (req) => {
     }
 
     // Log partial detections as they're found
-    console.log('=== IDENTIFICATION RESULTS ===');
+    logger.info('=== IDENTIFICATION RESULTS ===');
     if (parsedResponse.parent_object) {
-      console.log('[DETECTED] Parent Object:', parsedResponse.parent_object);
+      logger.info('Parent object detected', { object: parsedResponse.parent_object });
     }
     if (parsedResponse.salvage_difficulty) {
-      console.log('[DETECTED] Salvage Difficulty:', parsedResponse.salvage_difficulty);
+      logger.info('Salvage difficulty', { difficulty: parsedResponse.salvage_difficulty });
     }
     if (parsedResponse.tools_needed?.length) {
-      console.log('[DETECTED] Tools Needed:', parsedResponse.tools_needed.join(', '));
+      logger.info('Tools needed', { tools: parsedResponse.tools_needed.join(', ') });
     }
     if (parsedResponse.total_estimated_value_low !== undefined) {
-      console.log('[DETECTED] Value Range: $' + parsedResponse.total_estimated_value_low + ' - $' + parsedResponse.total_estimated_value_high);
+      logger.info('Value range', { low: parsedResponse.total_estimated_value_low, high: parsedResponse.total_estimated_value_high });
     }
     
     // Log each identified component
     if (parsedResponse.items?.length > 0) {
-      console.log('[DETECTED] Found', parsedResponse.items.length, 'salvageable components:');
+      logger.info('Salvageable components found', { count: parsedResponse.items.length });
       parsedResponse.items.forEach((item: any, idx: number) => {
         const brand = item.specifications?.brand || item.specifications?.manufacturer || '';
         const brandStr = brand ? ` (${brand})` : '';
-        console.log(`  ${idx + 1}. ${item.component_name}${brandStr} - ${item.category} - Confidence: ${Math.round((item.confidence || 0) * 100)}%`);
+        logger.debug(`Component ${idx + 1}`, { name: item.component_name, brand: item.brand, category: item.category, confidence: Math.round((item.confidence || 0) * 100) });
       });
     }
-    console.log('==============================');
+    logger.info('='.repeat(30));
 
     // Save cost to database if user is authenticated
     if (userId) {
-      console.log('[identify-component] Saving cost for user:', userId);
+      logger.debug('Saving cost for user', { userId });
       supabase
         .from('scan_costs')
         .insert({
@@ -925,16 +927,16 @@ serve(async (req) => {
         })
         .then(({ error }) => {
           if (error) {
-            console.error('[identify-component] Failed to save cost:', error.message);
+            logger.error('Failed to save cost', error as Error);
           } else {
-            console.log('[identify-component] Cost saved successfully');
+            logger.debug('Cost saved successfully');
           }
         });
     }
 
     // Cache the result if we have a hash (save for 7 days)
     if (imageHash && parsedResponse.items?.length > 0) {
-      console.log('[identify-component] Caching result for hash:', imageHash);
+      logger.debug('Caching result', { hash: imageHash });
       supabase
         .from('scan_cache')
         .upsert({
@@ -945,9 +947,9 @@ serve(async (req) => {
         }, { onConflict: 'image_hash' })
         .then(({ error }) => {
           if (error) {
-            console.error('[identify-component] Failed to cache result:', error.message);
+            logger.error('Failed to cache result', error as Error);
           } else {
-            console.log('[identify-component] Result cached successfully');
+            logger.debug('Result cached successfully');
           }
         });
     }
@@ -961,12 +963,12 @@ serve(async (req) => {
       cost_usd: costUsd
     };
 
-    console.log(`[identify-component] ⏱️ TOTAL TIME: ${Date.now() - totalStart}ms`);
+    logger.timing('Total request', Date.now() - totalStart);
     
 
     // Submit new device to ScrapGadget database
     if (parsedResponse.items && parsedResponse.items.length >= 5 && userId) {
-      console.log("[ScrapGadget] Submitting new device...");
+      logger.info('Submitting new device to ScrapGadget');
       try {
         await supabase.from("scrap_gadget_submissions").insert({
           user_id: userId,
@@ -977,9 +979,9 @@ serve(async (req) => {
           user_notes: userHint || null,
           status: "pending"
         });
-        console.log("[ScrapGadget] ✅ Submission created");
+        logger.info('ScrapGadget submission created');
       } catch (error) {
-        console.error("[ScrapGadget] Submission failed:", error);
+        logger.error('ScrapGadget submission failed', error as Error);
       }
     }
     
@@ -1001,7 +1003,7 @@ serve(async (req) => {
     );
 
   } catch (error) {
-    console.error('Error in identify-component function:', error);
+    logger.error('Function error', error as Error);
     return new Response(
       JSON.stringify({ error: error instanceof Error ? error.message : 'Unknown error' }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
