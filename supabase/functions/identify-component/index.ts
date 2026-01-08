@@ -586,16 +586,6 @@ serve(async (req) => {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
-
-// ScrapGadget database lookup module
-import {
-  quickIdentifyDevice,
-  searchScrapGadgetDB,
-  convertScrapGadgetToAIResponse,
-  logScrapGadgetMatch,
-  type QuickIdentificationResult,
-  type ScrapGadgetResult
-} from "./scrapgadget-lookup.ts";
     
     // Support both single image (legacy) and multiple images
     let images: Array<{ imageBase64: string; mimeType: string }> = [];
@@ -644,6 +634,7 @@ import {
       }
       
       console.log('[identify-component] Cache miss, proceeding with API call');
+    }
 
     // =============================================
     // SCRAPGADGET DATABASE LOOKUP
@@ -777,9 +768,6 @@ import {
     console.log(`[ScrapGadget] ❌ Not in database (${Date.now() - dbLookupStart}ms)`);
     console.log('[ScrapGadget] Proceeding with full AI analysis...');
     console.log('[ScrapGadget] ===== DATABASE LOOKUP END (MISS) =====');
-    
-    // Skip duplicate image validation and provider selection below
-    // (they were moved above for ScrapGadget integration)
     
     // Fetch component limit settings from database
     const settingsStart = Date.now();
