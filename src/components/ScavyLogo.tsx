@@ -1,12 +1,12 @@
 /**
- * Kabari Logo Component
+ * Scavy Logo Component
  * Industrial wordmark with rickshaw icon (SVG)
  * Glitch effect on hover
  */
 
 import { cn } from '@/lib/utils';
 
-interface KabariLogoProps {
+interface ScavyLogoProps {
   className?: string;
   size?: 'sm' | 'md' | 'lg';
   showText?: boolean;
@@ -135,11 +135,11 @@ const RickshawIcon = ({ className, size }: { className?: string; size: 'sm' | 'm
   );
 };
 
-export const KabariLogo = ({ 
+export const ScavyLogo = ({ 
   className, 
   size = 'md',
   showText = true 
-}: KabariLogoProps) => {
+}: ScavyLogoProps) => {
   const textSizeClasses = {
     sm: 'text-xl',
     md: 'text-2xl',
@@ -172,10 +172,10 @@ export const KabariLogo = ({
             "group-hover:tracking-wider"
           )}>
             <span className="relative inline-block group-hover:animate-[glitch-1_0.3s_ease-in-out]">
-              Ka
+              Sca
             </span>
             <span className="text-accent relative inline-block group-hover:animate-[glitch-2_0.3s_ease-in-out_0.05s]">
-              bari
+              vy
             </span>
           </span>
 
@@ -224,6 +224,6 @@ export const KabariLogo = ({
 };
 
 // Icon-only variant for compact spaces
-export const KabariIcon = ({ className, size = 'md' }: { className?: string; size?: 'sm' | 'md' | 'lg' }) => (
+export const ScavyIcon = ({ className, size = 'md' }: { className?: string; size?: 'sm' | 'md' | 'lg' }) => (
   <RickshawIcon size={size} className={className} />
 );

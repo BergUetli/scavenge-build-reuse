@@ -1,12 +1,12 @@
 /**
- * HOME PAGE - Kabari
+ * HOME PAGE - Scavy
  * Scan salvage, identify components, build epic projects
  */
 
 import { useNavigate } from 'react-router-dom';
 import { ChevronRight, Zap, Crosshair } from 'lucide-react';
 import { UsageIndicator } from '@/components/scanner/UsageIndicator';
-import { KabariLogo } from '@/components/KabariLogo';
+import { ScavyLogo } from '@/components/ScavyLogo';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { AppLayout } from '@/components/layout/AppLayout';
@@ -63,7 +63,7 @@ export default function Home() {
 
               {/* Logo & Title */}
               <div className="relative mb-5 inline-block">
-                <KabariLogo size="lg" className="drop-shadow-lg" />
+                <ScavyLogo size="lg" className="drop-shadow-lg" />
                 {/* Status indicator */}
                 <div className="absolute top-0 right-0 w-3 h-3 bg-success rounded-full border-2 border-background animate-pulse" />
               </div>
