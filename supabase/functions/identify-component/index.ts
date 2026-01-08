@@ -17,6 +17,16 @@ import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
+// ScrapGadget database lookup module
+import {
+  quickIdentifyDevice,
+  searchScrapGadgetDB,
+  convertScrapGadgetToAIResponse,
+  logScrapGadgetMatch,
+  type QuickIdentificationResult,
+  type ScrapGadgetResult
+} from "./scrapgadget-lookup.ts";
+
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
@@ -576,6 +586,16 @@ serve(async (req) => {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+// ScrapGadget database lookup module
+import {
+  quickIdentifyDevice,
+  searchScrapGadgetDB,
+  convertScrapGadgetToAIResponse,
+  logScrapGadgetMatch,
+  type QuickIdentificationResult,
+  type ScrapGadgetResult
+} from "./scrapgadget-lookup.ts";
     
     // Support both single image (legacy) and multiple images
     let images: Array<{ imageBase64: string; mimeType: string }> = [];
@@ -624,8 +644,16 @@ serve(async (req) => {
       }
       
       console.log('[identify-component] Cache miss, proceeding with API call');
-    }
+
+    // =============================================
+    // SCRAPGADGET DATABASE LOOKUP
+    // Check database before expensive AI call
+    // =============================================
     
+    console.log("[ScrapGadget] ===== DATABASE LOOKUP START =====");
+    const dbLookupStart = Date.now();
+    
+    // Setup for ScrapGadget lookup
     if (body.images && Array.isArray(body.images)) {
       console.log('[identify-component] Received images array with', body.images.length, 'items');
       images = body.images;
@@ -642,36 +670,21 @@ serve(async (req) => {
       );
     }
 
-    // Validate each image
-    for (let i = 0; i < images.length; i++) {
-      const img = images[i];
-      if (!img.imageBase64 || img.imageBase64.length < 100) {
-        console.error(`[identify-component] Image ${i} is invalid or too small`);
-        return new Response(
-          JSON.stringify({ error: `Image ${i + 1} is invalid` }),
-          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
-      }
-      console.log(`[identify-component] Image ${i + 1}: ${img.mimeType}, ${img.imageBase64.length} chars`);
-    }
-
     // Determine which AI provider to use
     const configs = getProviderConfigs();
     let selectedProvider: AIProvider;
     let apiKey: string;
     
     if (requestedProvider && configs[requestedProvider].apiKey) {
-      // Use the requested provider if available
       selectedProvider = requestedProvider;
       apiKey = configs[requestedProvider].apiKey!;
     } else {
-      // Fall back to first available provider
       const available = getAvailableProvider();
       if (!available) {
         console.error('No AI provider configured');
         return new Response(
           JSON.stringify({ 
-            error: 'No AI provider configured. Add an API key for OpenAI, Google Gemini, or Anthropic Claude in Settings → Cloud → Secrets.',
+            error: 'No AI provider configured.',
             configuredProviders: Object.entries(configs)
               .filter(([_, c]) => c.apiKey)
               .map(([p]) => p)
@@ -682,9 +695,92 @@ serve(async (req) => {
       selectedProvider = available.provider;
       apiKey = available.config.apiKey!;
     }
-
+    
     console.log(`[identify-component] Using provider: ${configs[selectedProvider].name}`);
-
+    
+    // Quick AI identification (cheap: ~$0.0001)
+    let quickId: QuickIdentificationResult | null = null;
+    try {
+      console.log('[ScrapGadget] Running quick device identification...');
+      quickId = await quickIdentifyDevice(
+        callAI,
+        selectedProvider,
+        apiKey,
+        images[0].imageBase64,
+        images[0].mimeType
+      );
+    } catch (error) {
+      console.error('[ScrapGadget] Quick ID failed:', error);
+      quickId = { brand: null, model: null, deviceName: null, confidence: 0 };
+    }
+    
+    // Search database if we have brand info
+    let dbResult: ScrapGadgetResult | null = null;
+    if (quickId && quickId.confidence > 0.5) {
+      console.log(`[ScrapGadget] Searching for: ${quickId.brand} ${quickId.model || ''}`);
+      dbResult = await searchScrapGadgetDB(
+        supabase,
+        quickId.brand,
+        quickId.model,
+        quickId.deviceName,
+        userHint
+      );
+    }
+    
+    // DATABASE HIT - Return immediately!
+    if (dbResult) {
+      const dbTime = Date.now() - dbLookupStart;
+      console.log(`[ScrapGadget] ✅ DATABASE HIT! (${dbTime}ms, saved ~$0.005)`);
+      
+      const result = convertScrapGadgetToAIResponse(dbResult.gadget, dbResult.components);
+      
+      // Log analytics
+      await logScrapGadgetMatch(
+        supabase,
+        userId,
+        dbResult.gadget.id,
+        imageHash,
+        quickId?.model ? 'exact_match' : 'fuzzy_match',
+        quickId?.confidence || 0.8,
+        0.005,
+        dbTime
+      );
+      
+      // Increment gadget scan count
+      supabase.from('scrap_gadgets')
+        .update({ scan_count: (dbResult.gadget.scan_count || 0) + 1 })
+        .eq('id', dbResult.gadget.id)
+        .then(() => {});
+      
+      // Cache result for future
+      if (imageHash) {
+        supabase.from('scan_cache')
+          .upsert({
+            image_hash: imageHash,
+            scan_result: result,
+            expires_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+            hit_count: 0
+          }, { onConflict: 'image_hash' })
+          .then(() => {});
+      }
+      
+      console.log(`[identify-component] ⏱️ TOTAL: ${Date.now() - totalStart}ms (ScrapGadget DB)`);
+      console.log('[ScrapGadget] ===== DATABASE LOOKUP END (HIT) =====');
+      
+      return new Response(
+        JSON.stringify(result),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+    
+    // DATABASE MISS - Continue with full AI
+    console.log(`[ScrapGadget] ❌ Not in database (${Date.now() - dbLookupStart}ms)`);
+    console.log('[ScrapGadget] Proceeding with full AI analysis...');
+    console.log('[ScrapGadget] ===== DATABASE LOOKUP END (MISS) =====');
+    
+    // Skip duplicate image validation and provider selection below
+    // (they were moved above for ScrapGadget integration)
+    
     // Fetch component limit settings from database
     const settingsStart = Date.now();
     let minComponents = 8;
@@ -879,6 +975,38 @@ serve(async (req) => {
 
     console.log(`[identify-component] ⏱️ TOTAL TIME: ${Date.now() - totalStart}ms`);
     
+
+    // Submit new device to ScrapGadget database
+    if (parsedResponse.items && parsedResponse.items.length >= 5 && userId) {
+      console.log("[ScrapGadget] Submitting new device...");
+      try {
+        await supabase.from("scrap_gadget_submissions").insert({
+          user_id: userId,
+          ai_scan_result: parsedResponse,
+          image_urls: [],
+          matched_gadget_id: null,
+          submission_type: "new_device",
+          user_notes: userHint || null,
+          status: "pending"
+        });
+        console.log("[ScrapGadget] ✅ Submission created");
+      } catch (error) {
+        console.error("[ScrapGadget] Submission failed:", error);
+      }
+    }
+    
+    // Log AI fallback analytics
+    await logScrapGadgetMatch(
+      supabase,
+      userId,
+      null,
+      imageHash,
+      "ai_fallback",
+      0,
+      0,
+      Date.now() - totalStart
+    );
+
     return new Response(
       JSON.stringify(parsedResponse),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
