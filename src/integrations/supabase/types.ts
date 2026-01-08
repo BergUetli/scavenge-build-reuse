@@ -372,6 +372,315 @@ export type Database = {
         }
         Relationships: []
       }
+      scrap_gadget_components: {
+        Row: {
+          category: string
+          common_uses: string[] | null
+          component_name: string
+          condition_notes: string | null
+          confidence: number | null
+          created_at: string | null
+          datasheet_url: string | null
+          depreciation_rate: number | null
+          description: string | null
+          extraction_difficulty: string | null
+          extraction_notes: string | null
+          gadget_id: string
+          id: string
+          market_value_new: number | null
+          purchase_urls: Json | null
+          quantity: number | null
+          reusability_score: number | null
+          specifications: Json | null
+          technical_specs: Json | null
+          verified: boolean | null
+        }
+        Insert: {
+          category: string
+          common_uses?: string[] | null
+          component_name: string
+          condition_notes?: string | null
+          confidence?: number | null
+          created_at?: string | null
+          datasheet_url?: string | null
+          depreciation_rate?: number | null
+          description?: string | null
+          extraction_difficulty?: string | null
+          extraction_notes?: string | null
+          gadget_id: string
+          id?: string
+          market_value_new?: number | null
+          purchase_urls?: Json | null
+          quantity?: number | null
+          reusability_score?: number | null
+          specifications?: Json | null
+          technical_specs?: Json | null
+          verified?: boolean | null
+        }
+        Update: {
+          category?: string
+          common_uses?: string[] | null
+          component_name?: string
+          condition_notes?: string | null
+          confidence?: number | null
+          created_at?: string | null
+          datasheet_url?: string | null
+          depreciation_rate?: number | null
+          description?: string | null
+          extraction_difficulty?: string | null
+          extraction_notes?: string | null
+          gadget_id?: string
+          id?: string
+          market_value_new?: number | null
+          purchase_urls?: Json | null
+          quantity?: number | null
+          reusability_score?: number | null
+          specifications?: Json | null
+          technical_specs?: Json | null
+          verified?: boolean | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "scrap_gadget_components_gadget_id_fkey"
+            columns: ["gadget_id"]
+            isOneToOne: false
+            referencedRelation: "scrap_gadgets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      scrap_gadget_match_log: {
+        Row: {
+          cost_saved_usd: number | null
+          created_at: string | null
+          gadget_id: string | null
+          id: string
+          image_hash: string | null
+          match_confidence: number | null
+          match_type: string
+          response_time_ms: number | null
+          user_id: string | null
+        }
+        Insert: {
+          cost_saved_usd?: number | null
+          created_at?: string | null
+          gadget_id?: string | null
+          id?: string
+          image_hash?: string | null
+          match_confidence?: number | null
+          match_type: string
+          response_time_ms?: number | null
+          user_id?: string | null
+        }
+        Update: {
+          cost_saved_usd?: number | null
+          created_at?: string | null
+          gadget_id?: string | null
+          id?: string
+          image_hash?: string | null
+          match_confidence?: number | null
+          match_type?: string
+          response_time_ms?: number | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "scrap_gadget_match_log_gadget_id_fkey"
+            columns: ["gadget_id"]
+            isOneToOne: false
+            referencedRelation: "scrap_gadgets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      scrap_gadget_submissions: {
+        Row: {
+          ai_scan_result: Json
+          auto_approved: boolean | null
+          created_at: string | null
+          id: string
+          image_urls: string[] | null
+          matched_gadget_id: string | null
+          review_notes: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: string
+          submission_type: string
+          updated_at: string | null
+          user_id: string
+          user_notes: string | null
+        }
+        Insert: {
+          ai_scan_result: Json
+          auto_approved?: boolean | null
+          created_at?: string | null
+          id?: string
+          image_urls?: string[] | null
+          matched_gadget_id?: string | null
+          review_notes?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          submission_type: string
+          updated_at?: string | null
+          user_id: string
+          user_notes?: string | null
+        }
+        Update: {
+          ai_scan_result?: Json
+          auto_approved?: boolean | null
+          created_at?: string | null
+          id?: string
+          image_urls?: string[] | null
+          matched_gadget_id?: string | null
+          review_notes?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          submission_type?: string
+          updated_at?: string | null
+          user_id?: string
+          user_notes?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "scrap_gadget_submissions_matched_gadget_id_fkey"
+            columns: ["matched_gadget_id"]
+            isOneToOne: false
+            referencedRelation: "scrap_gadgets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      scrap_gadget_taxonomy: {
+        Row: {
+          category: string
+          icon_name: string | null
+          id: string
+          industry: string
+          sort_order: number | null
+          subcategory: string | null
+        }
+        Insert: {
+          category: string
+          icon_name?: string | null
+          id?: string
+          industry: string
+          sort_order?: number | null
+          subcategory?: string | null
+        }
+        Update: {
+          category?: string
+          icon_name?: string | null
+          id?: string
+          industry?: string
+          sort_order?: number | null
+          subcategory?: string | null
+        }
+        Relationships: []
+      }
+      scrap_gadgets: {
+        Row: {
+          brand: string
+          category: string
+          common_names: string[] | null
+          confidence_score: number | null
+          created_at: string | null
+          damage_risk: string | null
+          device_name: string
+          disassembly_difficulty: string | null
+          disassembly_time_estimate: string | null
+          end_of_life_year: number | null
+          estimated_device_age_years: number | null
+          id: string
+          ifixit_url: string | null
+          image_urls: string[] | null
+          industry: string
+          injury_risk: string | null
+          manufacturer_url: string | null
+          model_name: string | null
+          model_number: string | null
+          release_year: number | null
+          safety_warnings: string[] | null
+          scan_count: number | null
+          search_vector: unknown
+          subcategory: string | null
+          tools_required: string[] | null
+          total_market_value_high: number | null
+          total_market_value_low: number | null
+          updated_at: string | null
+          verified: boolean | null
+          visual_identifiers: Json | null
+          youtube_teardown_url: string | null
+        }
+        Insert: {
+          brand: string
+          category: string
+          common_names?: string[] | null
+          confidence_score?: number | null
+          created_at?: string | null
+          damage_risk?: string | null
+          device_name: string
+          disassembly_difficulty?: string | null
+          disassembly_time_estimate?: string | null
+          end_of_life_year?: number | null
+          estimated_device_age_years?: number | null
+          id?: string
+          ifixit_url?: string | null
+          image_urls?: string[] | null
+          industry: string
+          injury_risk?: string | null
+          manufacturer_url?: string | null
+          model_name?: string | null
+          model_number?: string | null
+          release_year?: number | null
+          safety_warnings?: string[] | null
+          scan_count?: number | null
+          search_vector?: unknown
+          subcategory?: string | null
+          tools_required?: string[] | null
+          total_market_value_high?: number | null
+          total_market_value_low?: number | null
+          updated_at?: string | null
+          verified?: boolean | null
+          visual_identifiers?: Json | null
+          youtube_teardown_url?: string | null
+        }
+        Update: {
+          brand?: string
+          category?: string
+          common_names?: string[] | null
+          confidence_score?: number | null
+          created_at?: string | null
+          damage_risk?: string | null
+          device_name?: string
+          disassembly_difficulty?: string | null
+          disassembly_time_estimate?: string | null
+          end_of_life_year?: number | null
+          estimated_device_age_years?: number | null
+          id?: string
+          ifixit_url?: string | null
+          image_urls?: string[] | null
+          industry?: string
+          injury_risk?: string | null
+          manufacturer_url?: string | null
+          model_name?: string | null
+          model_number?: string | null
+          release_year?: number | null
+          safety_warnings?: string[] | null
+          scan_count?: number | null
+          search_vector?: unknown
+          subcategory?: string | null
+          tools_required?: string[] | null
+          total_market_value_high?: number | null
+          total_market_value_low?: number | null
+          updated_at?: string | null
+          verified?: boolean | null
+          visual_identifiers?: Json | null
+          youtube_teardown_url?: string | null
+        }
+        Relationships: []
+      }
       user_inventory: {
         Row: {
           category: string
@@ -458,12 +767,30 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_gadget_breakdown: { Args: { gadget_uuid: string }; Returns: Json }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
           _user_id: string
         }
         Returns: boolean
+      }
+      search_scrap_gadgets: {
+        Args: {
+          limit_results?: number
+          search_brand?: string
+          search_model?: string
+          search_query: string
+        }
+        Returns: {
+          brand: string
+          category: string
+          device_name: string
+          id: string
+          model_name: string
+          model_number: string
+          similarity_score: number
+        }[]
       }
     }
     Enums: {
