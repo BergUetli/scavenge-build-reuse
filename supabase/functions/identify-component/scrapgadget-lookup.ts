@@ -17,14 +17,17 @@ export interface ScrapGadgetResult {
   components: any[];
 }
 
+// AI Provider type (must match main module)
+type AIProvider = 'openai' | 'gemini' | 'claude';
+
 /**
  * Quick AI call to identify just the brand and model
  * This is much cheaper than full component identification
  * Cost: ~$0.0001 vs $0.002-0.01 for full analysis
  */
 export async function quickIdentifyDevice(
-  callAI: (provider: string, apiKey: string, systemPrompt: string, userContent: any[]) => Promise<any>,
-  provider: string,
+  callAI: (provider: AIProvider, apiKey: string, systemPrompt: string, userContent: any[]) => Promise<any>,
+  provider: AIProvider,
   apiKey: string,
   imageBase64: string,
   mimeType: string

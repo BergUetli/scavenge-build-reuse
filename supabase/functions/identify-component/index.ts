@@ -586,16 +586,6 @@ serve(async (req) => {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
-
-// ScrapGadget database lookup module
-import {
-  quickIdentifyDevice,
-  searchScrapGadgetDB,
-  convertScrapGadgetToAIResponse,
-  logScrapGadgetMatch,
-  type QuickIdentificationResult,
-  type ScrapGadgetResult
-} from "./scrapgadget-lookup.ts";
     
     // Support both single image (legacy) and multiple images
     let images: Array<{ imageBase64: string; mimeType: string }> = [];
@@ -644,7 +634,8 @@ import {
       }
       
       console.log('[identify-component] Cache miss, proceeding with API call');
-
+    }
+    
     // =============================================
     // SCRAPGADGET DATABASE LOOKUP
     // Check database before expensive AI call
