@@ -50,7 +50,7 @@ class Logger {
     console.error(`[ERROR] ${message}`, {
       error: error?.message || error,
       stack: error?.stack,
-      ...this.formatContext(context),
+      context: this.formatContext(context),
     });
   }
 
