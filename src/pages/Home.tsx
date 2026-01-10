@@ -39,9 +39,10 @@ export default function Home() {
         {/* Content Container */}
         <div className="relative px-5 pt-6 pb-28 max-w-lg mx-auto">
           
-          {/* Logo */}
-          <div className="mb-8">
+          {/* Logo with Version */}
+          <div className="mb-8 flex items-center justify-between">
             <h1 className="text-white text-2xl font-bold tracking-wide">Scavy</h1>
+            <span className="text-[#00D9FF]/40 text-xs font-mono tracking-wider">v0.1</span>
           </div>
 
           {/* Hero Text with Cyan Glow */}
