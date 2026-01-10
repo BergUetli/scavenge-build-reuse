@@ -33,7 +33,7 @@ export function useInventory() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
 
-  // Fetch all inventory items for current user
+  // Fetch all inventory items for current user (active items only)
   const {
     data: inventory = [],
     isLoading,
@@ -48,6 +48,7 @@ export function useInventory() {
         .from('user_inventory')
         .select('*')
         .eq('user_id', user.id)
+        .is('deleted_at', null)  // Only active items
         .order('date_added', { ascending: false });
 
       if (error) throw error;
@@ -183,24 +184,60 @@ export function useInventory() {
     }
   });
 
-  // Delete inventory item
+  // Soft delete inventory item (recoverable within 30 days)
   const deleteItem = useMutation({
     mutationFn: async (itemId: string) => {
       if (!user) throw new Error('Not authenticated');
 
+      // Soft delete: set deleted_at timestamp
       const { error } = await supabase
         .from('user_inventory')
-        .delete()
+        .update({ deleted_at: new Date().toISOString() })
         .eq('id', itemId)
-        .eq('user_id', user.id);
+        .eq('user_id', user.id)
+        .is('deleted_at', null);  // Can't delete already deleted items
 
       if (error) throw error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['inventory', user?.id] });
       toast({
-        title: 'Deleted',
-        description: 'Item removed from inventory.'
+        title: 'Item removed',
+        description: 'You can restore this item within 30 days.',
+        duration: 5000
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: 'Error',
+        description: error.message,
+        variant: 'destructive'
+      });
+    }
+  });
+
+  // Restore soft-deleted item (within 30-day window)
+  const restoreItem = useMutation({
+    mutationFn: async (itemId: string) => {
+      if (!user) throw new Error('Not authenticated');
+
+      // Restore: set deleted_at back to null
+      const { error } = await supabase
+        .from('user_inventory')
+        .update({ deleted_at: null })
+        .eq('id', itemId)
+        .eq('user_id', user.id)
+        .not('deleted_at', 'is', null)  // Only restore deleted items
+        .gt('deleted_at', new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString());  // Within 30 days
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['inventory', user?.id] });
+      toast({
+        title: 'Item restored',
+        description: 'The item has been restored to your inventory.',
+        duration: 3000
       });
     },
     onError: (error) => {
@@ -228,6 +265,7 @@ export function useInventory() {
     addItem,
     updateItem,
     deleteItem,
+    restoreItem,
     stats
   };
 }
