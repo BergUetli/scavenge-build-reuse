@@ -4,7 +4,7 @@
  */
 
 import { useNavigate } from 'react-router-dom';
-import { Camera, Package, Wrench, MapPin, Hammer } from 'lucide-react';
+import { Camera, Package, Wrench, ShoppingBag, Hammer } from 'lucide-react';
 import { ScavyLogo } from '@/components/ScavyLogo';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -107,25 +107,25 @@ export default function Home() {
               </CardContent>
             </Card>
 
-            {/* Find Parts */}
+            {/* Marketplace */}
             <Card className="bg-[#1C1C1E] border-[#2C394B] hover:border-[#00D9FF]/30 transition-all duration-300 group">
               <CardContent className="p-5">
                 <div className="flex items-start gap-4 mb-4">
                   <div className="w-12 h-12 rounded-xl bg-[#00D9FF]/10 flex items-center justify-center flex-shrink-0 group-hover:bg-[#00D9FF]/20 transition-colors">
-                    <MapPin className="w-6 h-6 text-[#00D9FF]" />
+                    <ShoppingBag className="w-6 h-6 text-[#00D9FF]" />
                   </div>
                   <div className="flex-1">
-                    <h3 className="text-white font-bold text-lg mb-1">Find Parts</h3>
+                    <h3 className="text-white font-bold text-lg mb-1">Marketplace</h3>
                     <p className="text-gray-400 text-sm leading-relaxed">
-                      Discover new & used parts in your city.
+                      Sell your salvaged parts to other makers.
                     </p>
                   </div>
                 </div>
                 <Button
-                  onClick={() => navigate('/parts')}
+                  onClick={() => navigate('/marketplace')}
                   className="w-full bg-[#00D9FF] hover:bg-[#00B8DD] text-white font-semibold rounded-xl h-11 transition-colors"
                 >
-                  Search Nearby
+                  Browse & Sell
                 </Button>
               </CardContent>
             </Card>
