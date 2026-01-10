@@ -13,6 +13,8 @@ import Profile from "./pages/Profile";
 import Settings from "./pages/Settings";
 import Auth from "./pages/Auth";
 import Admin from "./pages/Admin";
+import Tools from "./pages/Tools";
+import Parts from "./pages/Parts";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -27,9 +29,12 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/scan" element={<Scanner />} />
+            <Route path="/scanner" element={<Scanner />} />
             <Route path="/inventory" element={<Inventory />} />
             <Route path="/projects" element={<Projects />} />
             <Route path="/projects/:id" element={<ProjectDetail />} />
+            <Route path="/tools" element={<Tools />} />
+            <Route path="/parts" element={<Parts />} />
             <Route path="/profile" element={<Profile />} />
             <Route path="/settings" element={<Settings />} />
             <Route path="/auth" element={<Auth />} />
