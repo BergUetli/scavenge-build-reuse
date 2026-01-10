@@ -5,7 +5,7 @@
  * Allows user to confirm, edit, or reject identification.
  */
 
-import { Check, Edit2, X, Star, CircleDollarSign, AlertCircle, Cpu } from 'lucide-react';
+import { Check, Edit2, X, Star, CircleDollarSign, AlertCircle, Cpu, Database, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -74,11 +74,24 @@ export function IdentificationResult({
           {/* Title and category */}
           <div className="flex-1 min-w-0">
             <CardTitle className="text-xl line-clamp-2">{result.component_name}</CardTitle>
-            <div className="flex items-center gap-2 mt-2">
+            <div className="flex items-center gap-2 mt-2 flex-wrap">
               <Badge variant="secondary" className={colorClass}>
                 {result.category}
               </Badge>
               <Badge variant="outline">{result.condition}</Badge>
+              
+              {/* Source Badge - Database vs AI */}
+              {(result as any).from_database ? (
+                <Badge variant="default" className="bg-eco/10 text-eco border-eco/20">
+                  <Database className="w-3 h-3 mr-1" />
+                  Verified Database
+                </Badge>
+              ) : (
+                <Badge variant="outline" className="text-amber-500 border-amber-500/20">
+                  <Sparkles className="w-3 h-3 mr-1" />
+                  AI Identified
+                </Badge>
+              )}
             </div>
           </div>
         </div>

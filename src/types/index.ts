@@ -210,6 +210,9 @@ export interface AIIdentificationResponse {
   partial_detection?: Record<string, string | null>;
   cost?: ScanCostInfo;
   cached?: boolean;
+  from_database?: boolean;  // Whether result came from ScrapGadget DB
+  verified?: boolean;        // Whether gadget is verified in DB
+  gadget_id?: string;        // ScrapGadget database ID
 }
 
 /**

@@ -1,5 +1,52 @@
 # Scavy Version History
 
+## v0.3 - Admin Review System
+**Date**: 2026-01-10  
+**Commit**: TBD  
+**Status**: 🚀 Deploying
+
+### Changes:
+- ✅ **NEW: Admin Dashboard** - Full review interface at `/admin`
+- ✅ **NEW: UI Source Badges** - Shows "Verified Database" vs "AI Identified" in scanner results
+- ✅ **NEW: Approval Workflow** - One-click approve/reject with automatic DB migration
+- ✅ **NEW: Quality Control** - Manual review before gadgets enter main database
+- ✅ **NEW: Analytics Dashboard** - Track pending, approved, rejected submissions
+
+### Features:
+**Admin Dashboard** (`/admin`):
+- View all pending, approved, and rejected submissions
+- See gadget details: components, values, difficulty, user info
+- Approve: Automatically moves to `scrap_gadgets` + `scrap_gadget_components` tables
+- Reject: Mark with reason for future reference
+- Stats cards: Pending count, approved count, rejected count, total submissions
+
+**Source Badges**:
+- Scanner results now show:
+  - 🟢 "Verified Database" badge (green) if from ScrapGadget DB
+  - 🟡 "AI Identified" badge (amber) if from AI call
+- Visible in both IdentificationResult and ComponentBreakdown views
+
+**Access Control**:
+- Admin access requires `user_roles.role = 'admin'` or `'super_admin'`
+- Non-admins see "Access Denied" message
+- Authentication required
+
+### Technical Details:
+- Added `from_database`, `verified`, `gadget_id` fields to `AIIdentificationResponse` type
+- Created `Admin.tsx` page (19KB) with full submission management
+- Database vs AI badges using Lucide icons: `<Database>` and `<Sparkles>`
+- Approval flow creates records in both `scrap_gadgets` and `scrap_gadget_components`
+- Updated `IdentificationResult.tsx` and `ComponentBreakdown.tsx` with source badges
+
+### Files Changed:
+- `src/pages/Admin.tsx` (NEW)
+- `src/components/scanner/IdentificationResult.tsx` (badge added)
+- `src/components/scanner/ComponentBreakdown.tsx` (badge added)
+- `src/types/index.ts` (added from_database, verified, gadget_id)
+- `src/pages/Home.tsx` (version → v0.3)
+
+---
+
 ## v0.2 - Scan History Fix
 **Date**: 2026-01-10  
 **Commit**: TBD  

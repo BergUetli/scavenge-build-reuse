@@ -38,7 +38,9 @@ import {
   Link2,
   X,
   Edit3,
-  Save
+  Save,
+  Database,
+  Sparkles
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -264,9 +266,24 @@ export function ComponentBreakdown({
           <p className="text-xs font-medium tracking-widest text-muted-foreground uppercase mb-1">
             Salvage Info
           </p>
-          <p className="text-xl font-semibold text-foreground">
-            {hasComponents ? `${result.items.length} Parts Found` : 'No Parts Found'}
-          </p>
+          <div className="flex items-center gap-3 mb-2">
+            <p className="text-xl font-semibold text-foreground">
+              {hasComponents ? `${result.items.length} Parts Found` : 'No Parts Found'}
+            </p>
+            
+            {/* Source Badge */}
+            {(result as any).from_database ? (
+              <Badge variant="default" className="bg-eco/10 text-eco border-eco/20">
+                <Database className="w-3 h-3 mr-1" />
+                Verified Database
+              </Badge>
+            ) : (
+              <Badge variant="outline" className="text-amber-500 border-amber-500/20">
+                <Sparkles className="w-3 h-3 mr-1" />
+                AI Identified
+              </Badge>
+            )}
+          </div>
           <p className="text-lg text-muted-foreground">
             {result.total_estimated_value_low !== undefined 
               ? `$${result.total_estimated_value_low} - $${result.total_estimated_value_high} total value`
