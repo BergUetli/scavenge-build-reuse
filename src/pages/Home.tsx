@@ -4,7 +4,7 @@
  */
 
 import { useNavigate } from 'react-router-dom';
-import { Camera, Package, Wrench, MapPin } from 'lucide-react';
+import { Camera, Package, Wrench, ShoppingBag, Hammer } from 'lucide-react';
 import { ScavyLogo } from '@/components/ScavyLogo';
 import { Button } from '@/components/ui/button';
 import { AppLayout } from '@/components/layout/AppLayout';
@@ -155,16 +155,16 @@ export default function Home() {
               </div>
             </div>
 
-            {/* Find Parts */}
+            {/* Marketplace */}
             <div className="bg-[#0D1B2A]/95 border border-[#00D9FF]/40 rounded-2xl p-4 backdrop-blur-sm shadow-[0_0_20px_rgba(0,217,255,0.1)]">
               <div className="flex items-center gap-3">
                 <div className="w-12 h-12 rounded-xl bg-[#00D9FF]/15 flex items-center justify-center flex-shrink-0 border border-[#00D9FF]/30">
-                  <MapPin className="w-6 h-6 text-[#00D9FF]" />
+                  <ShoppingBag className="w-6 h-6 text-[#00D9FF]" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <h3 className="text-white font-bold text-base">Find Parts</h3>
+                  <h3 className="text-white font-bold text-base">Marketplace</h3>
                   <p className="text-gray-400 text-sm leading-snug">
-                    Locate needed parts nearby
+                    Sell your salvaged parts to others
                   </p>
                 </div>
                 <Button
@@ -172,7 +172,29 @@ export default function Home() {
                   size="sm"
                   className="bg-[#00D9FF] hover:bg-[#00C4E8] text-[#0A1929] font-semibold rounded-full px-4 h-9 flex-shrink-0 shadow-lg"
                 >
-                  Search Nearby
+                  Browse & Sell
+                </Button>
+              </div>
+            </div>
+
+            {/* Build Projects */}
+            <div className="bg-[#0D1B2A]/95 border border-[#00D9FF]/40 rounded-2xl p-4 backdrop-blur-sm shadow-[0_0_20px_rgba(0,217,255,0.1)]">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-xl bg-[#00D9FF]/15 flex items-center justify-center flex-shrink-0 border border-[#00D9FF]/30">
+                  <Hammer className="w-6 h-6 text-[#00D9FF]" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h3 className="text-white font-bold text-base">Build Projects</h3>
+                  <p className="text-gray-400 text-sm leading-snug">
+                    Create amazing things from salvaged components
+                  </p>
+                </div>
+                <Button
+                  onClick={() => navigate('/projects')}
+                  size="sm"
+                  className="bg-[#00D9FF] hover:bg-[#00C4E8] text-[#0A1929] font-semibold rounded-full px-4 h-9 flex-shrink-0 shadow-lg"
+                >
+                  Start Building
                 </Button>
               </div>
             </div>
