@@ -1,5 +1,66 @@
 # Scavy Version History
 
+## v0.4 - Interactive Disassembly Workflow
+**Date**: 2026-01-10  
+**Commit**: TBD  
+**Status**: 🚀 Deploying
+
+### Changes:
+- ✅ **NEW: Two-Path Save System** - "Save As-Is" or "Disassemble"
+- ✅ **NEW: Interactive Disassembly Wizard** - Step-by-step guided teardown
+- ✅ **NEW: Risk Acknowledgment** - Safety warnings with user acceptance
+- ✅ **NEW: Component Selection** - Choose which parts to keep after disassembly
+- ✅ **NEW: Safety Warnings** - Highlighted alerts for dangerous components
+- ✅ **NEW: Tool Requirements** - Shows what tools you need before starting
+- ✅ **NEW: Progress Tracking** - Visual progress through disassembly steps
+
+### Features:
+**Save As-Is Button**:
+- Quick save all components to inventory
+- No disassembly required
+- Same as old "Save All" behavior
+
+**Disassemble Button**:
+- Launches interactive wizard
+- Multi-step guided process:
+  1. **Overview**: Tools, time, difficulty, safety warnings
+  2. **Risk Acknowledgment**: Must accept risks before proceeding
+  3. **Step-by-Step Guide**: Detailed instructions with warnings
+  4. **Component Selection**: Choose what to save
+- Special warnings for:
+  - ⚡ Batteries and capacitors (electrical hazard)
+  - 🔥 Soldered components (recommend professional help)
+  - ⚠️ Sharp edges, glass, chemicals
+
+**Safety Features**:
+- Risk levels: Low/Medium/High
+- Injury risk assessment
+- Damage risk assessment
+- Real-time warnings for hazardous steps
+- Links to iFixit and YouTube tutorials
+- "Proceed at your own risk" checkbox
+
+**User Inventory Separation**:
+- Already implemented via Row Level Security (RLS)
+- Each user's inventory filtered by `user_id`
+- Components saved separately per user
+
+### Technical Details:
+- Created `DisassemblyWizard.tsx` (22KB, 650+ lines)
+- Updated `ComponentBreakdown.tsx` with two-button system
+- Integrated wizard with existing save flow
+- Added `Scissors` icon for disassembly button
+- Multi-step wizard with progress tracking
+- Risk acknowledgment dialog with checkbox
+- Component selection with checkboxes
+
+### Files Changed:
+- `src/components/scanner/DisassemblyWizard.tsx` (NEW - 22KB)
+- `src/components/scanner/ComponentBreakdown.tsx` (button changes)
+- `src/pages/Home.tsx` (version → v0.4)
+
+---
+
 ## v0.3 - Admin Review System
 **Date**: 2026-01-10  
 **Commit**: TBD  

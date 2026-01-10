@@ -1,0 +1,530 @@
+/**
+ * INTERACTIVE DISASSEMBLY WIZARD
+ * 
+ * Guides users through step-by-step disassembly with:
+ * - Progress tracking
+ * - Safety warnings
+ * - Risk acknowledgment
+ * - Component images
+ * - Tool requirements
+ * - Final component selection
+ */
+
+import { useState } from 'react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Progress } from '@/components/ui/progress';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { 
+  ChevronLeft, 
+  ChevronRight, 
+  AlertTriangle, 
+  CheckCircle2, 
+  Wrench, 
+  Clock,
+  Shield,
+  ExternalLink,
+  Package,
+  Zap,
+  Flame,
+  Skull
+} from 'lucide-react';
+import { AIIdentificationResponse, IdentifiedItem } from '@/types';
+import { cn } from '@/lib/utils';
+
+interface DisassemblyWizardProps {
+  isOpen: boolean;
+  onClose: () => void;
+  result: AIIdentificationResponse;
+  imageUrl?: string;
+  onComponentsSelected: (components: IdentifiedItem[]) => void;
+}
+
+type WizardStep = 'overview' | 'risk-acknowledgment' | 'steps' | 'component-selection';
+
+export function DisassemblyWizard({
+  isOpen,
+  onClose,
+  result,
+  imageUrl,
+  onComponentsSelected
+}: DisassemblyWizardProps) {
+  const [currentStep, setCurrentStep] = useState<WizardStep>('overview');
+  const [stepIndex, setStepIndex] = useState(0);
+  const [riskAccepted, setRiskAccepted] = useState(false);
+  const [selectedComponents, setSelectedComponents] = useState<string[]>(
+    result.items.map(item => item.component_name)
+  );
+
+  const disassembly = result.disassembly;
+  const steps = disassembly?.steps || [
+    "No detailed steps available. Proceed with caution.",
+    "Refer to manufacturer documentation or iFixit guides."
+  ];
+
+  // Risk level styling
+  const getRiskStyle = (risk: string = 'Low') => {
+    const styles = {
+      Low: 'bg-green-500/10 text-green-600 border-green-500/20',
+      Medium: 'bg-amber-500/10 text-amber-600 border-amber-500/20',
+      High: 'bg-red-500/10 text-red-600 border-red-500/20'
+    };
+    return styles[risk as keyof typeof styles] || styles.Low;
+  };
+
+  const getRiskIcon = (risk: string = 'Low') => {
+    switch (risk) {
+      case 'High': return <Skull className="w-5 h-5" />;
+      case 'Medium': return <AlertTriangle className="w-5 h-5" />;
+      default: return <Shield className="w-5 h-5" />;
+    }
+  };
+
+  // Handle component selection
+  const toggleComponent = (componentName: string) => {
+    setSelectedComponents(prev =>
+      prev.includes(componentName)
+        ? prev.filter(c => c !== componentName)
+        : [...prev, componentName]
+    );
+  };
+
+  const selectAllComponents = () => {
+    setSelectedComponents(result.items.map(item => item.component_name));
+  };
+
+  const deselectAllComponents = () => {
+    setSelectedComponents([]);
+  };
+
+  // Navigation
+  const handleNext = () => {
+    if (currentStep === 'overview') {
+      setCurrentStep('risk-acknowledgment');
+    } else if (currentStep === 'risk-acknowledgment') {
+      if (riskAccepted) {
+        setCurrentStep('steps');
+        setStepIndex(0);
+      }
+    } else if (currentStep === 'steps') {
+      if (stepIndex < steps.length - 1) {
+        setStepIndex(stepIndex + 1);
+      } else {
+        setCurrentStep('component-selection');
+      }
+    } else if (currentStep === 'component-selection') {
+      const selected = result.items.filter(item =>
+        selectedComponents.includes(item.component_name)
+      );
+      onComponentsSelected(selected);
+      onClose();
+    }
+  };
+
+  const handleBack = () => {
+    if (currentStep === 'risk-acknowledgment') {
+      setCurrentStep('overview');
+    } else if (currentStep === 'steps') {
+      if (stepIndex > 0) {
+        setStepIndex(stepIndex - 1);
+      } else {
+        setCurrentStep('risk-acknowledgment');
+      }
+    } else if (currentStep === 'component-selection') {
+      setCurrentStep('steps');
+      setStepIndex(steps.length - 1);
+    }
+  };
+
+  const canProceed = () => {
+    if (currentStep === 'risk-acknowledgment') return riskAccepted;
+    if (currentStep === 'component-selection') return selectedComponents.length > 0;
+    return true;
+  };
+
+  // Progress calculation
+  const getProgress = () => {
+    const total = steps.length + 3; // overview + risk + steps + selection
+    let current = 0;
+    
+    if (currentStep === 'overview') current = 1;
+    else if (currentStep === 'risk-acknowledgment') current = 2;
+    else if (currentStep === 'steps') current = 3 + stepIndex;
+    else if (currentStep === 'component-selection') current = total;
+    
+    return (current / total) * 100;
+  };
+
+  return (
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <div className="flex items-center justify-between">
+            <DialogTitle className="text-2xl">
+              Disassembly Guide: {result.parent_object || 'Device'}
+            </DialogTitle>
+            <Badge variant="outline" className={getRiskStyle(disassembly?.injury_risk)}>
+              {getRiskIcon(disassembly?.injury_risk)}
+              <span className="ml-1">{disassembly?.injury_risk || 'Low'} Risk</span>
+            </Badge>
+          </div>
+          <Progress value={getProgress()} className="mt-4" />
+        </DialogHeader>
+
+        <div className="mt-6">
+          {/* OVERVIEW STEP */}
+          {currentStep === 'overview' && (
+            <div className="space-y-6">
+              <div>
+                <h3 className="text-xl font-semibold mb-4">Before You Begin</h3>
+                
+                {/* Device Image */}
+                {imageUrl && (
+                  <div className="rounded-lg overflow-hidden aspect-video mb-6 bg-muted">
+                    <img src={imageUrl} alt="Device" className="w-full h-full object-cover" />
+                  </div>
+                )}
+
+                {/* Quick Stats */}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                  <div className="bg-muted/50 rounded-lg p-4">
+                    <div className="flex items-center gap-2 text-muted-foreground mb-1">
+                      <Clock className="w-4 h-4" />
+                      <span className="text-sm">Time</span>
+                    </div>
+                    <p className="font-semibold">{disassembly?.time_estimate || 'Unknown'}</p>
+                  </div>
+
+                  <div className="bg-muted/50 rounded-lg p-4">
+                    <div className="flex items-center gap-2 text-muted-foreground mb-1">
+                      <Wrench className="w-4 h-4" />
+                      <span className="text-sm">Difficulty</span>
+                    </div>
+                    <p className="font-semibold">{disassembly?.difficulty || 'Unknown'}</p>
+                  </div>
+
+                  <div className="bg-muted/50 rounded-lg p-4">
+                    <div className="flex items-center gap-2 text-muted-foreground mb-1">
+                      <AlertTriangle className="w-4 h-4" />
+                      <span className="text-sm">Injury Risk</span>
+                    </div>
+                    <p className="font-semibold">{disassembly?.injury_risk || 'Low'}</p>
+                  </div>
+
+                  <div className="bg-muted/50 rounded-lg p-4">
+                    <div className="flex items-center gap-2 text-muted-foreground mb-1">
+                      <Package className="w-4 h-4" />
+                      <span className="text-sm">Components</span>
+                    </div>
+                    <p className="font-semibold">{result.items.length}</p>
+                  </div>
+                </div>
+
+                {/* Tools Required */}
+                {result.tools_needed && result.tools_needed.length > 0 && (
+                  <div className="mb-6">
+                    <h4 className="font-semibold mb-3 flex items-center gap-2">
+                      <Wrench className="w-5 h-5" />
+                      Tools Required
+                    </h4>
+                    <div className="flex flex-wrap gap-2">
+                      {result.tools_needed.map((tool, idx) => (
+                        <Badge key={idx} variant="secondary">
+                          {tool}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Safety Warnings */}
+                {disassembly?.safety_warnings && disassembly.safety_warnings.length > 0 && (
+                  <Alert className="border-amber-500/20 bg-amber-500/10">
+                    <AlertTriangle className="w-4 h-4 text-amber-600" />
+                    <AlertDescription className="text-amber-600">
+                      <p className="font-semibold mb-2">Safety Warnings:</p>
+                      <ul className="list-disc pl-5 space-y-1">
+                        {disassembly.safety_warnings.map((warning, idx) => (
+                          <li key={idx}>{warning}</li>
+                        ))}
+                      </ul>
+                    </AlertDescription>
+                  </Alert>
+                )}
+
+                {/* External Resources */}
+                <div className="flex gap-3 mt-6">
+                  {disassembly?.tutorial_url && (
+                    <Button variant="outline" asChild>
+                      <a href={disassembly.tutorial_url} target="_blank" rel="noopener noreferrer">
+                        <ExternalLink className="w-4 h-4 mr-2" />
+                        iFixit Guide
+                      </a>
+                    </Button>
+                  )}
+                  {disassembly?.video_url && (
+                    <Button variant="outline" asChild>
+                      <a href={disassembly.video_url} target="_blank" rel="noopener noreferrer">
+                        <ExternalLink className="w-4 h-4 mr-2" />
+                        Video Tutorial
+                      </a>
+                    </Button>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* RISK ACKNOWLEDGMENT */}
+          {currentStep === 'risk-acknowledgment' && (
+            <div className="space-y-6">
+              <div>
+                <h3 className="text-xl font-semibold mb-4">Safety Acknowledgment</h3>
+                
+                <Alert className="border-red-500/20 bg-red-500/10 mb-6">
+                  <Skull className="w-5 h-5 text-red-600" />
+                  <AlertDescription className="text-red-600">
+                    <p className="font-semibold mb-3">⚠️ Read Carefully Before Proceeding</p>
+                    <div className="space-y-3 text-sm">
+                      <p>
+                        <strong>Injury Risk: {disassembly?.injury_risk || 'Low'}</strong> - 
+                        This disassembly process may involve sharp edges, electrical components, 
+                        batteries, or other hazardous materials.
+                      </p>
+                      
+                      <p>
+                        <strong>Damage Risk: {disassembly?.damage_risk || 'Medium'}</strong> - 
+                        Improper disassembly may damage components, void warranties, or render 
+                        the device unusable.
+                      </p>
+
+                      {result.items.some(item => 
+                        item.component_name.toLowerCase().includes('battery') ||
+                        item.component_name.toLowerCase().includes('capacitor')
+                      ) && (
+                        <>
+                          <div className="bg-red-600/20 border border-red-600/30 rounded p-3 mt-3">
+                            <div className="flex items-start gap-2">
+                              <Zap className="w-5 h-5 flex-shrink-0 mt-0.5" />
+                              <div>
+                                <p className="font-semibold">⚡ ELECTRICAL HAZARD DETECTED</p>
+                                <p className="mt-1">
+                                  This device contains batteries or capacitors that may store electrical charge. 
+                                  Improper handling can cause fire, explosion, or electric shock.
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                          
+                          <div className="bg-red-600/20 border border-red-600/30 rounded p-3">
+                            <div className="flex items-start gap-2">
+                              <Flame className="w-5 h-5 flex-shrink-0 mt-0.5" />
+                              <div>
+                                <p className="font-semibold">🔥 RECOMMENDATION: Seek Professional Help</p>
+                                <p className="mt-1">
+                                  For components with soldered connections or embedded batteries, 
+                                  we strongly recommend consulting a trained technician or electronics 
+                                  repair professional.
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                        </>
+                      )}
+
+                      <div className="pt-3 border-t border-red-600/20">
+                        <p className="font-semibold">By proceeding, you acknowledge that:</p>
+                        <ul className="list-disc pl-5 mt-2 space-y-1">
+                          <li>You understand the risks involved</li>
+                          <li>You have the necessary tools and skills</li>
+                          <li>You proceed at your own risk</li>
+                          <li>Scavy is not liable for any injuries or damages</li>
+                        </ul>
+                      </div>
+                    </div>
+                  </AlertDescription>
+                </Alert>
+
+                <div className="flex items-start gap-3 p-4 bg-muted/50 rounded-lg">
+                  <Checkbox
+                    id="risk-acceptance"
+                    checked={riskAccepted}
+                    onCheckedChange={(checked) => setRiskAccepted(checked as boolean)}
+                    className="mt-1"
+                  />
+                  <label htmlFor="risk-acceptance" className="text-sm cursor-pointer">
+                    <span className="font-semibold">
+                      I have read and understood the risks, and I choose to proceed at my own risk.
+                    </span>
+                    <p className="text-muted-foreground mt-1">
+                      I understand that improper disassembly may result in injury, property damage, 
+                      or destruction of the device.
+                    </p>
+                  </label>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* DISASSEMBLY STEPS */}
+          {currentStep === 'steps' && (
+            <div className="space-y-6">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-xl font-semibold">
+                  Step {stepIndex + 1} of {steps.length}
+                </h3>
+                <Badge variant="outline">
+                  {Math.round(((stepIndex + 1) / steps.length) * 100)}% Complete
+                </Badge>
+              </div>
+
+              {/* Step Content */}
+              <div className="bg-muted/50 rounded-lg p-6 min-h-[300px]">
+                <div className="flex items-start gap-3 mb-4">
+                  <div className="flex-shrink-0 w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold">
+                    {stepIndex + 1}
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-lg leading-relaxed">{steps[stepIndex]}</p>
+                  </div>
+                </div>
+
+                {/* Warning for specific steps */}
+                {steps[stepIndex].toLowerCase().includes('solder') && (
+                  <Alert className="mt-4 border-amber-500/20 bg-amber-500/10">
+                    <AlertTriangle className="w-4 h-4 text-amber-600" />
+                    <AlertDescription className="text-amber-600">
+                      <p className="font-semibold">⚠️ Soldered Component Detected</p>
+                      <p className="mt-1">
+                        This component appears to be machine-soldered. We recommend seeking help from 
+                        a trained technician with proper desoldering equipment. If you proceed, use 
+                        proper ventilation and heat-resistant tools.
+                      </p>
+                    </AlertDescription>
+                  </Alert>
+                )}
+
+                {steps[stepIndex].toLowerCase().includes('battery') && (
+                  <Alert className="mt-4 border-red-500/20 bg-red-500/10">
+                    <Zap className="w-4 h-4 text-red-600" />
+                    <AlertDescription className="text-red-600">
+                      <p className="font-semibold">⚡ Battery Handling Warning</p>
+                      <p className="mt-1">
+                        Never puncture, bend, or short-circuit batteries. Disconnect power before 
+                        proceeding. Store removed batteries in a safe, non-conductive container.
+                      </p>
+                    </AlertDescription>
+                  </Alert>
+                )}
+              </div>
+
+              {/* Progress Dots */}
+              <div className="flex justify-center gap-2">
+                {steps.map((_, idx) => (
+                  <div
+                    key={idx}
+                    className={cn(
+                      "w-2 h-2 rounded-full transition-colors",
+                      idx === stepIndex ? "bg-primary" : "bg-muted-foreground/20"
+                    )}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* COMPONENT SELECTION */}
+          {currentStep === 'component-selection' && (
+            <div className="space-y-6">
+              <div>
+                <h3 className="text-xl font-semibold mb-2">Select Components to Save</h3>
+                <p className="text-muted-foreground mb-4">
+                  Choose which components you successfully extracted and want to add to your inventory.
+                </p>
+
+                <div className="flex gap-2 mb-4">
+                  <Button variant="outline" size="sm" onClick={selectAllComponents}>
+                    <CheckCircle2 className="w-4 h-4 mr-2" />
+                    Select All
+                  </Button>
+                  <Button variant="outline" size="sm" onClick={deselectAllComponents}>
+                    Clear All
+                  </Button>
+                </div>
+
+                <div className="space-y-3">
+                  {result.items.map((item, idx) => (
+                    <div
+                      key={idx}
+                      className={cn(
+                        "flex items-start gap-3 p-4 rounded-lg border-2 transition-all cursor-pointer",
+                        selectedComponents.includes(item.component_name)
+                          ? "border-primary bg-primary/5"
+                          : "border-border hover:border-primary/50"
+                      )}
+                      onClick={() => toggleComponent(item.component_name)}
+                    >
+                      <Checkbox
+                        checked={selectedComponents.includes(item.component_name)}
+                        onCheckedChange={() => toggleComponent(item.component_name)}
+                        className="mt-1"
+                      />
+                      <div className="flex-1">
+                        <p className="font-semibold">{item.component_name}</p>
+                        <div className="flex flex-wrap gap-2 mt-2">
+                          <Badge variant="secondary">{item.category}</Badge>
+                          <Badge variant="outline">Score: {item.reusability_score}/10</Badge>
+                          <Badge variant="outline">
+                            ${item.market_value_low?.toFixed(2)} - ${item.market_value_high?.toFixed(2)}
+                          </Badge>
+                        </div>
+                        {item.description && (
+                          <p className="text-sm text-muted-foreground mt-2">{item.description}</p>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                <Alert className="mt-6">
+                  <Package className="w-4 h-4" />
+                  <AlertDescription>
+                    {selectedComponents.length} component{selectedComponents.length !== 1 ? 's' : ''} selected. 
+                    These will be added to your inventory.
+                  </AlertDescription>
+                </Alert>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Navigation Footer */}
+        <div className="flex items-center justify-between mt-8 pt-6 border-t">
+          <Button
+            variant="outline"
+            onClick={currentStep === 'overview' ? onClose : handleBack}
+          >
+            <ChevronLeft className="w-4 h-4 mr-2" />
+            {currentStep === 'overview' ? 'Cancel' : 'Back'}
+          </Button>
+
+          <Button onClick={handleNext} disabled={!canProceed()}>
+            {currentStep === 'component-selection' ? (
+              <>
+                Save to Inventory
+                <CheckCircle2 className="w-4 h-4 ml-2" />
+              </>
+            ) : (
+              <>
+                Continue
+                <ChevronRight className="w-4 h-4 ml-2" />
+              </>
+            )}
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}

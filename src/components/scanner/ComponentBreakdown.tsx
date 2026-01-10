@@ -122,6 +122,7 @@ export function ComponentBreakdown({
   const [loadingImages, setLoadingImages] = useState<Set<string>>(new Set());
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [editForm, setEditForm] = useState<Partial<IdentifiedItem>>({});
+  const [showDisassemblyWizard, setShowDisassemblyWizard] = useState(false);
   const { playClick, playSuccess } = useSounds();
 
   // Generate image for a component
@@ -220,6 +221,17 @@ export function ComponentBreakdown({
   const hasComponents = result.items && result.items.length > 0;
   const difficulty = result.salvage_difficulty ? difficultyConfig[result.salvage_difficulty] : null;
 
+  // Handle disassembly wizard completion
+  const handleDisassemblyComplete = (selectedComponents: IdentifiedItem[]) => {
+    // Save only the selected components to inventory
+    selectedComponents.forEach(component => {
+      onAddComponent(component);
+      setAddedItems(prev => new Set([...prev, component.component_name]));
+    });
+    setShowDisassemblyWizard(false);
+    playSuccess();
+  };
+
   // Render component image or fallback
   const renderComponentImage = (item: IdentifiedItem, size: 'small' | 'large' = 'small') => {
     const image = componentImages[item.component_name];
@@ -255,7 +267,8 @@ export function ComponentBreakdown({
   // Main view
   if (viewMode === 'main') {
     return (
-      <div className="space-y-6 animate-fade-in pb-8">
+      <>
+        <div className="space-y-6 animate-fade-in pb-8">
         {/* Large Title */}
         <h1 className="text-4xl font-bold tracking-tight text-foreground">
           {result.parent_object || 'Identified Item'}
@@ -504,21 +517,38 @@ export function ComponentBreakdown({
 
         {/* Action Buttons */}
         <div className="space-y-3 pt-4">
-          <Button
-            size="lg"
-            className="w-full h-14 text-lg font-semibold rounded-2xl bg-success hover:bg-success/90 text-success-foreground"
-            onClick={onAddAll}
-            disabled={isLoading || !hasComponents || addedItems.size === result.items.length}
-          >
-            {addedItems.size === result.items.length ? (
-              <>
-                <Check className="w-5 h-5 mr-2" />
-                All Saved
-              </>
-            ) : (
-              'Save All Parts'
-            )}
-          </Button>
+          {/* Primary Actions Row */}
+          <div className="grid grid-cols-2 gap-3">
+            <Button
+              size="lg"
+              className="h-14 text-base font-semibold rounded-2xl bg-success hover:bg-success/90 text-success-foreground"
+              onClick={onAddAll}
+              disabled={isLoading || !hasComponents || addedItems.size === result.items.length}
+            >
+              {addedItems.size === result.items.length ? (
+                <>
+                  <Check className="w-5 h-5 mr-2" />
+                  Saved
+                </>
+              ) : (
+                <>
+                  <Package className="w-5 h-5 mr-2" />
+                  Save As-Is
+                </>
+              )}
+            </Button>
+            
+            <Button
+              size="lg"
+              variant="outline"
+              className="h-14 text-base font-semibold rounded-2xl border-2"
+              onClick={() => setShowDisassemblyWizard(true)}
+              disabled={isLoading || !hasComponents}
+            >
+              <Scissors className="w-5 h-5 mr-2" />
+              Disassemble
+            </Button>
+          </div>
           
           <Button
             variant="ghost"
@@ -530,6 +560,16 @@ export function ComponentBreakdown({
           </Button>
         </div>
       </div>
+        
+        {/* Disassembly Wizard Dialog */}
+        <DisassemblyWizard
+          isOpen={showDisassemblyWizard}
+          onClose={() => setShowDisassemblyWizard(false)}
+          result={result}
+          imageUrl={imageUrl}
+          onComponentsSelected={handleDisassemblyComplete}
+        />
+      </>
     );
   }
 
@@ -547,7 +587,8 @@ export function ComponentBreakdown({
     };
     
     return (
-      <div className="space-y-6 animate-fade-in pb-8">
+      <>
+        <div className="space-y-6 animate-fade-in pb-8">
         {/* Back Button */}
         <button
           onClick={() => setViewMode('main')}
@@ -860,8 +901,20 @@ export function ComponentBreakdown({
           )}
         </Button>
       </div>
+        
+        {/* Disassembly Wizard Dialog */}
+        <DisassemblyWizard
+          isOpen={showDisassemblyWizard}
+          onClose={() => setShowDisassemblyWizard(false)}
+          result={result}
+          imageUrl={imageUrl}
+          onComponentsSelected={handleDisassemblyComplete}
+        />
+      </>
     );
   }
 
   return null;
+}
+  );
 }
