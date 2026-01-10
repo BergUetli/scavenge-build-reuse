@@ -121,7 +121,7 @@ export default function Scanner() {
       });
 
       await addScan.mutateAsync({
-        component_name: item.component_name,
+        component_name: fullResult?.parent_object || item.component_name, // Use high-level gadget name
         category: item.category,
         confidence: item.confidence,
         image_url: capturedImage || undefined,
@@ -164,10 +164,35 @@ export default function Scanner() {
     
     if (!fullResult?.items) return;
 
+    // Add ONE scan history entry for the parent object (high-level gadget)
+    try {
+      await addScan.mutateAsync({
+        component_name: fullResult.parent_object || fullResult.items[0]?.component_name || 'Unknown Device',
+        category: fullResult.items[0]?.category || 'Electronics',
+        confidence: fullResult.items.reduce((sum, item) => sum + item.confidence, 0) / fullResult.items.length,
+        image_url: capturedImage || undefined,
+        ai_response: fullResult,
+      });
+    } catch (error) {
+      console.error('Failed to save scan history:', error);
+    }
+
+    // Add all individual components to inventory
     let savedCount = 0;
     for (const item of fullResult.items) {
       try {
-        await handleAddComponent(item);
+        await addItem.mutateAsync({
+          component_name: item.component_name,
+          category: item.category,
+          condition: item.condition,
+          specifications: item.specifications,
+          technical_specs: item.technical_specs,
+          reusability_score: item.reusability_score,
+          market_value: (item.market_value_low + item.market_value_high) / 2,
+          image_url: capturedImage || undefined,
+          description: item.description,
+          common_uses: item.common_uses,
+        });
         savedCount++;
       } catch (error) {
         console.error('Failed to save item:', item.component_name, error);
@@ -179,8 +204,11 @@ export default function Scanner() {
       description: `${savedCount} components saved to your Cargo Hold.`,
     });
 
+    setShowSuccessSparks(true);
+    setTimeout(() => setShowSuccessSparks(false), 2000);
+
     navigate('/inventory');
-  }, [user, fullResult, handleAddComponent, navigate]);
+  }, [user, fullResult, addItem, addScan, capturedImage, navigate]);
 
   // Handle rescanning
   const handleRescan = useCallback(() => {
