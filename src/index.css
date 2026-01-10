@@ -813,7 +813,51 @@
    ELECTRIC BLUE HOMEPAGE STYLES
    ============================================= */
 
-/* Electric slide animation for scan button */
+/* Electric border effect for scan button */
+.electric-border {
+  position: relative;
+  background: linear-gradient(90deg, 
+    transparent 0%, 
+    rgba(0, 217, 255, 0.3) 20%,
+    rgba(0, 217, 255, 0.8) 40%,
+    #00D9FF 50%,
+    rgba(0, 217, 255, 0.8) 60%,
+    rgba(0, 217, 255, 0.3) 80%,
+    transparent 100%
+  );
+  animation: electric-pulse 1.5s ease-in-out infinite;
+}
+
+.electric-border::before,
+.electric-border::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: inherit;
+}
+
+.electric-border::before {
+  filter: blur(4px);
+  opacity: 0.8;
+}
+
+.electric-border::after {
+  filter: blur(8px);
+  opacity: 0.5;
+}
+
+@keyframes electric-pulse {
+  0%, 100% {
+    opacity: 0.6;
+    transform: scaleX(0.95);
+  }
+  50% {
+    opacity: 1;
+    transform: scaleX(1);
+  }
+}
+
+/* Electric slide animation */
 @keyframes electric-slide {
   0% {
     transform: translateX(-100%);
@@ -825,6 +869,11 @@
 
 .animate-electric-slide {
   animation: electric-slide 2s ease-in-out infinite;
+}
+
+/* Scan button hover effect */
+.scan-button-electric:hover .electric-border {
+  animation: electric-pulse 0.8s ease-in-out infinite;
 }
 
 /* Glitch text effect */
@@ -873,4 +922,5 @@
 .glitch-text:hover {
   animation: glitch 0.5s infinite;
 }
+
 
