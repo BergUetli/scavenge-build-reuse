@@ -1,15 +1,13 @@
 /**
  * HOME PAGE - Scavy
- * Dark electric blue design with circuit board pattern
+ * Dark electric blue design matching the original mockup
  */
 
 import { useNavigate } from 'react-router-dom';
 import { Camera, Package, Wrench, ShoppingBag, Hammer } from 'lucide-react';
-import { ScavyLogo } from '@/components/ScavyLogo';
 import { Button } from '@/components/ui/button';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { useScanHistory } from '@/hooks/useScanHistory';
-import { formatDistanceToNow } from 'date-fns';
 
 export default function Home() {
   const navigate = useNavigate();
@@ -20,91 +18,62 @@ export default function Home() {
 
   return (
     <AppLayout>
-      <div className="min-h-screen bg-[#0A1929] relative overflow-hidden">
-        {/* Circuit Board Pattern Background */}
+      <div className="min-h-screen bg-[#0A1828] relative overflow-hidden">
+        {/* Subtle Circuit Board Pattern Background */}
         <div 
-          className="fixed inset-0 opacity-30 pointer-events-none"
+          className="fixed inset-0 opacity-[0.03] pointer-events-none"
           style={{
-            backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120' viewBox='0 0 120 120'%3E%3Cg fill='none' stroke='%2300B4D8' stroke-width='0.8'%3E%3Cpath d='M0 60h45M75 60h45M60 0v45M60 75v45'/%3E%3Ccircle cx='60' cy='60' r='4' fill='%2300B4D8'/%3E%3Ccircle cx='0' cy='60' r='2' fill='%2300B4D8'/%3E%3Ccircle cx='120' cy='60' r='2' fill='%2300B4D8'/%3E%3Ccircle cx='60' cy='0' r='2' fill='%2300B4D8'/%3E%3Ccircle cx='60' cy='120' r='2' fill='%2300B4D8'/%3E%3Crect x='15' y='15' width='12' height='12' rx='2'/%3E%3Crect x='93' y='15' width='12' height='12' rx='2'/%3E%3Crect x='15' y='93' width='12' height='12' rx='2'/%3E%3Crect x='93' y='93' width='12' height='12' rx='2'/%3E%3Cpath d='M21 0v15M99 0v15M21 105v15M99 105v15M0 21h15M105 21h15M0 99h15M105 99h15'/%3E%3Cpath d='M30 30L45 45M75 30L90 45M30 90L45 75M75 90L90 75' stroke-width='0.5'/%3E%3C/g%3E%3C/svg%3E")`,
+            backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200' viewBox='0 0 200 200'%3E%3Cg fill='none' stroke='%2300D9FF' stroke-width='0.5'%3E%3Cpath d='M0 100h60M140 100h60M100 0v60M100 140v60'/%3E%3Ccircle cx='100' cy='100' r='5' fill='%2300D9FF'/%3E%3Ccircle cx='0' cy='100' r='3' fill='%2300D9FF'/%3E%3Ccircle cx='200' cy='100' r='3' fill='%2300D9FF'/%3E%3Ccircle cx='100' cy='0' r='3' fill='%2300D9FF'/%3E%3Ccircle cx='100' cy='200' r='3' fill='%2300D9FF'/%3E%3Crect x='25' y='25' width='15' height='15' rx='2'/%3E%3Crect x='160' y='25' width='15' height='15' rx='2'/%3E%3Crect x='25' y='160' width='15' height='15' rx='2'/%3E%3Crect x='160' y='160' width='15' height='15' rx='2'/%3E%3C/g%3E%3C/svg%3E")`,
           }}
         />
 
         {/* Content Container */}
-        <div className="relative px-5 pt-8 pb-28 max-w-lg mx-auto">
+        <div className="relative px-5 pt-6 pb-28 max-w-lg mx-auto">
           
-          {/* Header */}
-          <div className="text-center mb-4">
-            <ScavyLogo size="md" className="justify-center" />
+          {/* Simple Logo Header */}
+          <div className="mb-8">
+            <div className="flex items-center justify-center gap-2">
+              <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+                <circle cx="16" cy="16" r="14" stroke="#00D9FF" strokeWidth="2"/>
+                <path d="M12 16h8M16 12v8" stroke="#00D9FF" strokeWidth="2" strokeLinecap="round"/>
+              </svg>
+              <span className="text-[#00D9FF] text-2xl font-bold tracking-tight">Scavy</span>
+            </div>
           </div>
 
-          {/* Hero Tagline */}
-          <div className="mb-6">
+          {/* Hero Tagline with Glitch Effect */}
+          <div className="mb-8 text-center">
             <h1 
-              className="text-[3.2rem] leading-[1.05] mb-3 font-black italic"
+              className="text-5xl font-black mb-2 glitch-text"
               style={{
-                fontFamily: "'Arial Black', 'Helvetica Neue', sans-serif",
-                textShadow: '0 0 40px rgba(0, 217, 255, 0.8), 0 0 80px rgba(0, 217, 255, 0.4)',
+                fontFamily: "'Inter', 'Helvetica Neue', sans-serif",
+                lineHeight: '1.1',
+                letterSpacing: '-0.02em'
               }}
             >
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#00E5FF] via-[#FFFFFF] to-[#00E5FF]">
-                Scan. Salvage.
-              </span>
+              <span className="text-white">Scan.</span>
               <br />
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#00E5FF] via-[#FFFFFF] to-[#00E5FF]">
-                Build.
-              </span>
+              <span className="text-white">Salvage.</span>
+              <br />
+              <span className="text-white">Build.</span>
             </h1>
-            <p className="text-[#00D9FF]/90 text-sm font-medium tracking-wide">
+            <p className="text-[#00D9FF]/70 text-sm font-medium mt-4">
               15,243 components in database
             </p>
           </div>
 
-          {/* Circuit Board Decorative Element */}
-          <div className="relative mb-3">
-            <svg className="w-full h-12 opacity-60" viewBox="0 0 400 50" preserveAspectRatio="xMidYMid meet">
-              <defs>
-                <linearGradient id="circuitGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-                  <stop offset="0%" stopColor="#00D9FF" stopOpacity="0" />
-                  <stop offset="30%" stopColor="#00D9FF" stopOpacity="0.6" />
-                  <stop offset="50%" stopColor="#00D9FF" stopOpacity="1" />
-                  <stop offset="70%" stopColor="#00D9FF" stopOpacity="0.6" />
-                  <stop offset="100%" stopColor="#00D9FF" stopOpacity="0" />
-                </linearGradient>
-              </defs>
-              {/* Center chip */}
-              <rect x="175" y="10" width="50" height="30" rx="4" fill="none" stroke="url(#circuitGrad)" strokeWidth="1.5" />
-              <rect x="185" y="18" width="30" height="14" rx="2" fill="#00D9FF" fillOpacity="0.2" />
-              {/* Left traces */}
-              <path d="M175 25 L120 25 L100 15 L50 15" stroke="url(#circuitGrad)" strokeWidth="1.5" fill="none" />
-              <path d="M175 30 L130 30 L110 40 L60 40" stroke="url(#circuitGrad)" strokeWidth="1" fill="none" />
-              <circle cx="50" cy="15" r="3" fill="#00D9FF" fillOpacity="0.5" />
-              <circle cx="60" cy="40" r="2" fill="#00D9FF" fillOpacity="0.4" />
-              {/* Right traces */}
-              <path d="M225 25 L280 25 L300 15 L350 15" stroke="url(#circuitGrad)" strokeWidth="1.5" fill="none" />
-              <path d="M225 30 L270 30 L290 40 L340 40" stroke="url(#circuitGrad)" strokeWidth="1" fill="none" />
-              <circle cx="350" cy="15" r="3" fill="#00D9FF" fillOpacity="0.5" />
-              <circle cx="340" cy="40" r="2" fill="#00D9FF" fillOpacity="0.4" />
-            </svg>
-          </div>
-
-          {/* Primary Scan Button with Electric Lightning Effect */}
+          {/* Primary Scan Button */}
           <button
             onClick={() => navigate('/scanner')}
-            className="w-full mb-6 group relative scan-button-electric"
+            className="w-full mb-8 group relative"
           >
             {/* Outer glow */}
-            <div className="absolute -inset-2 bg-[#00D9FF]/30 rounded-2xl blur-xl opacity-60 group-hover:opacity-80 transition-opacity" />
+            <div className="absolute -inset-1 bg-[#00D9FF]/40 rounded-xl blur-lg opacity-75 group-hover:opacity-100 transition-opacity" />
             
-            {/* Lightning border container */}
-            <div className="absolute -inset-[3px] rounded-2xl overflow-hidden">
-              {/* Animated electric arcs */}
-              <div className="absolute inset-0 electric-border" />
-            </div>
-            
-            {/* Button content */}
-            <div className="relative bg-gradient-to-r from-[#0891B2] via-[#00D9FF] to-[#0891B2] rounded-xl py-4 px-6 flex items-center justify-center gap-3 shadow-[0_0_40px_rgba(0,217,255,0.5),inset_0_1px_0_rgba(255,255,255,0.2)]">
-              <Camera className="w-6 h-6 text-white drop-shadow-lg" strokeWidth={2.5} />
-              <span className="text-white text-xl font-bold tracking-wide drop-shadow-lg">Scan</span>
+            {/* Button */}
+            <div className="relative bg-[#00D9FF] hover:bg-[#00E5FF] text-[#0A1828] font-bold text-lg py-5 rounded-xl flex items-center justify-center gap-3 transition-all shadow-lg">
+              <Camera className="w-6 h-6" />
+              <span>Scan</span>
             </div>
           </button>
 
@@ -112,140 +81,83 @@ export default function Home() {
           <div className="space-y-3">
             
             {/* Track Inventory */}
-            <div className="bg-[#0D1B2A]/95 border border-[#00D9FF]/40 rounded-2xl p-4 backdrop-blur-sm shadow-[0_0_20px_rgba(0,217,255,0.1)]">
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-xl bg-[#8B6914]/30 flex items-center justify-center flex-shrink-0 border border-[#D4A542]/20">
-                  <Package className="w-6 h-6 text-[#D4A542]" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <h3 className="text-white font-bold text-base">Track Inventory</h3>
-                  <p className="text-gray-400 text-sm leading-snug">
-                    Keep tabs on all your collected items easily
-                  </p>
-                </div>
-                <Button
-                  onClick={() => navigate('/inventory')}
-                  size="sm"
-                  className="bg-[#00D9FF] hover:bg-[#00C4E8] text-[#0A1929] font-semibold rounded-full px-4 h-9 flex-shrink-0 shadow-lg"
-                >
-                  Manage Items
-                </Button>
+            <div className="bg-[#1C1C1E] border border-[#00D9FF]/20 rounded-xl p-4 flex items-center gap-4">
+              <div className="w-12 h-12 rounded-lg bg-[#00D9FF]/10 border border-[#00D9FF]/30 flex items-center justify-center flex-shrink-0">
+                <Package className="w-6 h-6 text-[#00D9FF]" />
               </div>
+              <div className="flex-1 min-w-0">
+                <h3 className="text-white font-bold text-base mb-1">Track Inventory</h3>
+                <p className="text-gray-400 text-sm">
+                  Keep tabs on all your collected items easily
+                </p>
+              </div>
+              <Button
+                onClick={() => navigate('/inventory')}
+                size="sm"
+                className="bg-[#00D9FF] hover:bg-[#00E5FF] text-[#0A1828] font-semibold rounded-full px-5 h-9 flex-shrink-0"
+              >
+                Manage Items
+              </Button>
             </div>
 
             {/* Find Tools */}
-            <div className="bg-[#0D1B2A]/95 border border-[#00D9FF]/40 rounded-2xl p-4 backdrop-blur-sm shadow-[0_0_20px_rgba(0,217,255,0.1)]">
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-xl bg-[#4A5568]/30 flex items-center justify-center flex-shrink-0 border border-[#718096]/20">
-                  <Wrench className="w-6 h-6 text-[#A0AEC0]" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <h3 className="text-white font-bold text-base">Find Tools</h3>
-                  <p className="text-gray-400 text-sm leading-snug">
-                    Locate needed tools and resources quickly
-                  </p>
-                </div>
-                <Button
-                  onClick={() => navigate('/tools')}
-                  size="sm"
-                  className="bg-[#00D9FF] hover:bg-[#00C4E8] text-[#0A1929] font-semibold rounded-full px-4 h-9 flex-shrink-0 shadow-lg"
-                >
-                  Explore Tools
-                </Button>
+            <div className="bg-[#1C1C1E] border border-[#00D9FF]/20 rounded-xl p-4 flex items-center gap-4">
+              <div className="w-12 h-12 rounded-lg bg-[#00D9FF]/10 border border-[#00D9FF]/30 flex items-center justify-center flex-shrink-0">
+                <Wrench className="w-6 h-6 text-[#00D9FF]" />
               </div>
+              <div className="flex-1 min-w-0">
+                <h3 className="text-white font-bold text-base mb-1">Find Tools</h3>
+                <p className="text-gray-400 text-sm">
+                  Locate needed tools and resources quickly
+                </p>
+              </div>
+              <Button
+                onClick={() => navigate('/tools')}
+                size="sm"
+                className="bg-[#00D9FF] hover:bg-[#00E5FF] text-[#0A1828] font-semibold rounded-full px-5 h-9 flex-shrink-0"
+              >
+                Explore Tools
+              </Button>
             </div>
 
             {/* Marketplace */}
-            <div className="bg-[#0D1B2A]/95 border border-[#00D9FF]/40 rounded-2xl p-4 backdrop-blur-sm shadow-[0_0_20px_rgba(0,217,255,0.1)]">
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-xl bg-[#00D9FF]/15 flex items-center justify-center flex-shrink-0 border border-[#00D9FF]/30">
-                  <ShoppingBag className="w-6 h-6 text-[#00D9FF]" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <h3 className="text-white font-bold text-base">Marketplace</h3>
-                  <p className="text-gray-400 text-sm leading-snug">
-                    Sell your salvaged parts to others
-                  </p>
-                </div>
-                <Button
-                  onClick={() => navigate('/marketplace')}
-                  size="sm"
-                  className="bg-[#00D9FF] hover:bg-[#00C4E8] text-[#0A1929] font-semibold rounded-full px-4 h-9 flex-shrink-0 shadow-lg"
-                >
-                  Browse & Sell
-                </Button>
+            <div className="bg-[#1C1C1E] border border-[#00D9FF]/20 rounded-xl p-4 flex items-center gap-4">
+              <div className="w-12 h-12 rounded-lg bg-[#00D9FF]/10 border border-[#00D9FF]/30 flex items-center justify-center flex-shrink-0">
+                <ShoppingBag className="w-6 h-6 text-[#00D9FF]" />
               </div>
+              <div className="flex-1 min-w-0">
+                <h3 className="text-white font-bold text-base mb-1">Marketplace</h3>
+                <p className="text-gray-400 text-sm">
+                  Sell your salvaged parts to others
+                </p>
+              </div>
+              <Button
+                onClick={() => navigate('/marketplace')}
+                size="sm"
+                className="bg-[#00D9FF] hover:bg-[#00E5FF] text-[#0A1828] font-semibold rounded-full px-5 h-9 flex-shrink-0"
+              >
+                Browse & Sell
+              </Button>
             </div>
 
             {/* Build Projects */}
-            <div className="bg-[#0D1B2A]/95 border border-[#00D9FF]/40 rounded-2xl p-4 backdrop-blur-sm shadow-[0_0_20px_rgba(0,217,255,0.1)]">
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-xl bg-[#00D9FF]/15 flex items-center justify-center flex-shrink-0 border border-[#00D9FF]/30">
-                  <Hammer className="w-6 h-6 text-[#00D9FF]" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <h3 className="text-white font-bold text-base">Build Projects</h3>
-                  <p className="text-gray-400 text-sm leading-snug">
-                    Create amazing things from salvaged components
-                  </p>
-                </div>
-                <Button
-                  onClick={() => navigate('/projects')}
-                  size="sm"
-                  className="bg-[#00D9FF] hover:bg-[#00C4E8] text-[#0A1929] font-semibold rounded-full px-4 h-9 flex-shrink-0 shadow-lg"
-                >
-                  Start Building
-                </Button>
+            <div className="bg-[#1C1C1E] border border-[#00D9FF]/20 rounded-xl p-4 flex items-center gap-4">
+              <div className="w-12 h-12 rounded-lg bg-[#00D9FF]/10 border border-[#00D9FF]/30 flex items-center justify-center flex-shrink-0">
+                <Hammer className="w-6 h-6 text-[#00D9FF]" />
               </div>
-            </div>
-
-            {/* Recent Item */}
-            <div className="bg-[#0D1B2A]/95 border border-[#00D9FF]/40 rounded-2xl p-4 backdrop-blur-sm shadow-[0_0_20px_rgba(0,217,255,0.1)]">
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-xl bg-[#00D9FF]/15 flex items-center justify-center flex-shrink-0 border border-[#00D9FF]/30">
-                  <Camera className="w-6 h-6 text-[#00D9FF]" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <h3 className="text-white font-bold text-base">Recent Item</h3>
-                  {recentScan ? (
-                    <>
-                      <p className="text-gray-300 text-sm truncate">{recentScan.component_name}</p>
-                      <p className="text-gray-500 text-xs">
-                        Identified {formatDistanceToNow(new Date(recentScan.scanned_at), { addSuffix: true })}.
-                      </p>
-                      <button 
-                        onClick={() => navigate('/inventory')}
-                        className="text-[#00D9FF] text-sm font-medium hover:underline"
-                      >
-                        View details.
-                      </button>
-                    </>
-                  ) : (
-                    <>
-                      <p className="text-gray-300 text-sm">Vintage Gear</p>
-                      <p className="text-gray-500 text-xs">Identified 2 hours ago.</p>
-                      <button className="text-[#00D9FF] text-sm font-medium hover:underline">
-                        View details.
-                      </button>
-                    </>
-                  )}
-                </div>
-                <div className="w-20 h-20 rounded-xl overflow-hidden flex-shrink-0 border border-[#00D9FF]/20">
-                  {recentScan?.image_url ? (
-                    <img 
-                      src={recentScan.image_url} 
-                      alt={recentScan.component_name}
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <div className="w-full h-full bg-gradient-to-br from-[#8B6914] to-[#5C4A0F] flex items-center justify-center">
-                      <svg className="w-10 h-10 text-[#D4A542]/60" viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/>
-                      </svg>
-                    </div>
-                  )}
-                </div>
+              <div className="flex-1 min-w-0">
+                <h3 className="text-white font-bold text-base mb-1">Build Projects</h3>
+                <p className="text-gray-400 text-sm">
+                  Create amazing things from salvaged components
+                </p>
               </div>
+              <Button
+                onClick={() => navigate('/projects')}
+                size="sm"
+                className="bg-[#00D9FF] hover:bg-[#00E5FF] text-[#0A1828] font-semibold rounded-full px-5 h-9 flex-shrink-0"
+              >
+                Start Building
+              </Button>
             </div>
 
           </div>

@@ -3,8 +3,8 @@
 @tailwind utilities;
 
 /* =============================================
-   KABARI - SCAN. SALVAGE. BUILD.
-   Industrial aesthetic for the kabari community
+   SCAVY - SCAN. SALVAGE. BUILD.
+   Dark electric blue aesthetic
    ============================================= */
 
 @layer base {
@@ -80,22 +80,22 @@
   }
 
   .dark {
-    /* Dark mode - industrial night 
-       Using #0A0E27 (226 57% 10%) as base instead of pure black
-       Softer whites for eye strain reduction */
-    --background: 226 57% 10%;
+    /* Dark mode - electric dark 
+       Using #0A1828 as base for premium feel
+       Electric blue accents throughout */
+    --background: 210 60% 8%;
     --foreground: 214 32% 91%;
 
-    /* Card surfaces - slightly elevated from background */
-    --card: 226 50% 12%;
+    /* Card surfaces - dark gray cards */
+    --card: 0 0% 11%;
     --card-foreground: 214 32% 93%;
 
     /* Popover - elevated surface */
     --popover: 226 45% 14%;
     --popover-foreground: 214 32% 93%;
 
-    /* Primary - Bright electric cyan (pops on dark) */
-    --primary: 199 89% 58%;
+    /* Primary - Electric blue #00D9FF */
+    --primary: 189 100% 50%;
     --primary-foreground: 226 57% 10%;
 
     /* Secondary - Elevated steel gray */
