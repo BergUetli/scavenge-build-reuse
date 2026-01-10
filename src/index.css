@@ -813,6 +813,20 @@
    ELECTRIC BLUE HOMEPAGE STYLES
    ============================================= */
 
+/* Electric slide animation for scan button */
+@keyframes electric-slide {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.animate-electric-slide {
+  animation: electric-slide 2s ease-in-out infinite;
+}
+
 /* Glitch text effect */
 @keyframes glitch {
   0% {
