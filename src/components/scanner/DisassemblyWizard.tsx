@@ -180,58 +180,53 @@ export function DisassemblyWizard({
               <div>
                 <h3 className="text-xl font-semibold mb-4">Before You Begin</h3>
                 
-                {/* Device Image */}
-                {imageUrl && (
-                  <div className="rounded-lg overflow-hidden aspect-video mb-6 bg-muted">
-                    <img src={imageUrl} alt="Device" className="w-full h-full object-cover" />
-                  </div>
-                )}
+                {/* Device Image - REMOVED for text-only optimization */}
 
-                {/* Quick Stats */}
+                {/* Quick Stats - LARGER TEXT */}
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
                   <div className="bg-muted/50 rounded-lg p-4">
-                    <div className="flex items-center gap-2 text-muted-foreground mb-1">
-                      <Clock className="w-4 h-4" />
-                      <span className="text-sm">Time</span>
+                    <div className="flex items-center gap-2 text-muted-foreground mb-2">
+                      <Clock className="w-5 h-5" />
+                      <span className="text-base font-medium">Time</span>
                     </div>
-                    <p className="font-semibold">{disassembly?.time_estimate || 'Unknown'}</p>
+                    <p className="font-bold text-lg">{disassembly?.time_estimate || 'Unknown'}</p>
                   </div>
 
                   <div className="bg-muted/50 rounded-lg p-4">
-                    <div className="flex items-center gap-2 text-muted-foreground mb-1">
-                      <Wrench className="w-4 h-4" />
-                      <span className="text-sm">Difficulty</span>
+                    <div className="flex items-center gap-2 text-muted-foreground mb-2">
+                      <Wrench className="w-5 h-5" />
+                      <span className="text-base font-medium">Difficulty</span>
                     </div>
-                    <p className="font-semibold">{disassembly?.difficulty || 'Unknown'}</p>
+                    <p className="font-bold text-lg">{disassembly?.difficulty || 'Unknown'}</p>
                   </div>
 
                   <div className="bg-muted/50 rounded-lg p-4">
-                    <div className="flex items-center gap-2 text-muted-foreground mb-1">
-                      <AlertTriangle className="w-4 h-4" />
-                      <span className="text-sm">Injury Risk</span>
+                    <div className="flex items-center gap-2 text-muted-foreground mb-2">
+                      <AlertTriangle className="w-5 h-5" />
+                      <span className="text-base font-medium">Injury Risk</span>
                     </div>
-                    <p className="font-semibold">{disassembly?.injury_risk || 'Low'}</p>
+                    <p className="font-bold text-lg">{disassembly?.injury_risk || 'Low'}</p>
                   </div>
 
                   <div className="bg-muted/50 rounded-lg p-4">
-                    <div className="flex items-center gap-2 text-muted-foreground mb-1">
-                      <Package className="w-4 h-4" />
-                      <span className="text-sm">Components</span>
+                    <div className="flex items-center gap-2 text-muted-foreground mb-2">
+                      <Package className="w-5 h-5" />
+                      <span className="text-base font-medium">Components</span>
                     </div>
-                    <p className="font-semibold">{result.items.length}</p>
+                    <p className="font-bold text-lg">{result.items.length}</p>
                   </div>
                 </div>
 
-                {/* Tools Required */}
+                {/* Tools Required - LARGER TEXT */}
                 {result.tools_needed && result.tools_needed.length > 0 && (
                   <div className="mb-6">
-                    <h4 className="font-semibold mb-3 flex items-center gap-2">
+                    <h4 className="font-bold text-lg mb-3 flex items-center gap-2">
                       <Wrench className="w-5 h-5" />
                       Tools Required
                     </h4>
                     <div className="flex flex-wrap gap-2">
                       {result.tools_needed.map((tool, idx) => (
-                        <Badge key={idx} variant="secondary">
+                        <Badge key={idx} variant="secondary" className="text-base py-2 px-3">
                           {tool}
                         </Badge>
                       ))}
@@ -281,13 +276,13 @@ export function DisassemblyWizard({
           {currentStep === 'risk-acknowledgment' && (
             <div className="space-y-6">
               <div>
-                <h3 className="text-xl font-semibold mb-4">Safety Acknowledgment</h3>
+                <h3 className="text-2xl sm:text-3xl font-bold mb-6">Safety Acknowledgment</h3>
                 
                 <Alert className="border-red-500/20 bg-red-500/10 mb-6">
-                  <Skull className="w-5 h-5 text-red-600" />
+                  <Skull className="w-6 h-6 text-red-600" />
                   <AlertDescription className="text-red-600">
-                    <p className="font-semibold mb-3">⚠️ Read Carefully Before Proceeding</p>
-                    <div className="space-y-3 text-sm">
+                    <p className="font-bold text-lg sm:text-xl mb-4">⚠️ Read Carefully Before Proceeding</p>
+                    <div className="space-y-4 text-base sm:text-lg">
                       <p>
                         <strong>Injury Risk: {disassembly?.injury_risk || 'Low'}</strong> - 
                         This disassembly process may involve sharp edges, electrical components, 
@@ -305,12 +300,12 @@ export function DisassemblyWizard({
                         item.component_name.toLowerCase().includes('capacitor')
                       ) && (
                         <>
-                          <div className="bg-red-600/20 border border-red-600/30 rounded p-3 mt-3">
-                            <div className="flex items-start gap-2">
-                              <Zap className="w-5 h-5 flex-shrink-0 mt-0.5" />
+                          <div className="bg-red-600/20 border border-red-600/30 rounded p-4 mt-4">
+                            <div className="flex items-start gap-3">
+                              <Zap className="w-6 h-6 flex-shrink-0 mt-0.5" />
                               <div>
-                                <p className="font-semibold">⚡ ELECTRICAL HAZARD DETECTED</p>
-                                <p className="mt-1">
+                                <p className="font-bold text-lg">⚡ ELECTRICAL HAZARD DETECTED</p>
+                                <p className="mt-2 text-base leading-relaxed">
                                   This device contains batteries or capacitors that may store electrical charge. 
                                   Improper handling can cause fire, explosion, or electric shock.
                                 </p>
@@ -318,12 +313,12 @@ export function DisassemblyWizard({
                             </div>
                           </div>
                           
-                          <div className="bg-red-600/20 border border-red-600/30 rounded p-3">
-                            <div className="flex items-start gap-2">
-                              <Flame className="w-5 h-5 flex-shrink-0 mt-0.5" />
+                          <div className="bg-red-600/20 border border-red-600/30 rounded p-4">
+                            <div className="flex items-start gap-3">
+                              <Flame className="w-6 h-6 flex-shrink-0 mt-0.5" />
                               <div>
-                                <p className="font-semibold">🔥 RECOMMENDATION: Seek Professional Help</p>
-                                <p className="mt-1">
+                                <p className="font-bold text-lg">🔥 RECOMMENDATION: Seek Professional Help</p>
+                                <p className="mt-2 text-base leading-relaxed">
                                   For components with soldered connections or embedded batteries, 
                                   we strongly recommend consulting a trained technician or electronics 
                                   repair professional.
@@ -334,9 +329,9 @@ export function DisassemblyWizard({
                         </>
                       )}
 
-                      <div className="pt-3 border-t border-red-600/20">
-                        <p className="font-semibold">By proceeding, you acknowledge that:</p>
-                        <ul className="list-disc pl-5 mt-2 space-y-1">
+                      <div className="pt-4 border-t border-red-600/20">
+                        <p className="font-bold text-base">By proceeding, you acknowledge that:</p>
+                        <ul className="list-disc pl-6 mt-3 space-y-2 text-base">
                           <li>You understand the risks involved</li>
                           <li>You have the necessary tools and skills</li>
                           <li>You proceed at your own risk</li>
@@ -347,15 +342,15 @@ export function DisassemblyWizard({
                   </AlertDescription>
                 </Alert>
 
-                <div className="flex items-start gap-3 p-4 bg-muted/50 rounded-lg">
+                <div className="flex items-start gap-4 p-5 sm:p-6 bg-muted/50 rounded-lg">
                   <Checkbox
                     id="risk-acceptance"
                     checked={riskAccepted}
                     onCheckedChange={(checked) => setRiskAccepted(checked as boolean)}
-                    className="mt-1"
+                    className="mt-1.5"
                   />
-                  <label htmlFor="risk-acceptance" className="text-sm cursor-pointer">
-                    <span className="font-semibold">
+                  <label htmlFor="risk-acceptance" className="text-base sm:text-lg cursor-pointer">
+                    <span className="font-bold block mb-2">
                       I have read and understood the risks, and I choose to proceed at my own risk.
                     </span>
                     <p className="text-muted-foreground mt-1">
@@ -371,23 +366,27 @@ export function DisassemblyWizard({
           {/* DISASSEMBLY STEPS */}
           {currentStep === 'steps' && (
             <div className="space-y-6">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-xl font-semibold">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
+                <h3 className="text-2xl sm:text-3xl font-bold">
                   Step {stepIndex + 1} of {steps.length}
                 </h3>
-                <Badge variant="outline">
+                <Badge variant="outline" className="text-base py-2 px-4 w-fit">
                   {Math.round(((stepIndex + 1) / steps.length) * 100)}% Complete
                 </Badge>
               </div>
 
-              {/* Step Content */}
-              <div className="bg-muted/50 rounded-lg p-6 min-h-[300px]">
-                <div className="flex items-start gap-3 mb-4">
-                  <div className="flex-shrink-0 w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold">
-                    {stepIndex + 1}
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-lg leading-relaxed">{steps[stepIndex]}</p>
+              {/* Step Content - TEXT ONLY, OPTIMIZED FOR MOBILE */}
+              <div className="bg-muted/50 rounded-lg p-6 sm:p-8 min-h-[280px] flex items-center">
+                <div className="w-full">
+                  <div className="flex items-start gap-4 mb-6">
+                    <div className="flex-shrink-0 w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold text-xl sm:text-2xl">
+                      {stepIndex + 1}
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-xl sm:text-2xl md:text-3xl font-bold leading-relaxed text-foreground">
+                        {steps[stepIndex]}
+                      </p>
+                    </div>
                   </div>
                 </div>
 
@@ -420,13 +419,13 @@ export function DisassemblyWizard({
                 )}
               </div>
 
-              {/* Progress Dots */}
-              <div className="flex justify-center gap-2">
+              {/* Progress Dots - LARGER FOR MOBILE */}
+              <div className="flex justify-center gap-3">
                 {steps.map((_, idx) => (
                   <div
                     key={idx}
                     className={cn(
-                      "w-2 h-2 rounded-full transition-colors",
+                      "w-3 h-3 sm:w-4 sm:h-4 rounded-full transition-colors",
                       idx === stepIndex ? "bg-primary" : "bg-muted-foreground/20"
                     )}
                   />
@@ -439,27 +438,27 @@ export function DisassemblyWizard({
           {currentStep === 'component-selection' && (
             <div className="space-y-6">
               <div>
-                <h3 className="text-xl font-semibold mb-2">Select Components to Save</h3>
-                <p className="text-muted-foreground mb-4">
+                <h3 className="text-2xl sm:text-3xl font-bold mb-3">Select Components to Save</h3>
+                <p className="text-base sm:text-lg text-muted-foreground mb-6">
                   Choose which components you successfully extracted and want to add to your inventory.
                 </p>
 
-                <div className="flex gap-2 mb-4">
-                  <Button variant="outline" size="sm" onClick={selectAllComponents}>
-                    <CheckCircle2 className="w-4 h-4 mr-2" />
+                <div className="flex gap-3 mb-6">
+                  <Button variant="outline" size="lg" onClick={selectAllComponents}>
+                    <CheckCircle2 className="w-5 h-5 mr-2" />
                     Select All
                   </Button>
-                  <Button variant="outline" size="sm" onClick={deselectAllComponents}>
+                  <Button variant="outline" size="lg" onClick={deselectAllComponents}>
                     Clear All
                   </Button>
                 </div>
 
-                <div className="space-y-3">
+                <div className="space-y-4">
                   {result.items.map((item, idx) => (
                     <div
                       key={idx}
                       className={cn(
-                        "flex items-start gap-3 p-4 rounded-lg border-2 transition-all cursor-pointer",
+                        "flex items-start gap-4 p-5 sm:p-6 rounded-lg border-2 transition-all cursor-pointer",
                         selectedComponents.includes(item.component_name)
                           ? "border-primary bg-primary/5"
                           : "border-border hover:border-primary/50"
@@ -469,19 +468,19 @@ export function DisassemblyWizard({
                       <Checkbox
                         checked={selectedComponents.includes(item.component_name)}
                         onCheckedChange={() => toggleComponent(item.component_name)}
-                        className="mt-1"
+                        className="mt-2"
                       />
                       <div className="flex-1">
-                        <p className="font-semibold">{item.component_name}</p>
+                        <p className="font-bold text-lg sm:text-xl mb-3">{item.component_name}</p>
                         <div className="flex flex-wrap gap-2 mt-2">
-                          <Badge variant="secondary">{item.category}</Badge>
-                          <Badge variant="outline">Score: {item.reusability_score}/10</Badge>
-                          <Badge variant="outline">
+                          <Badge variant="secondary" className="text-sm py-1 px-3">{item.category}</Badge>
+                          <Badge variant="outline" className="text-sm py-1 px-3">Score: {item.reusability_score}/10</Badge>
+                          <Badge variant="outline" className="text-sm py-1 px-3">
                             ${item.market_value_low?.toFixed(2)} - ${item.market_value_high?.toFixed(2)}
                           </Badge>
                         </div>
                         {item.description && (
-                          <p className="text-sm text-muted-foreground mt-2">{item.description}</p>
+                          <p className="text-base text-muted-foreground mt-3 leading-relaxed">{item.description}</p>
                         )}
                       </div>
                     </div>
@@ -489,8 +488,8 @@ export function DisassemblyWizard({
                 </div>
 
                 <Alert className="mt-6">
-                  <Package className="w-4 h-4" />
-                  <AlertDescription>
+                  <Package className="w-5 h-5" />
+                  <AlertDescription className="text-base font-medium">
                     {selectedComponents.length} component{selectedComponents.length !== 1 ? 's' : ''} selected. 
                     These will be added to your inventory.
                   </AlertDescription>
