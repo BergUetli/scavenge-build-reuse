@@ -48,7 +48,6 @@ export function useInventory() {
         .from('user_inventory')
         .select('*')
         .eq('user_id', user.id)
-        .is('deleted_at', null)  // Only active items
         .order('date_added', { ascending: false });
 
       if (error) throw error;

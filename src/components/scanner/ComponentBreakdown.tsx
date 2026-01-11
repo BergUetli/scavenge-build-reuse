@@ -64,7 +64,8 @@ interface ComponentBreakdownProps {
   result: AIIdentificationResponse;
   imageUrl?: string;
   onAddComponent: (item: IdentifiedItem) => void;
-  onAddAll: () => void;
+  onAddGadget: () => void;
+  onAddComponents: (components: IdentifiedItem[]) => void;
   onRescan: () => void;
   onUpdateComponent?: (index: number, updates: Partial<IdentifiedItem>) => void;
   isLoading?: boolean;
@@ -112,7 +113,8 @@ export function ComponentBreakdown({
   result, 
   imageUrl,
   onAddComponent,
-  onAddAll,
+  onAddGadget,
+  onAddComponents,
   onRescan,
   onUpdateComponent,
   isLoading = false
@@ -226,8 +228,8 @@ export function ComponentBreakdown({
   // Handle disassembly wizard completion
   const handleDisassemblyComplete = (selectedComponents: IdentifiedItem[]) => {
     // Save only the selected components to inventory
+    onAddComponents(selectedComponents);
     selectedComponents.forEach(component => {
-      onAddComponent(component);
       setAddedItems(prev => new Set([...prev, component.component_name]));
     });
     setShowDisassemblyWizard(false);
@@ -524,7 +526,7 @@ export function ComponentBreakdown({
             <Button
               size="lg"
               className="h-14 text-base font-semibold rounded-2xl bg-success hover:bg-success/90 text-success-foreground"
-              onClick={onAddAll}
+              onClick={onAddGadget}
               disabled={isLoading || !hasComponents || addedItems.size === result.items.length}
             >
               {addedItems.size === result.items.length ? (
