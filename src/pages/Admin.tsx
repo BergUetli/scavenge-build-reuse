@@ -37,18 +37,20 @@ interface Submission {
   id: string;
   user_id: string;
   ai_scan_result: any;
-  image_urls: string[];
+  image_urls: string[] | null;
   matched_gadget_id: string | null;
   submission_type: string;
   user_notes: string | null;
   status: 'pending' | 'approved' | 'rejected';
-  admin_notes: string | null;
+  review_notes: string | null;
+  reviewed_at: string | null;
+  reviewed_by: string | null;
+  auto_approved: boolean | null;
   created_at: string;
-  updated_at: string;
+  updated_at: string | null;
   profiles?: {
-    email: string;
-    full_name: string;
-  };
+    display_name: string | null;
+  } | null;
 }
 
 interface Stats {
@@ -77,7 +79,7 @@ export default function Admin() {
         .single();
       
       if (error) return false;
-      return data?.role === 'admin' || data?.role === 'super_admin';
+      return data?.role === 'admin' || data?.role === 'moderator';
     },
     enabled: !!user
   });
@@ -91,8 +93,7 @@ export default function Admin() {
         .select(`
           *,
           profiles:user_id (
-            email,
-            full_name
+            display_name
           )
         `)
         .order('created_at', { ascending: false });
@@ -103,7 +104,7 @@ export default function Admin() {
 
       const { data, error } = await query;
       if (error) throw error;
-      return data as Submission[];
+      return (data || []) as unknown as Submission[];
     },
     enabled: isAdmin === true
   });
@@ -140,25 +141,23 @@ export default function Admin() {
       // 1. Insert into scrap_gadgets table
       const { data: newGadget, error: gadgetError } = await supabase
         .from('scrap_gadgets')
-        .insert({
+        .insert([{
           device_name: gadgetData.parent_object,
-          brand: gadgetData.brand || null,
-          model: gadgetData.model || null,
+          brand: gadgetData.brand || 'Unknown',
           category: gadgetData.items?.[0]?.category || 'Electronics',
-          year_released: new Date().getFullYear(),
+          industry: 'Consumer Electronics',
           estimated_device_age_years: gadgetData.estimated_device_age_years || 3,
           disassembly_difficulty: gadgetData.salvage_difficulty || 'Medium',
           disassembly_time_estimate: gadgetData.disassembly?.time_estimate || '20-30 minutes',
           injury_risk: gadgetData.disassembly?.injury_risk || 'Low',
           damage_risk: gadgetData.disassembly?.damage_risk || 'Medium',
           tools_required: gadgetData.tools_needed || [],
-          disassembly_steps: gadgetData.disassembly?.steps || [],
           safety_warnings: gadgetData.disassembly?.safety_warnings || [],
           ifixit_url: gadgetData.disassembly?.tutorial_url,
           youtube_teardown_url: gadgetData.disassembly?.video_url,
           verified: true,
           scan_count: 1
-        })
+        }])
         .select()
         .single();
 
@@ -401,7 +400,7 @@ export default function Admin() {
                       <CardDescription className="mt-2 flex items-center gap-4 flex-wrap">
                         <span className="flex items-center gap-1">
                           <Users className="w-4 h-4" />
-                          {submission.profiles?.email || 'Unknown user'}
+                          {submission.profiles?.display_name || 'Unknown user'}
                         </span>
                         <span className="flex items-center gap-1">
                           <Package className="w-4 h-4" />
@@ -500,10 +499,10 @@ export default function Admin() {
                         </div>
                       )}
 
-                      {submission.admin_notes && (
+                      {submission.review_notes && (
                         <div>
-                          <h4 className="font-semibold mb-2">Admin Notes</h4>
-                          <p className="text-sm text-muted-foreground">{submission.admin_notes}</p>
+                          <h4 className="font-semibold mb-2">Review Notes</h4>
+                          <p className="text-sm text-muted-foreground">{submission.review_notes}</p>
                         </div>
                       )}
                     </div>

@@ -40,8 +40,10 @@ import {
   Edit3,
   Save,
   Database,
-  Sparkles
+  Sparkles,
+  Scissors
 } from 'lucide-react';
+import { DisassemblyWizard } from './DisassemblyWizard';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
@@ -915,6 +917,4 @@ export function ComponentBreakdown({
   }
 
   return null;
-}
-  );
 }
