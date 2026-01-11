@@ -29,7 +29,8 @@ import {
   Package,
   Zap,
   Flame,
-  Skull
+  Skull,
+  Play
 } from 'lucide-react';
 import { AIIdentificationResponse, IdentifiedItem } from '@/types';
 import { cn } from '@/lib/utils';
@@ -63,6 +64,26 @@ export function DisassemblyWizard({
     "No detailed steps available. Proceed with caution.",
     "Refer to manufacturer documentation or iFixit guides."
   ];
+
+  // Extract YouTube video ID if available
+  const getYouTubeVideoId = (url?: string) => {
+    if (!url) return null;
+    const regex = /(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&\?]+)/;
+    const match = url.match(regex);
+    return match ? match[1] : null;
+  };
+
+  const youtubeVideoId = getYouTubeVideoId(disassembly?.video_url);
+  const hasVideo = !!youtubeVideoId;
+
+  // Calculate timestamp for current step (estimate)
+  const getStepTimestamp = (stepIndex: number, totalSteps: number) => {
+    // Assume average teardown is 10-15 minutes
+    // Distribute steps evenly
+    const averageDuration = 12 * 60; // 12 minutes in seconds
+    const secondsPerStep = averageDuration / totalSteps;
+    return Math.floor(stepIndex * secondsPerStep);
+  };
 
   // Risk level styling
   const getRiskStyle = (risk: string = 'Low') => {
@@ -250,23 +271,35 @@ export function DisassemblyWizard({
                 )}
 
                 {/* External Resources */}
-                <div className="flex gap-3 mt-6">
-                  {disassembly?.tutorial_url && (
-                    <Button variant="outline" asChild>
-                      <a href={disassembly.tutorial_url} target="_blank" rel="noopener noreferrer">
-                        <ExternalLink className="w-4 h-4 mr-2" />
-                        iFixit Guide
-                      </a>
-                    </Button>
+                <div className="flex flex-col gap-3 mt-6">
+                  {hasVideo && (
+                    <Alert className="border-primary/20 bg-primary/10">
+                      <Play className="w-5 h-5 text-primary" />
+                      <AlertDescription className="text-primary">
+                        <p className="font-bold">Video Guide Available!</p>
+                        <p className="mt-1">This device has a step-by-step video tutorial that will play during disassembly.</p>
+                      </AlertDescription>
+                    </Alert>
                   )}
-                  {disassembly?.video_url && (
-                    <Button variant="outline" asChild>
-                      <a href={disassembly.video_url} target="_blank" rel="noopener noreferrer">
-                        <ExternalLink className="w-4 h-4 mr-2" />
-                        Video Tutorial
-                      </a>
-                    </Button>
-                  )}
+                  
+                  <div className="flex gap-3">
+                    {disassembly?.tutorial_url && (
+                      <Button variant="outline" asChild>
+                        <a href={disassembly.tutorial_url} target="_blank" rel="noopener noreferrer">
+                          <ExternalLink className="w-4 h-4 mr-2" />
+                          iFixit Guide
+                        </a>
+                      </Button>
+                    )}
+                    {disassembly?.video_url && (
+                      <Button variant="outline" asChild>
+                        <a href={disassembly.video_url} target="_blank" rel="noopener noreferrer">
+                          <Play className="w-4 h-4 mr-2" />
+                          Full Video
+                        </a>
+                      </Button>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
@@ -378,6 +411,22 @@ export function DisassemblyWizard({
               {/* Step Content - TEXT ONLY, OPTIMIZED FOR MOBILE */}
               <div className="bg-muted/50 rounded-lg p-6 sm:p-8 min-h-[280px] flex items-center">
                 <div className="w-full">
+                  {/* YouTube Video Player (if available) */}
+                  {hasVideo && (
+                    <div className="mb-6 rounded-lg overflow-hidden aspect-video bg-black">
+                      <iframe
+                        width="100%"
+                        height="100%"
+                        src={`https://www.youtube.com/embed/${youtubeVideoId}?start=${getStepTimestamp(stepIndex, steps.length)}&autoplay=0`}
+                        title="Teardown Video"
+                        frameBorder="0"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                        allowFullScreen
+                        className="w-full h-full"
+                      />
+                    </div>
+                  )}
+
                   <div className="flex items-start gap-4 mb-6">
                     <div className="flex-shrink-0 w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold text-xl sm:text-2xl">
                       {stepIndex + 1}
