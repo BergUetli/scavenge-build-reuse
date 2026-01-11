@@ -142,8 +142,80 @@ export default function Scanner() {
     }
   }, [user, addItem, addScan, capturedImage, fullResult, navigate]);
 
-  // Handle adding all components
-  const handleAddAll = useCallback(async () => {
+  // Handle adding the whole gadget as-is (single item)
+  const handleAddGadget = useCallback(async () => {
+    if (!user) {
+      toast({
+        title: 'Sign Up Required',
+        description: 'Create an account to save items to your Cargo Hold.',
+        action: (
+          <Button 
+            size="sm" 
+            onClick={() => navigate('/auth?mode=signup')}
+            className="bg-primary hover:bg-primary/90"
+          >
+            Sign Up
+          </Button>
+        ),
+      });
+      return;
+    }
+    
+    if (!fullResult) return;
+
+    try {
+      // Save the parent gadget as a single inventory item
+      const gadgetName = fullResult.parent_object || 'Unknown Device';
+      const avgValue = fullResult.total_estimated_value_low && fullResult.total_estimated_value_high
+        ? (fullResult.total_estimated_value_low + fullResult.total_estimated_value_high) / 2
+        : fullResult.items.reduce((sum, item) => sum + (item.market_value_low + item.market_value_high) / 2, 0);
+
+      await addItem.mutateAsync({
+        component_name: gadgetName,
+        category: fullResult.items[0]?.category || 'Electronics',
+        condition: 'Good',
+        specifications: {
+          is_whole_gadget: true,
+          component_count: fullResult.items.length,
+          salvage_difficulty: fullResult.salvage_difficulty,
+          tools_needed: fullResult.tools_needed,
+        },
+        reusability_score: Math.round(fullResult.items.reduce((sum, item) => sum + item.reusability_score, 0) / fullResult.items.length),
+        market_value: avgValue,
+        image_url: capturedImage || undefined,
+        description: `Complete ${gadgetName} with ${fullResult.items.length} salvageable parts. Not disassembled.`,
+        common_uses: ['Repair', 'Refurbishment', 'Parts donor'],
+      });
+
+      // Log scan history
+      await addScan.mutateAsync({
+        component_name: gadgetName,
+        category: fullResult.items[0]?.category || 'Electronics',
+        confidence: fullResult.items.reduce((sum, item) => sum + item.confidence, 0) / fullResult.items.length,
+        image_url: capturedImage || undefined,
+        ai_response: fullResult,
+      });
+
+      toast({
+        title: 'Gadget Saved!',
+        description: `${gadgetName} has been added to your Cargo Hold as a whole item.`,
+      });
+
+      setShowSuccessSparks(true);
+      setTimeout(() => setShowSuccessSparks(false), 2000);
+      navigate('/inventory');
+    } catch (error) {
+      console.error('Failed to save gadget:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to save gadget to inventory.',
+        variant: 'destructive',
+      });
+    }
+  }, [user, fullResult, addItem, addScan, capturedImage, navigate]);
+
+  // Handle adding all components (after disassembly)
+  const handleAddAll = useCallback(async (components: IdentifiedItem[]) => {
     // Check if user is authenticated (not guest)
     if (!user) {
       toast({
@@ -162,16 +234,16 @@ export default function Scanner() {
       return;
     }
     
-    if (!fullResult?.items) return;
+    if (!components || components.length === 0) return;
 
     // Add ONE scan history entry for the parent object (high-level gadget)
     try {
       await addScan.mutateAsync({
-        component_name: fullResult.parent_object || fullResult.items[0]?.component_name || 'Unknown Device',
-        category: fullResult.items[0]?.category || 'Electronics',
-        confidence: fullResult.items.reduce((sum, item) => sum + item.confidence, 0) / fullResult.items.length,
+        component_name: fullResult?.parent_object || components[0]?.component_name || 'Unknown Device',
+        category: components[0]?.category || 'Electronics',
+        confidence: components.reduce((sum, item) => sum + item.confidence, 0) / components.length,
         image_url: capturedImage || undefined,
-        ai_response: fullResult,
+        ai_response: fullResult || undefined,
       });
     } catch (error) {
       console.error('Failed to save scan history:', error);
@@ -179,7 +251,7 @@ export default function Scanner() {
 
     // Add all individual components to inventory
     let savedCount = 0;
-    for (const item of fullResult.items) {
+    for (const item of components) {
       try {
         await addItem.mutateAsync({
           component_name: item.component_name,
@@ -269,8 +341,12 @@ export default function Scanner() {
               handleAddComponent(item);
               setShowSuccessSparks(true);
             }}
-            onAddAll={() => {
-              handleAddAll();
+            onAddGadget={() => {
+              handleAddGadget();
+              setShowSuccessSparks(true);
+            }}
+            onAddComponents={(components) => {
+              handleAddAll(components);
               setShowSuccessSparks(true);
             }}
             onRescan={handleRescan}
