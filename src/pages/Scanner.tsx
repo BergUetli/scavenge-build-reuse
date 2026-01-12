@@ -12,6 +12,7 @@ import { Loader2 } from 'lucide-react';
 import { CameraView } from '@/components/scanner/CameraView';
 import { ComponentBreakdown } from '@/components/scanner/ComponentBreakdown';
 import { SuccessSparks } from '@/components/effects/ParticleEffect';
+import { PerformanceMonitor } from '@/components/scanner/PerformanceMonitor';
 import { useScanner } from '@/hooks/useScanner';
 import { useInventory } from '@/hooks/useInventory';
 import { useScanHistory } from '@/hooks/useScanHistory';
@@ -46,6 +47,7 @@ export default function Scanner() {
   const [fullResult, setFullResult] = useState<AIIdentificationResponse | null>(null);
   const [userHint, setUserHint] = useState('');
   const [showSuccessSparks, setShowSuccessSparks] = useState(false);
+  const [performanceTimings, setPerformanceTimings] = useState<any>(null);
 
   // Start camera on mount (allow for both users and guests)
   useEffect(() => {
@@ -67,6 +69,7 @@ export default function Scanner() {
 
   // Handle analyze button - sends all images to AI with optional hint
   const handleAnalyze = useCallback(async () => {
+    const startTime = performance.now();
     const result = await analyzeAllImages(userHint);
     
     if (!result) {
@@ -76,6 +79,18 @@ export default function Scanner() {
     }
 
     console.log('[Scanner] Full AI result:', result);
+    
+    // Extract timing data if available
+    const totalTime = performance.now() - startTime;
+    const timings = {
+      total: totalTime,
+      dataSource: (result as any)?.from_database ? 'database' : 
+                  (result as any)?.cached ? 'cache' : 'ai',
+      ...(result as any)?._timings
+    };
+    setPerformanceTimings(timings);
+    console.log('[Scanner] Performance timings:', timings);
+    
     setFullResult(result);
     setShowResult(true);
   }, [analyzeAllImages, userHint]);
@@ -216,6 +231,9 @@ export default function Scanner() {
 
   // Handle adding all components (after disassembly)
   const handleAddAll = useCallback(async (components: IdentifiedItem[]) => {
+    console.log('[Scanner] handleAddAll called with', components.length, 'components');
+    console.log('[Scanner] Components to save:', components.map(c => c.component_name));
+    
     // Check if user is authenticated (not guest)
     if (!user) {
       toast({
@@ -251,8 +269,12 @@ export default function Scanner() {
 
     // Add all individual components to inventory
     let savedCount = 0;
+    const errors: string[] = [];
+    
     for (const item of components) {
       try {
+        console.log(`[Scanner] Saving component ${savedCount + 1}/${components.length}:`, item.component_name);
+        
         await addItem.mutateAsync({
           component_name: item.component_name,
           category: item.category,
@@ -265,16 +287,31 @@ export default function Scanner() {
           description: item.description,
           common_uses: item.common_uses,
         });
+        
         savedCount++;
+        console.log(`[Scanner] ✅ Saved: ${item.component_name}`);
       } catch (error) {
-        console.error('Failed to save item:', item.component_name, error);
+        const errorMsg = error instanceof Error ? error.message : 'Unknown error';
+        console.error(`[Scanner] ❌ Failed to save ${item.component_name}:`, error);
+        errors.push(`${item.component_name}: ${errorMsg}`);
       }
     }
 
-    toast({
-      title: 'Cargo Loaded!',
-      description: `${savedCount} components saved to your Cargo Hold.`,
-    });
+    console.log(`[Scanner] Save complete: ${savedCount}/${components.length} saved`);
+    
+    if (errors.length > 0) {
+      console.error('[Scanner] Save errors:', errors);
+      toast({
+        title: 'Partial Save',
+        description: `${savedCount} of ${components.length} components saved. ${errors.length} failed.`,
+        variant: savedCount > 0 ? 'default' : 'destructive',
+      });
+    } else {
+      toast({
+        title: 'Cargo Loaded!',
+        description: `${savedCount} component${savedCount !== 1 ? 's' : ''} saved to your Cargo Hold.`,
+      });
+    }
 
     setShowSuccessSparks(true);
     setTimeout(() => setShowSuccessSparks(false), 2000);
@@ -334,6 +371,14 @@ export default function Scanner() {
         />
         
         <div className="max-w-md mx-auto pt-4 pb-8">
+          {/* Performance diagnostics (can be removed later) */}
+          {performanceTimings && (
+            <PerformanceMonitor 
+              timings={performanceTimings}
+              className="mb-4"
+            />
+          )}
+          
           <ComponentBreakdown
             result={fullResult}
             imageUrl={capturedImage || undefined}
