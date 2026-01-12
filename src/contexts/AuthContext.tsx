@@ -2,7 +2,7 @@
  * AUTHENTICATION CONTEXT
  * 
  * Provides authentication state and methods throughout the app.
- * Uses Lovable Cloud (Supabase) for auth.
+ * Uses Supabase for authentication.
  */
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
