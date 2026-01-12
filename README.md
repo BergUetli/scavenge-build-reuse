@@ -178,10 +178,28 @@ This project is open source and available under the MIT License.
 
 ---
 
+## 📄 **License**
+
+**Copyright (c) 2026 Rishi Prasad**
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+### What This Means:
+- ✅ Free to use commercially
+- ✅ Free to modify and distribute
+- ✅ No warranty provided
+- ✅ Attribution appreciated but not required
+
+**Attribution**: Initial template from Lovable.dev. Substantial modifications and all valuable features developed by Rishi Prasad. See [ATTRIBUTION.md](ATTRIBUTION.md) for full history.
+
+---
+
 ## 📞 **Support**
 
 For issues or questions:
-- Open an issue on GitHub
+- **Author**: Rishi Prasad (BergUetli)
+- **Email**: rishi_prasad@hotmail.com
+- **GitHub Issues**: https://github.com/BergUetli/scavenge-build-reuse/issues
 - Check documentation in `/docs` folder
 - Review setup guides in project root
 
@@ -197,4 +215,4 @@ For issues or questions:
 
 ---
 
-**Built with ❤️ for the maker community**
+**Built with ❤️ by Rishi Prasad for the maker community**
