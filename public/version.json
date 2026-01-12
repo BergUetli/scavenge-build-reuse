@@ -1,0 +1,9 @@
+{
+  "version": "0.6.0",
+  "name": "Scavy",
+  "description": "Electronics salvage and inventory management app with AI-powered identification",
+  "build": {
+    "timestamp": "2026-01-12T18:52:00Z",
+    "commit": "e0a6326"
+  }
+}
