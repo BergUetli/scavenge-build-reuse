@@ -1,0 +1,54 @@
+name: Deploy Supabase Edge Functions
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'supabase/functions/**'
+  workflow_dispatch: # Allow manual trigger
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Setup Supabase CLI
+        uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Deploy Edge Functions
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_PROJECT_ID: cemlaexpettqxvslaqop
+        run: |
+          echo "🚀 Deploying Edge Functions to Supabase..."
+          
+          # Deploy identify-component function
+          echo "📦 Deploying identify-component..."
+          supabase functions deploy identify-component --project-ref $SUPABASE_PROJECT_ID
+          
+          # Deploy generate-component-image function
+          echo "📦 Deploying generate-component-image..."
+          supabase functions deploy generate-component-image --project-ref $SUPABASE_PROJECT_ID
+          
+          # Deploy match-projects function
+          echo "📦 Deploying match-projects..."
+          supabase functions deploy match-projects --project-ref $SUPABASE_PROJECT_ID
+          
+          echo "✅ All Edge Functions deployed successfully!"
+
+      - name: Summary
+        run: |
+          echo "## 🎉 Deployment Complete!" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Deployed Functions:" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ identify-component" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ generate-component-image" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ match-projects" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Project: cemlaexpettqxvslaqop" >> $GITHUB_STEP_SUMMARY
