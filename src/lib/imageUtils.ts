@@ -5,7 +5,7 @@
  */
 
 const MAX_DIMENSION = 1024;
-const COMPRESSION_QUALITY = 0.8;
+const COMPRESSION_QUALITY = 0.7; // Reduced from 0.8 for faster processing
 
 /**
  * Compress and resize an image for API submission
