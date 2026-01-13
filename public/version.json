@@ -1,9 +1,16 @@
 {
-  "version": "0.6.0",
+  "version": "0.6.2",
   "name": "Scavy",
   "description": "Electronics salvage and inventory management app with AI-powered identification",
   "build": {
-    "timestamp": "2026-01-12T18:52:00Z",
-    "commit": "e0a6326"
-  }
+    "timestamp": "2026-01-13T23:41:15Z",
+    "commit": "0aa5cf5"
+  },
+  "features": [
+    "Improved hint UI with larger, more readable button",
+    "Follow-up questions for generic device identification",
+    "Performance monitoring with timing breakdown",
+    "YouTube video link improvements",
+    "Optimized image processing"
+  ]
 }
