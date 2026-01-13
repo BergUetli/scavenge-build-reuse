@@ -132,14 +132,15 @@ export function CameraView({
       {/* Hint text and input */}
       <div className="absolute top-20 left-0 right-0 text-center safe-area-pt px-4">
         {showHintInput ? (
-          <div className="flex items-center gap-2 max-w-sm mx-auto bg-black/50 backdrop-blur-sm rounded-full px-3 py-2">
-            <MessageSquare className="w-4 h-4 text-white/70 flex-shrink-0" />
+          <div className="flex items-center gap-2 max-w-md mx-auto bg-black/70 backdrop-blur-md rounded-xl px-4 py-3 shadow-xl">
+            <MessageSquare className="w-5 h-5 text-primary flex-shrink-0" />
             <Input
               value={userHint}
               onChange={(e) => onHintChange(e.target.value)}
-              placeholder="e.g., JBL wireless headset"
-              className="bg-transparent border-none text-white placeholder:text-white/50 text-sm h-auto py-0 focus-visible:ring-0"
+              placeholder="e.g., iPhone 12 Pro, Samsung Galaxy S21"
+              className="bg-transparent border-none text-white placeholder:text-white/60 text-base h-auto py-0 focus-visible:ring-0 focus-visible:ring-offset-0"
               maxLength={100}
+              autoFocus
             />
             <button 
               onClick={() => {
@@ -163,10 +164,12 @@ export function CameraView({
                 playClick();
                 setShowHintInput(true);
               }}
-              className="text-primary text-xs bg-black/40 backdrop-blur-sm px-3 py-1.5 rounded-full flex items-center gap-1.5 hover:bg-black/50 transition-colors"
+              className="text-white text-sm bg-primary/90 hover:bg-primary backdrop-blur-sm px-5 py-3 rounded-lg flex items-center gap-2 transition-all shadow-lg hover:shadow-xl"
             >
-              <MessageSquare className="w-3 h-3" />
-              {userHint ? `Hint: "${userHint.substring(0, 20)}${userHint.length > 20 ? '...' : ''}"` : 'Add hint (optional)'}
+              <MessageSquare className="w-5 h-5" />
+              <span className="font-medium">
+                {userHint ? `Hint: "${userHint.substring(0, 30)}${userHint.length > 30 ? '...' : ''}"` : 'Add Hint (Optional)'}
+              </span>
             </button>
           </div>
         )}

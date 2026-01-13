@@ -13,6 +13,7 @@ import { CameraView } from '@/components/scanner/CameraView';
 import { ComponentBreakdown } from '@/components/scanner/ComponentBreakdown';
 import { SuccessSparks } from '@/components/effects/ParticleEffect';
 import { PerformanceMonitor } from '@/components/scanner/PerformanceMonitor';
+import { FollowUpPrompt } from '@/components/scanner/FollowUpPrompt';
 import { useScanner } from '@/hooks/useScanner';
 import { useInventory } from '@/hooks/useInventory';
 import { useScanHistory } from '@/hooks/useScanHistory';
@@ -48,6 +49,8 @@ export default function Scanner() {
   const [userHint, setUserHint] = useState('');
   const [showSuccessSparks, setShowSuccessSparks] = useState(false);
   const [performanceTimings, setPerformanceTimings] = useState<any>(null);
+  const [showFollowUp, setShowFollowUp] = useState(false);
+  const [genericDeviceName, setGenericDeviceName] = useState('');
 
   // Start camera on mount (allow for both users and guests)
   useEffect(() => {
@@ -91,9 +94,50 @@ export default function Scanner() {
     setPerformanceTimings(timings);
     console.log('[Scanner] Performance timings:', timings);
     
-    setFullResult(result);
-    setShowResult(true);
+    // Check if device name is too generic (needs follow-up)
+    const deviceName = result.parent_object?.toLowerCase() || '';
+    const genericNames = ['smartphone', 'phone', 'device', 'gadget', 'tablet', 'laptop', 'computer', 'electronics', 'electronic device'];
+    const isGeneric = genericNames.some(generic => deviceName.includes(generic) && deviceName.split(' ').length <= 2);
+    
+    if (isGeneric && !userHint) {
+      // Show follow-up prompt for more specific info
+      setGenericDeviceName(result.parent_object || 'Device');
+      setShowFollowUp(true);
+      setFullResult(result); // Store result temporarily
+    } else {
+      // Show results immediately if specific enough or user already provided hint
+      setFullResult(result);
+      setShowResult(true);
+    }
   }, [analyzeAllImages, userHint]);
+
+  // Handle follow-up prompt submission
+  const handleFollowUpSubmit = useCallback(async (additionalHint: string) => {
+    setShowFollowUp(false);
+    setUserHint(additionalHint);
+    // Re-analyze with the new hint
+    const startTime = performance.now();
+    const result = await analyzeAllImages(additionalHint);
+    
+    if (result) {
+      const totalTime = performance.now() - startTime;
+      const timings = {
+        total: totalTime,
+        dataSource: (result as any)?.from_database ? 'database' : 
+                    (result as any)?.cached ? 'cache' : 'ai',
+        ...(result as any)?._timings
+      };
+      setPerformanceTimings(timings);
+      setFullResult(result);
+    }
+    setShowResult(true);
+  }, [analyzeAllImages]);
+
+  // Handle follow-up prompt skip
+  const handleFollowUpSkip = useCallback(() => {
+    setShowFollowUp(false);
+    setShowResult(true); // Show generic results
+  }, []);
 
   // Handle closing scanner
   const handleClose = useCallback(() => {
@@ -444,17 +488,27 @@ export default function Scanner() {
 
   // Show camera view with multi-photo support
   return (
-    <CameraView
-      videoRef={videoRef}
-      isStreaming={isCapturing}
-      capturedImages={capturedImages}
-      userHint={userHint}
-      onHintChange={setUserHint}
-      onCapture={handleCapture}
-      onUpload={handleUpload}
-      onRemoveImage={removeImage}
-      onAnalyze={handleAnalyze}
-      onClose={handleClose}
-    />
+    <>
+      <CameraView
+        videoRef={videoRef}
+        isStreaming={isCapturing}
+        capturedImages={capturedImages}
+        userHint={userHint}
+        onHintChange={setUserHint}
+        onCapture={handleCapture}
+        onUpload={handleUpload}
+        onRemoveImage={removeImage}
+        onAnalyze={handleAnalyze}
+        onClose={handleClose}
+      />
+      
+      {/* Follow-up prompt for generic device names */}
+      <FollowUpPrompt
+        isOpen={showFollowUp}
+        onClose={handleFollowUpSkip}
+        onSubmit={handleFollowUpSubmit}
+        genericName={genericDeviceName}
+      />
+    </>
   );
 }
