@@ -74,9 +74,15 @@ export async function stage1_identifyDevice(
   // Call AI for device identification
   // NOTE: Edge function doesn't support 'mode' yet, so we get full scan
   // and just extract device name from it
+  
+  // Strip data URL prefix if present (edge function expects raw base64)
+  const base64Data = imageUrl.includes('base64,') 
+    ? imageUrl.split('base64,')[1] 
+    : imageUrl;
+  
   const { data, error } = await supabase.functions.invoke('identify-component', {
     body: {
-      imageBase64: imageUrl,
+      imageBase64: base64Data,
       userHint: userHint,
       mimeType: 'image/jpeg',
       imageHash: imageHash
@@ -191,9 +197,14 @@ export async function stage2_getComponentList(
     throw new Error('Image required for uncached component list');
   }
 
+  // Strip data URL prefix if present (edge function expects raw base64)
+  const base64Data = imageUrl.includes('base64,') 
+    ? imageUrl.split('base64,')[1] 
+    : imageUrl;
+  
   const { data, error } = await supabase.functions.invoke('identify-component', {
     body: {
-      imageBase64: imageUrl,
+      imageBase64: base64Data,
       userHint: `Device: ${deviceName}${manufacturer ? `, Manufacturer: ${manufacturer}` : ''}${model ? `, Model: ${model}` : ''}`,
       mimeType: 'image/jpeg'
     }
