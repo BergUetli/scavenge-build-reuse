@@ -51,8 +51,8 @@ function getProviderConfigs(): Record<AIProvider, ProviderConfig> {
       name: 'OpenAI GPT-4o-mini'
     },
     gemini: {
-      apiKey: Deno.env.get('GOOGLE_AI_API_KEY'),
-      envVar: 'GOOGLE_AI_API_KEY', 
+      apiKey: Deno.env.get('SCAVY_GEMINI_KEY') || Deno.env.get('GOOGLE_AI_API_KEY'),
+      envVar: 'SCAVY_GEMINI_KEY', 
       name: 'Google Gemini 1.5 Flash'
     },
     claude: {
