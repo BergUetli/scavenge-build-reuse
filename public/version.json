@@ -1,23 +1,22 @@
 {
-  "version": "0.7.1",
+  "version": "0.7.2",
   "name": "Scavy",
   "description": "Electronics salvage and inventory management app with AI-powered identification",
   "build": {
-    "timestamp": "2026-01-14T02:45:00Z",
-    "commit": "3601fc2"
+    "timestamp": "2026-01-14T03:00:00Z",
+    "commit": "006ef9f"
   },
   "features": [
     "Multi-stage scan flow (60-80% faster when cached)",
     "Colored bubble UI for component display",
     "On-demand component detail loading",
-    "Fixed edge function endpoint (Supabase)",
-    "Improved error handling and logging",
+    "Detailed error logging with HTTP status codes",
     "12-category color scheme"
   ],
   "fixes": [
-    "Fixed 405 Method Not Allowed error",
-    "Use Supabase client for edge function calls",
-    "Better error messages from edge function",
-    "Added data.error checking"
+    "Added detailed error.status logging",
+    "Capture HTTP status codes (400, 401, 500, etc.)",
+    "Show error.statusText and error.context",
+    "Better debugging for edge function errors"
   ]
 }
