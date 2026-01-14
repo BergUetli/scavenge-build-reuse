@@ -131,7 +131,7 @@ export default function Scanner() {
     } finally {
       setAnalyzingObject(false);
     }
-  }, [analyzingObject, captureImage, handleAnalyze]);
+  }, [analyzingObject, captureImage]); // Don't include handleAnalyze to avoid circular dependency
 
   // V0.7 Multi-stage analyze
   const handleAnalyze = useCallback(async () => {

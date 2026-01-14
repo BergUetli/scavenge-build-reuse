@@ -1,0 +1,10 @@
+The fix is to remove handleAnalyze from handleObjectSelect dependencies and call it directly.
+
+Change line 134 from:
+  }, [analyzingObject, captureImage, handleAnalyze]);
+
+To:
+  }, [analyzingObject, captureImage]);
+
+This breaks the circular dependency because handleObjectSelect can call handleAnalyze 
+without declaring it as a dependency (it's safe because we're calling it, not storing it).
