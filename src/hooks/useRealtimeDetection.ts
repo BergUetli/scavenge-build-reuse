@@ -1,5 +1,6 @@
 /**
- * REAL-TIME OBJECT DETECTION HOOK - ENHANCED DEBUGGING
+ * REAL-TIME OBJECT DETECTION HOOK - PRODUCTION VERSION
+ * Uses TensorFlow.js COCO-SSD for in-browser object detection
  */
 
 import { useEffect, useRef, useState } from 'react';
@@ -20,7 +21,6 @@ export function useRealtimeDetection() {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const lastDetectionTime = useRef<number>(0);
   const isDetecting = useRef<boolean>(false);
-  const detectionCount = useRef<number>(0);
 
   // Load model on mount
   useEffect(() => {
@@ -28,7 +28,7 @@ export function useRealtimeDetection() {
 
     async function loadModel() {
       try {
-        console.log('[RT Detection] 🚀 Starting model load...');
+        console.log('[Real-time Detection] Loading model...');
         const startTime = Date.now();
         
         const loadedModel = await cocoSsd.load({
@@ -36,14 +36,14 @@ export function useRealtimeDetection() {
         });
         
         const loadTime = Date.now() - startTime;
-        console.log(`[RT Detection] ✅ Model loaded in ${loadTime}ms`);
+        console.log(`[Real-time Detection] Model loaded in ${loadTime}ms`);
         
         if (mounted) {
           setModel(loadedModel);
           setIsModelLoading(false);
         }
       } catch (error) {
-        console.error('[RT Detection] ❌ Failed to load model:', error);
+        console.error('[Real-time Detection] Failed to load model:', error);
         setIsModelLoading(false);
       }
     }
@@ -55,53 +55,35 @@ export function useRealtimeDetection() {
     };
   }, []);
 
-  // Start detection loop with throttling
+  // Start detection loop with throttling for mobile performance
   const startDetection = (video: HTMLVideoElement) => {
     if (!model) {
-      console.warn('[RT Detection] ⚠️ Cannot start - model not loaded');
+      console.warn('[Real-time Detection] Model not loaded yet');
       return;
     }
 
-    console.log('[RT Detection] 🎬 Starting detection loop');
+    console.log('[Real-time Detection] Starting detection');
     videoRef.current = video;
     isDetecting.current = false;
-    detectionCount.current = 0;
 
     const detect = async () => {
       if (!videoRef.current || videoRef.current.paused || videoRef.current.ended) {
-        console.log('[RT Detection] ⏸️ Video not ready, stopping');
         return;
       }
 
       const now = Date.now();
       
-      // Throttle detection to max 3 FPS (333ms between detections)
+      // Throttle to max 3 FPS (333ms between detections) for mobile performance
       if (!isDetecting.current && now - lastDetectionTime.current >= 333) {
         isDetecting.current = true;
         lastDetectionTime.current = now;
-        detectionCount.current++;
 
         try {
-          const detectStart = Date.now();
-          const predictions = await model.detect(videoRef.current, 10); // Increase to 10 max objects
-          const detectTime = Date.now() - detectStart;
+          // Detect objects (max 8 for performance)
+          const predictions = await model.detect(videoRef.current, 8);
           
-          // Lower threshold to 30% for more detections
+          // Filter by confidence (30% threshold)
           const filteredPredictions = predictions.filter(pred => pred.score > 0.3);
-          
-          if (detectionCount.current % 10 === 1) { // Log every 10th detection
-            console.log(`[RT Detection] 📊 Detection #${detectionCount.current}:`, {
-              totalPredictions: predictions.length,
-              filtered: filteredPredictions.length,
-              detectTime: `${detectTime}ms`
-            });
-          }
-          
-          if (filteredPredictions.length > 0) {
-            console.log('[RT Detection] 🎯 Found:', filteredPredictions.map(p => 
-              `${p.class} (${(p.score * 100).toFixed(0)}%)`
-            ).join(', '));
-          }
           
           // Convert to our format
           const detectedObjects: DetectedObject[] = filteredPredictions.map(pred => ({
@@ -112,7 +94,7 @@ export function useRealtimeDetection() {
 
           setDetections(detectedObjects);
         } catch (error) {
-          console.error('[RT Detection] ❌ Detection error:', error);
+          console.error('[Real-time Detection] Detection error:', error);
         } finally {
           isDetecting.current = false;
         }
@@ -127,12 +109,13 @@ export function useRealtimeDetection() {
 
   // Stop detection loop
   const stopDetection = () => {
-    console.log('[RT Detection] 🛑 Stopping detection');
+    console.log('[Real-time Detection] Stopping detection');
     if (animationFrameId.current) {
       cancelAnimationFrame(animationFrameId.current);
     }
     setDetections([]);
     isDetecting.current = false;
+    videoRef.current = null;
   };
 
   return {

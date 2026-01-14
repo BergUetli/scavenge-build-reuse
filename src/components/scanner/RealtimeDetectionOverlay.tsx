@@ -1,5 +1,6 @@
 /**
- * REAL-TIME DETECTION OVERLAY - WITH TEST BOX
+ * REAL-TIME DETECTION OVERLAY - PRODUCTION VERSION
+ * Clean overlay for real-time object detection with mobile optimization
  */
 
 import React from 'react';
@@ -22,20 +23,14 @@ export function RealtimeDetectionOverlay({
   displayHeight,
   onObjectSelect
 }: RealtimeDetectionOverlayProps) {
-  console.log('[Overlay] Props:', {
-    detectionsCount: detections?.length || 0,
-    videoSize: `${videoWidth}x${videoHeight}`,
-    displaySize: `${displayWidth}x${displayHeight}`,
-    hasDetections: detections && detections.length > 0
-  });
+  // Don't render if we don't have valid dimensions
+  if (!displayWidth || !displayHeight || !videoWidth || !videoHeight) {
+    return null;
+  }
 
-  // Always show a test box in center of screen
-  const testBox = {
-    left: displayWidth / 2 - 100,
-    top: displayHeight / 2 - 100,
-    width: 200,
-    height: 200
-  };
+  // Calculate scale factors
+  const scaleX = displayWidth / videoWidth;
+  const scaleY = displayHeight / videoHeight;
 
   return (
     <div 
@@ -43,93 +38,75 @@ export function RealtimeDetectionOverlay({
       style={{ 
         width: displayWidth, 
         height: displayHeight,
-        zIndex: 10,
-        border: '2px dashed white' // Debug: show overlay boundaries
+        zIndex: 10
       }}
     >
-      {/* TEST BOX - Always visible */}
-      <div
-        className="absolute pointer-events-auto"
-        style={{
-          left: `${testBox.left}px`,
-          top: `${testBox.top}px`,
-          width: `${testBox.width}px`,
-          height: `${testBox.height}px`,
-          border: '4px solid #FF00FF',
-          background: 'rgba(255, 0, 255, 0.1)',
-          zIndex: 20
-        }}
-      >
-        <div
-          className="absolute -top-8 left-0 px-3 py-1 rounded bg-pink-500 text-white font-bold text-sm"
-        >
-          TEST BOX - If you see this, overlay works!
-        </div>
-      </div>
-
-      {/* Actual detections */}
-      {detections && detections.length > 0 && videoWidth > 0 && videoHeight > 0 && displayWidth > 0 && displayHeight > 0 ? (
+      {detections && detections.length > 0 ? (
         detections.map((detection, index) => {
           const [x, y, width, height] = detection.bbox;
           
-          // Scale coordinates
-          const scaleX = displayWidth / videoWidth;
-          const scaleY = displayHeight / videoHeight;
+          // Scale coordinates from video dimensions to display dimensions
+          const scaledX = Math.max(0, Math.min(x * scaleX, displayWidth - 4));
+          const scaledY = Math.max(0, Math.min(y * scaleY, displayHeight - 4));
+          const scaledWidth = Math.min(width * scaleX, displayWidth - scaledX);
+          const scaledHeight = Math.min(height * scaleY, displayHeight - scaledY);
           
-          const scaledX = x * scaleX;
-          const scaledY = y * scaleY;
-          const scaledWidth = width * scaleX;
-          const scaledHeight = height * scaleY;
-          
-          console.log(`[Overlay] Box ${index}:`, {
-            label: detection.label,
-            confidence: detection.confidence,
-            original: { x, y, width, height },
-            scaled: { x: scaledX, y: scaledY, width: scaledWidth, height: scaledHeight }
-          });
+          // Skip if box is too small or out of bounds
+          if (scaledWidth < 20 || scaledHeight < 20) {
+            return null;
+          }
           
           const confidence = Math.round(detection.confidence * 100);
-          const color = confidence > 80 ? '#00FF00' : confidence > 60 ? '#FFFF00' : '#FF6600';
+          
+          // Color based on confidence
+          const color = confidence > 80 ? '#22c55e' : // green-500
+                       confidence > 60 ? '#eab308' : // yellow-500
+                       '#f97316'; // orange-500
 
           return (
             <button
-              key={`detection-${index}`}
+              key={`detection-${detection.label}-${index}`}
               onClick={() => onObjectSelect?.(detection)}
-              className="absolute pointer-events-auto"
+              className="absolute pointer-events-auto transition-all duration-200 hover:scale-105"
               style={{
-                left: `${Math.max(0, scaledX)}px`,
-                top: `${Math.max(0, scaledY)}px`,
-                width: `${Math.min(scaledWidth, displayWidth - scaledX)}px`,
-                height: `${Math.min(scaledHeight, displayHeight - scaledY)}px`,
-                border: `4px solid ${color}`,
-                boxShadow: `0 0 20px ${color}`,
-                background: `rgba(255, 255, 255, 0.1)`,
-                zIndex: 20,
-                minWidth: '40px',
-                minHeight: '40px'
+                left: `${scaledX}px`,
+                top: `${scaledY}px`,
+                width: `${scaledWidth}px`,
+                height: `${scaledHeight}px`,
+                border: `3px solid ${color}`,
+                borderRadius: '8px',
+                boxShadow: `0 0 16px ${color}66`,
+                background: 'transparent',
+                zIndex: 20
               }}
             >
-              {/* Label */}
+              {/* Label badge */}
               <div
-                className="absolute -top-8 left-0 px-3 py-1 rounded font-bold text-sm whitespace-nowrap"
+                className="absolute left-0 px-2 py-1 rounded-md font-semibold text-xs whitespace-nowrap shadow-lg"
                 style={{
+                  top: scaledY > 30 ? '-28px' : '4px', // Place above or inside box
                   backgroundColor: color,
-                  color: '#000'
+                  color: '#ffffff',
+                  maxWidth: `${scaledWidth}px`,
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis'
                 }}
               >
                 {detection.label} {confidence}%
               </div>
+
+              {/* Corner markers for better visibility */}
+              <div className="absolute top-0 left-0 w-3 h-3 border-t-2 border-l-2" style={{ borderColor: color }} />
+              <div className="absolute top-0 right-0 w-3 h-3 border-t-2 border-r-2" style={{ borderColor: color }} />
+              <div className="absolute bottom-0 left-0 w-3 h-3 border-b-2 border-l-2" style={{ borderColor: color }} />
+              <div className="absolute bottom-0 right-0 w-3 h-3 border-b-2 border-r-2" style={{ borderColor: color }} />
             </button>
           );
         })
       ) : (
-        <div
-          className="absolute top-4 left-4 px-4 py-2 bg-red-500/80 text-white rounded font-bold text-sm"
-        >
-          No detections yet - Point at objects
-          <div className="text-xs mt-1">
-            Video: {videoWidth}x{videoHeight} | Display: {displayWidth}x{displayHeight}
-          </div>
+        // Subtle hint when no detections
+        <div className="absolute top-4 left-1/2 transform -translate-x-1/2 px-4 py-2 bg-black/50 backdrop-blur-sm text-white/70 rounded-lg text-sm text-center">
+          Point camera at objects to detect
         </div>
       )}
     </div>
