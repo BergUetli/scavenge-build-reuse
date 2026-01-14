@@ -13,6 +13,7 @@ export interface Stage1Result {
   year?: number;
   imageHash: string;
   fromCache?: boolean;
+  components?: Stage2Component[];  // Include components if we got them in Stage 1
 }
 
 export interface Stage2Component {
@@ -125,21 +126,50 @@ export async function stage1_identifyDevice(
     model: data.model,
     year: data.year,
     imageHash,
-    fromCache: false
+    fromCache: false,
+    // Include components if we got them (full scan)
+    components: data.items && Array.isArray(data.items) && data.items.length > 0
+      ? data.items.map((item: any, idx: number) => ({
+          name: item.component_name || item.name,
+          category: item.category || 'Other',
+          quantity: item.quantity || 1,
+          sort_order: idx
+        }))
+      : undefined
   };
 
-  // Cache the device (gracefully handle missing tables)
+  // Cache the device AND components (gracefully handle missing tables)
   try {
-    await supabase.from('scrap_gadget_devices').insert({
-      device_name: result.deviceName,
-      device_category: result.category,
-      manufacturer: result.manufacturer,
-      model: result.model,
-      year: result.year,
-      image_hash: imageHash
-    });
+    const { data: insertedDevice, error: insertError } = await supabase
+      .from('scrap_gadget_devices')
+      .insert({
+        device_name: result.deviceName,
+        device_category: result.category,
+        manufacturer: result.manufacturer,
+        model: result.model,
+        year: result.year,
+        image_hash: imageHash
+      })
+      .select('id')
+      .single();
+
+    // If we got components in Stage 1, cache them now!
+    if (insertedDevice?.id && data.items && Array.isArray(data.items) && data.items.length > 0) {
+      console.log('[Stage1] Caching', data.items.length, 'components from full scan');
+      const componentsToInsert = data.items.map((item: any, idx: number) => ({
+        device_id: insertedDevice.id,
+        component_name: item.component_name || item.name,
+        component_category: item.category || 'Other',
+        quantity: item.quantity || 1,
+        sort_order: idx,
+        is_detailed: false
+      }));
+
+      await supabase.from('scrap_gadget_device_components').insert(componentsToInsert);
+      console.log('[Stage1] Successfully cached components!');
+    }
   } catch (dbError) {
-    console.log('[Stage1] Failed to cache device:', dbError);
+    console.log('[Stage1] Failed to cache device/components:', dbError);
     // Continue without caching
   }
 

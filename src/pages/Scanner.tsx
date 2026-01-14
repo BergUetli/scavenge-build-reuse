@@ -130,12 +130,24 @@ export default function Scanner() {
       console.log('[Scanner v0.7] Stage 2: Getting component list...');
       setScanStage('stage2');
       
-      const stage2Result = await stage2_getComponentList(
-        stage1Result.deviceName,
-        imageBase64,
-        stage1Result.manufacturer,
-        stage1Result.model
-      );
+      let stage2Result: { components: any[]; fromDatabase: boolean };
+      
+      // OPTIMIZATION: If Stage 1 already returned components, use them!
+      if (stage1Result.components && stage1Result.components.length > 0) {
+        console.log(`[Scanner v0.7] Stage 2: Using ${stage1Result.components.length} components from Stage 1 (no AI call needed!)`);
+        stage2Result = {
+          components: stage1Result.components,
+          fromDatabase: false
+        };
+      } else {
+        // Stage 1 didn't return components, need to call Stage 2
+        stage2Result = await stage2_getComponentList(
+          stage1Result.deviceName,
+          imageBase64,
+          stage1Result.manufacturer,
+          stage1Result.model
+        );
+      }
 
       const stage2Time = performance.now() - startTime;
       console.log(`[Scanner v0.7] Stage 2 complete in ${stage2Time.toFixed(0)}ms: ${stage2Result.components.length} components`);
