@@ -102,15 +102,36 @@ export default function Scanner() {
       description: `Getting details for: ${detection.label}`,
     });
 
-    // Capture current frame and analyze it
-    captureImage();
-    
-    // Wait a bit for capture to complete, then analyze
-    setTimeout(() => {
-      handleAnalyze();
+    try {
+      // Capture current frame
+      const capturedDataUrl = captureImage();
+      
+      if (!capturedDataUrl) {
+        toast({
+          title: 'Capture failed',
+          description: 'Could not capture image from camera',
+          variant: 'destructive'
+        });
+        setAnalyzingObject(false);
+        return;
+      }
+      
+      // Wait for state to update, then analyze
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      // Now analyze with the captured image
+      await handleAnalyze();
+    } catch (error) {
+      console.error('[Scanner] Object select error:', error);
+      toast({
+        title: 'Analysis failed',
+        description: error instanceof Error ? error.message : 'Unknown error',
+        variant: 'destructive'
+      });
+    } finally {
       setAnalyzingObject(false);
-    }, 500);
-  }, [analyzingObject, captureImage]);
+    }
+  }, [analyzingObject, captureImage, handleAnalyze]);
 
   // V0.7 Multi-stage analyze
   const handleAnalyze = useCallback(async () => {
