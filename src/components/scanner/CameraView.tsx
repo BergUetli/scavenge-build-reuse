@@ -1,8 +1,8 @@
 /**
- * CAMERA VIEW WITH REAL-TIME DETECTION - SIMPLIFIED & ROBUST
+ * CAMERA VIEW WITH REAL-TIME DETECTION - FIXED INFINITE LOOP
  */
 
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { Camera, Upload, X, Zap, Brain, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useRealtimeDetection, DetectedObject } from '@/hooks/useRealtimeDetection';
@@ -38,6 +38,8 @@ export function CameraView({
   const [videoSize, setVideoSize] = useState({ width: 0, height: 0 });
   const [displaySize, setDisplaySize] = useState({ width: 0, height: 0 });
   const containerRef = useRef<HTMLDivElement>(null);
+  const isDetectionActive = useRef(false);
+  
   const { 
     isModelLoading, 
     detections, 
@@ -66,10 +68,7 @@ export function CameraView({
   useEffect(() => {
     const updateDisplaySize = () => {
       const container = containerRef.current;
-      if (!container) {
-        console.log('[CameraView] Container ref not ready');
-        return;
-      }
+      if (!container) return;
 
       const rect = container.getBoundingClientRect();
       setDisplaySize({
@@ -79,7 +78,7 @@ export function CameraView({
       console.log('[CameraView] Display size:', rect.width, 'x', rect.height);
     };
 
-    // Initial update with delays to ensure DOM is ready
+    // Initial updates with delays
     setTimeout(updateDisplaySize, 100);
     setTimeout(updateDisplaySize, 300);
     setTimeout(updateDisplaySize, 500);
@@ -88,44 +87,50 @@ export function CameraView({
     return () => window.removeEventListener('resize', updateDisplaySize);
   }, []);
 
-  // Start/stop detection based on mode
+  // Start/stop detection based on mode - FIXED DEPENDENCIES
   useEffect(() => {
     const video = videoRef.current;
+    
     if (!video || !realtimeMode) {
-      stopDetection();
+      if (isDetectionActive.current) {
+        console.log('[CameraView] Stopping detection (mode off)');
+        stopDetection();
+        isDetectionActive.current = false;
+      }
+      return;
+    }
+
+    // Don't start if already active
+    if (isDetectionActive.current) {
       return;
     }
 
     // Wait for video to be ready
-    if (video.readyState >= 2) {
-      console.log('[CameraView] Starting detection');
-      startDetection(video);
-    } else {
-      const handleCanPlay = () => {
-        console.log('[CameraView] Video can play, starting detection');
+    const tryStartDetection = () => {
+      if (video.readyState >= 2 && !isDetectionActive.current) {
+        console.log('[CameraView] Starting detection');
         startDetection(video);
-      };
-      video.addEventListener('canplay', handleCanPlay);
+        isDetectionActive.current = true;
+      }
+    };
+
+    if (video.readyState >= 2) {
+      tryStartDetection();
+    } else {
+      video.addEventListener('canplay', tryStartDetection);
       return () => {
-        video.removeEventListener('canplay', handleCanPlay);
-        stopDetection();
+        video.removeEventListener('canplay', tryStartDetection);
       };
     }
 
-    return () => stopDetection();
-  }, [realtimeMode, videoRef, startDetection, stopDetection]);
-
-  // Log overlay render conditions
-  useEffect(() => {
-    console.log('[CameraView] Overlay conditions:', {
-      realtimeMode,
-      isModelLoading,
-      videoWidth: videoSize.width,
-      displayWidth: displaySize.width,
-      detectionsCount: detections.length,
-      shouldRender: realtimeMode && !isModelLoading && videoSize.width > 0 && displaySize.width > 0
-    });
-  }, [realtimeMode, isModelLoading, videoSize.width, displaySize.width, detections.length]);
+    return () => {
+      if (isDetectionActive.current) {
+        console.log('[CameraView] Cleanup: stopping detection');
+        stopDetection();
+        isDetectionActive.current = false;
+      }
+    };
+  }, [realtimeMode]); // Only depend on realtimeMode
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -301,12 +306,10 @@ export function CameraView({
             {capturedImages.length > 0 && (
               <Button
                 onClick={onAnalyze}
-                variant="default"
                 className="flex-1"
                 size="lg"
               >
-                <Brain className="h-5 w-5 mr-2" />
-                Analyze
+                Analyze ({capturedImages.length})
               </Button>
             )}
           </div>
