@@ -42,7 +42,7 @@ export default function Home() {
           {/* Logo with Version */}
           <div className="mb-8 flex items-center justify-between">
             <h1 className="text-white text-2xl font-bold tracking-wide">Scavy</h1>
-            <span className="text-[#00D9FF]/40 text-xs font-mono tracking-wider">v0.7.0</span>
+            <span className="text-[#00D9FF]/40 text-xs font-mono tracking-wider">v0.7.1</span>
           </div>
 
           {/* Hero Text with Cyan Glow */}

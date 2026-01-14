@@ -80,13 +80,18 @@ export async function stage1_identifyDevice(
       userHint: userHint,
       mimeType: 'image/jpeg',
       imageHash: imageHash
-      // mode: 'device_only' - Not supported yet, will be added in Phase 4
     }
   });
 
   if (error) {
     console.error('[Stage1] Edge function error:', error);
     throw new Error(`Failed to identify device: ${error.message}`);
+  }
+  
+  // Check if edge function returned error in response body
+  if (data?.error) {
+    console.error('[Stage1] Edge function returned error:', data.error);
+    throw new Error(`Failed to identify device: ${data.error}`);
   }
   
   console.log('[Stage1] Edge function response:', {
@@ -183,13 +188,18 @@ export async function stage2_getComponentList(
       imageBase64: imageUrl,
       userHint: `Device: ${deviceName}${manufacturer ? `, Manufacturer: ${manufacturer}` : ''}${model ? `, Model: ${model}` : ''}`,
       mimeType: 'image/jpeg'
-      // mode: 'components_list' - Will be added in Phase 4
     }
   });
 
   if (error) {
     console.error('[Stage2] Edge function error:', error);
     throw new Error(`Failed to get component list: ${error.message}`);
+  }
+  
+  // Check if edge function returned error in response body
+  if (data?.error) {
+    console.error('[Stage2] Edge function returned error:', data.error);
+    throw new Error(`Failed to get component list: ${data.error}`);
   }
   
   console.log('[Stage2] Edge function response:', {
