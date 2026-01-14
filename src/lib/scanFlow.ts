@@ -92,8 +92,18 @@ export async function stage1_identifyDevice(
 
   const data = await response.json();
   
+  console.log('[Stage1] Edge function response:', {
+    hasParentObject: !!data.parent_object,
+    hasDeviceName: !!data.deviceName,
+    hasItems: !!data.items,
+    itemsLength: data.items?.length,
+    parentObject: data.parent_object,
+    manufacturer: data.manufacturer,
+    model: data.model
+  });
+  
   const result: Stage1Result = {
-    deviceName: data.deviceName || data.parent_object || 'Unknown Device',
+    deviceName: data.parent_object || data.deviceName || 'Unknown Device',
     category: data.category,
     manufacturer: data.manufacturer,
     model: data.model,
@@ -188,17 +198,28 @@ export async function stage2_getComponentList(
 
   const data = await response.json();
   
+  console.log('[Stage2] Edge function response:', {
+    hasComponents: !!data.components,
+    hasItems: !!data.items,
+    itemsLength: data.items?.length,
+    parentObject: data.parent_object,
+    message: data.message
+  });
+  
   // Handle both old format (items array) and new format (components array)
   let components: Stage2Component[] = [];
   if (data.components) {
     components = data.components;
-  } else if (data.items) {
+  } else if (data.items && Array.isArray(data.items)) {
     // Convert old format to new
     components = data.items.map((item: any) => ({
-      name: item.name || item.component_name,
+      name: item.component_name || item.name,
       category: item.category || 'Other',
       quantity: item.quantity || 1
     }));
+  } else {
+    console.error('[Stage2] No items in response:', data);
+    throw new Error(`No components found. ${data.message || 'Edge function returned unexpected format'}`);
   }
 
   // Cache the components (gracefully handle missing tables)
