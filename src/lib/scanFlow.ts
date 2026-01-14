@@ -74,23 +74,20 @@ export async function stage1_identifyDevice(
   // Call AI for device identification
   // NOTE: Edge function doesn't support 'mode' yet, so we get full scan
   // and just extract device name from it
-  const response = await fetch('/api/identify-components', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
+  const { data, error } = await supabase.functions.invoke('identify-component', {
+    body: {
       imageBase64: imageUrl,
       userHint: userHint,
       mimeType: 'image/jpeg',
       imageHash: imageHash
       // mode: 'device_only' - Not supported yet, will be added in Phase 4
-    })
+    }
   });
 
-  if (!response.ok) {
-    throw new Error('Failed to identify device');
+  if (error) {
+    console.error('[Stage1] Edge function error:', error);
+    throw new Error(`Failed to identify device: ${error.message}`);
   }
-
-  const data = await response.json();
   
   console.log('[Stage1] Edge function response:', {
     hasParentObject: !!data.parent_object,
@@ -181,22 +178,19 @@ export async function stage2_getComponentList(
     throw new Error('Image required for uncached component list');
   }
 
-  const response = await fetch('/api/identify-components', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
+  const { data, error } = await supabase.functions.invoke('identify-component', {
+    body: {
       imageBase64: imageUrl,
       userHint: `Device: ${deviceName}${manufacturer ? `, Manufacturer: ${manufacturer}` : ''}${model ? `, Model: ${model}` : ''}`,
       mimeType: 'image/jpeg'
       // mode: 'components_list' - Will be added in Phase 4
-    })
+    }
   });
 
-  if (!response.ok) {
-    throw new Error('Failed to get component list');
+  if (error) {
+    console.error('[Stage2] Edge function error:', error);
+    throw new Error(`Failed to get component list: ${error.message}`);
   }
-
-  const data = await response.json();
   
   console.log('[Stage2] Edge function response:', {
     hasComponents: !!data.components,
