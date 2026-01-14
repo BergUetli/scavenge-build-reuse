@@ -83,14 +83,22 @@ export async function stage1_identifyDevice(
     }
   });
 
+  console.log('[Stage1] Response:', { data, error, hasData: !!data, hasError: !!error });
+
   if (error) {
-    console.error('[Stage1] Edge function error:', error);
-    throw new Error(`Failed to identify device: ${error.message}`);
+    console.error('[Stage1] Edge function error object:', {
+      message: error.message,
+      status: error.status,
+      statusText: error.statusText,
+      context: error.context,
+      details: error
+    });
+    throw new Error(`Failed to identify device: ${error.message || 'Edge Function error'}`);
   }
   
   // Check if edge function returned error in response body
   if (data?.error) {
-    console.error('[Stage1] Edge function returned error:', data.error);
+    console.error('[Stage1] Edge function returned error in data:', data.error);
     throw new Error(`Failed to identify device: ${data.error}`);
   }
   
