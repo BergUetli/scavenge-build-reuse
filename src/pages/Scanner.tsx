@@ -116,11 +116,11 @@ export default function Scanner() {
         return;
       }
       
-      // Wait for state to update, then analyze
+      // Wait a moment for thumbnail to render
       await new Promise(resolve => setTimeout(resolve, 100));
       
-      // Now analyze with the captured image
-      await handleAnalyze();
+      // Now analyze with the captured image directly
+      await handleAnalyze(capturedDataUrl);
     } catch (error) {
       console.error('[Scanner] Object select error:', error);
       toast({
@@ -134,8 +134,11 @@ export default function Scanner() {
   }, [analyzingObject, captureImage]); // Don't include handleAnalyze to avoid circular dependency
 
   // V0.7 Multi-stage analyze
-  const handleAnalyze = useCallback(async () => {
-    if (capturedImages.length === 0) {
+  const handleAnalyze = useCallback(async (imageOverride?: string) => {
+    // Use provided image or fall back to captured images
+    const imageBase64 = imageOverride || capturedImages[0];
+    
+    if (!imageBase64) {
       toast({
         title: 'No image captured',
         description: 'Please capture or upload an image first.',
@@ -145,7 +148,6 @@ export default function Scanner() {
     }
 
     const startTime = performance.now();
-    const imageBase64 = capturedImages[0];
 
     try {
       // STAGE 1: Identify device name only (~1s)
