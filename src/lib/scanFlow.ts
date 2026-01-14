@@ -78,8 +78,10 @@ export async function stage1_identifyDevice(
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      image: imageUrl,
-      hint: userHint
+      imageBase64: imageUrl,
+      userHint: userHint,
+      mimeType: 'image/jpeg',
+      imageHash: imageHash
       // mode: 'device_only' - Not supported yet, will be added in Phase 4
     })
   });
@@ -173,8 +175,9 @@ export async function stage2_getComponentList(
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      image: imageUrl,
-      hint: `Device: ${deviceName}${manufacturer ? `, Manufacturer: ${manufacturer}` : ''}${model ? `, Model: ${model}` : ''}`
+      imageBase64: imageUrl,
+      userHint: `Device: ${deviceName}${manufacturer ? `, Manufacturer: ${manufacturer}` : ''}${model ? `, Model: ${model}` : ''}`,
+      mimeType: 'image/jpeg'
       // mode: 'components_list' - Will be added in Phase 4
     })
   });
