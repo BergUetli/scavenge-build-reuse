@@ -87,16 +87,23 @@ export function CameraView({
     return () => window.removeEventListener('resize', updateDisplaySize);
   }, []);
 
-  // Start/stop detection based on mode - FIXED DEPENDENCIES
+  // Start/stop detection - Wait for BOTH model and video
   useEffect(() => {
     const video = videoRef.current;
     
+    // Stop if mode is off
     if (!video || !realtimeMode) {
       if (isDetectionActive.current) {
         console.log('[CameraView] Stopping detection (mode off)');
         stopDetection();
         isDetectionActive.current = false;
       }
+      return;
+    }
+
+    // Don't start if model is still loading
+    if (isModelLoading) {
+      console.log('[CameraView] Waiting for model to load...');
       return;
     }
 
@@ -107,8 +114,8 @@ export function CameraView({
 
     // Wait for video to be ready
     const tryStartDetection = () => {
-      if (video.readyState >= 2 && !isDetectionActive.current) {
-        console.log('[CameraView] Starting detection');
+      if (video.readyState >= 2 && !isDetectionActive.current && !isModelLoading) {
+        console.log('[CameraView] Starting detection (model ready + video ready)');
         startDetection(video);
         isDetectionActive.current = true;
       }
@@ -117,6 +124,7 @@ export function CameraView({
     if (video.readyState >= 2) {
       tryStartDetection();
     } else {
+      console.log('[CameraView] Waiting for video to be ready...');
       video.addEventListener('canplay', tryStartDetection);
       return () => {
         video.removeEventListener('canplay', tryStartDetection);
@@ -130,7 +138,7 @@ export function CameraView({
         isDetectionActive.current = false;
       }
     };
-  }, [realtimeMode]); // Only depend on realtimeMode
+  }, [realtimeMode, isModelLoading]); // Depend on BOTH mode and model loading state
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
