@@ -1,10 +1,9 @@
 /**
- * REAL-TIME OBJECT DETECTION HOOK
+ * REAL-TIME OBJECT DETECTION HOOK - MOBILE OPTIMIZED
  * 
  * Uses TensorFlow.js COCO-SSD for instant object detection
  * Runs entirely in the browser, no server calls needed
- * 
- * Performance: <100ms per frame
+ * Optimized for mobile performance with throttling
  */
 
 import { useEffect, useRef, useState } from 'react';
@@ -23,6 +22,8 @@ export function useRealtimeDetection() {
   const [detections, setDetections] = useState<DetectedObject[]>([]);
   const animationFrameId = useRef<number>();
   const videoRef = useRef<HTMLVideoElement | null>(null);
+  const lastDetectionTime = useRef<number>(0);
+  const isDetecting = useRef<boolean>(false);
 
   // Load model on mount
   useEffect(() => {
@@ -53,7 +54,7 @@ export function useRealtimeDetection() {
     };
   }, []);
 
-  // Start detection loop
+  // Start detection loop with throttling
   const startDetection = (video: HTMLVideoElement) => {
     if (!model) {
       console.warn('[RT Detection] Model not loaded yet');
@@ -61,25 +62,40 @@ export function useRealtimeDetection() {
     }
 
     videoRef.current = video;
+    isDetecting.current = false;
 
     const detect = async () => {
       if (!videoRef.current || videoRef.current.paused || videoRef.current.ended) {
         return;
       }
 
-      try {
-        const predictions = await model.detect(videoRef.current);
-        
-        // Convert to our format
-        const detectedObjects: DetectedObject[] = predictions.map(pred => ({
-          label: pred.class,
-          confidence: pred.score,
-          bbox: pred.bbox as [number, number, number, number]
-        }));
+      const now = Date.now();
+      
+      // Throttle detection to max 3 FPS (333ms between detections) for mobile performance
+      // This prevents UI slowdown while still feeling responsive
+      if (!isDetecting.current && now - lastDetectionTime.current >= 333) {
+        isDetecting.current = true;
+        lastDetectionTime.current = now;
 
-        setDetections(detectedObjects);
-      } catch (error) {
-        console.error('[RT Detection] Detection error:', error);
+        try {
+          const predictions = await model.detect(videoRef.current, 5); // Max 5 detections
+          
+          // Filter by confidence (only show confident detections)
+          const filteredPredictions = predictions.filter(pred => pred.score > 0.5);
+          
+          // Convert to our format
+          const detectedObjects: DetectedObject[] = filteredPredictions.map(pred => ({
+            label: pred.class,
+            confidence: pred.score,
+            bbox: pred.bbox as [number, number, number, number]
+          }));
+
+          setDetections(detectedObjects);
+        } catch (error) {
+          console.error('[RT Detection] Detection error:', error);
+        } finally {
+          isDetecting.current = false;
+        }
       }
 
       // Continue loop
@@ -95,6 +111,7 @@ export function useRealtimeDetection() {
       cancelAnimationFrame(animationFrameId.current);
     }
     setDetections([]);
+    isDetecting.current = false;
   };
 
   return {

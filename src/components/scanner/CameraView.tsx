@@ -40,6 +40,8 @@ export function CameraView({
   onObjectSelect
 }: CameraViewProps) {
   const [videoSize, setVideoSize] = useState({ width: 0, height: 0 });
+  const [displaySize, setDisplaySize] = useState({ width: 0, height: 0 });
+  const containerRef = React.useRef<HTMLDivElement>(null);
   const { 
     isModelLoading, 
     detections, 
@@ -62,6 +64,24 @@ export function CameraView({
     video.addEventListener('loadedmetadata', updateSize);
     return () => video.removeEventListener('loadedmetadata', updateSize);
   }, [videoRef]);
+
+  // Update display size (actual rendered size on screen)
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    const updateDisplaySize = () => {
+      const rect = container.getBoundingClientRect();
+      setDisplaySize({
+        width: rect.width,
+        height: rect.height
+      });
+    };
+
+    updateDisplaySize();
+    window.addEventListener('resize', updateDisplaySize);
+    return () => window.removeEventListener('resize', updateDisplaySize);
+  }, []);
 
   // Start/stop detection based on mode
   useEffect(() => {
@@ -160,7 +180,7 @@ export function CameraView({
       </div>
 
       {/* Camera Feed */}
-      <div className="flex-1 relative overflow-hidden bg-black">
+      <div ref={containerRef} className="flex-1 relative overflow-hidden bg-black">
         <video
           ref={videoRef}
           autoPlay
@@ -170,17 +190,15 @@ export function CameraView({
         />
 
         {/* Real-time Detection Overlay */}
-        {realtimeMode && !isModelLoading && videoSize.width > 0 && (
-          <div className="absolute inset-0 flex items-center justify-center">
-            <div className="relative" style={{ width: videoSize.width, height: videoSize.height }}>
-              <RealtimeDetectionOverlay
-                detections={detections}
-                videoWidth={videoSize.width}
-                videoHeight={videoSize.height}
-                onObjectSelect={onObjectSelect}
-              />
-            </div>
-          </div>
+        {realtimeMode && !isModelLoading && videoSize.width > 0 && displaySize.width > 0 && (
+          <RealtimeDetectionOverlay
+            detections={detections}
+            videoWidth={videoSize.width}
+            videoHeight={videoSize.height}
+            displayWidth={displaySize.width}
+            displayHeight={displaySize.height}
+            onObjectSelect={onObjectSelect}
+          />
         )}
 
         {/* Captured Images Preview */}
