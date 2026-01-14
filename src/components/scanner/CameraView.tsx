@@ -1,263 +1,276 @@
 /**
- * CAMERA VIEW COMPONENT
+ * CAMERA VIEW WITH REAL-TIME DETECTION
  * 
- * Full-screen camera interface for scanning components.
- * Supports multi-photo capture with thumbnail strip.
- * Includes sound feedback for actions and pre-scan hints.
+ * Hybrid scanning system:
+ * - Real-time mode: Instant object detection with bounding boxes
+ * - Full AI mode: Detailed component analysis (current system)
  */
 
-import { useRef, useState, useCallback } from 'react';
-import { Camera, X, ImagePlus, Send, MessageSquare } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { Camera, Upload, X, Zap, Brain, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { cn } from '@/lib/utils';
-import { useSounds } from '@/hooks/useSounds';
+import { useRealtimeDetection, DetectedObject } from '@/hooks/useRealtimeDetection';
+import { RealtimeDetectionOverlay } from './RealtimeDetectionOverlay';
 
 interface CameraViewProps {
   videoRef: React.RefObject<HTMLVideoElement>;
-  isStreaming: boolean;
   capturedImages: string[];
-  userHint: string;
-  onHintChange: (hint: string) => void;
+  isCapturing: boolean;
   onCapture: () => void;
   onUpload: (file: File) => void;
   onRemoveImage: (index: number) => void;
   onAnalyze: () => void;
   onClose: () => void;
+  realtimeMode?: boolean;
+  onRealtimeModeToggle?: () => void;
+  onObjectSelect?: (detection: DetectedObject) => void;
 }
 
-export function CameraView({ 
-  videoRef, 
-  isStreaming,
+export function CameraView({
+  videoRef,
   capturedImages,
-  userHint,
-  onHintChange,
-  onCapture, 
+  isCapturing,
+  onCapture,
   onUpload,
   onRemoveImage,
   onAnalyze,
-  onClose 
+  onClose,
+  realtimeMode = true,
+  onRealtimeModeToggle,
+  onObjectSelect
 }: CameraViewProps) {
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const [flash, setFlash] = useState(false);
-  const [showHintInput, setShowHintInput] = useState(false);
-  const { playClick, playScan, playWhoosh } = useSounds();
+  const [videoSize, setVideoSize] = useState({ width: 0, height: 0 });
+  const { 
+    isModelLoading, 
+    detections, 
+    startDetection, 
+    stopDetection 
+  } = useRealtimeDetection();
 
-  const handleFileChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (files) {
-      Array.from(files).forEach(file => onUpload(file));
-      playClick();
+  // Update video size when video loads
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+
+    const updateSize = () => {
+      setVideoSize({
+        width: video.videoWidth,
+        height: video.videoHeight
+      });
+    };
+
+    video.addEventListener('loadedmetadata', updateSize);
+    return () => video.removeEventListener('loadedmetadata', updateSize);
+  }, [videoRef]);
+
+  // Start/stop detection based on mode
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video || !realtimeMode) {
+      stopDetection();
+      return;
     }
-    // Reset input so same file can be selected again
-    e.target.value = '';
-  }, [onUpload, playClick]);
 
-  const triggerCapture = useCallback(() => {
-    setFlash(true);
-    playScan();
-    onCapture();
-    setTimeout(() => setFlash(false), 150);
-  }, [onCapture, playScan]);
+    // Wait for video to be ready
+    if (video.readyState >= 2) {
+      startDetection(video);
+    } else {
+      const handleCanPlay = () => startDetection(video);
+      video.addEventListener('canplay', handleCanPlay);
+      return () => {
+        video.removeEventListener('canplay', handleCanPlay);
+        stopDetection();
+      };
+    }
 
-  const handleAnalyze = useCallback(() => {
-    playWhoosh();
-    onAnalyze();
-  }, [onAnalyze, playWhoosh]);
+    return () => stopDetection();
+  }, [realtimeMode, videoRef, startDetection, stopDetection]);
 
-  const handleClose = useCallback(() => {
-    playClick();
-    onClose();
-  }, [onClose, playClick]);
-
-  const handleRemoveImage = useCallback((index: number) => {
-    playClick();
-    onRemoveImage(index);
-  }, [onRemoveImage, playClick]);
-
-  const hasImages = capturedImages.length > 0;
+  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      onUpload(file);
+    }
+  };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black">
-      {/* Flash effect */}
-      {flash && (
-        <div className="absolute inset-0 bg-white z-50 animate-flash" />
-      )}
-      
-      {/* Video feed */}
-      <video
-        ref={videoRef}
-        autoPlay
-        playsInline
-        muted
-        className="w-full h-full object-cover"
-      />
-      
-      {/* Scanning overlay */}
-      <div className="absolute inset-0 pointer-events-none">
-        {/* Viewfinder frame */}
-        <div className="absolute inset-8 md:inset-20 border-2 border-white/30 rounded-2xl">
-          {/* Corner accents */}
-          <div className="absolute -top-px -left-px w-8 h-8 border-t-2 border-l-2 border-primary rounded-tl-lg" />
-          <div className="absolute -top-px -right-px w-8 h-8 border-t-2 border-r-2 border-primary rounded-tr-lg" />
-          <div className="absolute -bottom-px -left-px w-8 h-8 border-b-2 border-l-2 border-primary rounded-bl-lg" />
-          <div className="absolute -bottom-px -right-px w-8 h-8 border-b-2 border-r-2 border-primary rounded-br-lg" />
-        </div>
-        
-        {/* Scan line animation */}
-        {isStreaming && (
-          <div className="absolute left-8 right-8 md:left-20 md:right-20 top-8 md:top-20 h-0.5 bg-gradient-to-r from-transparent via-primary to-transparent animate-scan-line" />
-        )}
-      </div>
-      
-      {/* Header controls */}
-      <div className="absolute top-0 left-0 right-0 p-4 flex items-center justify-between safe-area-pt">
-        <Button
-          variant="ghost"
-          size="icon"
-          className="text-white bg-black/30 backdrop-blur-sm hover:bg-black/50"
-          onClick={handleClose}
-        >
-          <X className="w-6 h-6" />
-        </Button>
-        
-        {/* Photo counter */}
-        {hasImages && (
-          <div className="bg-primary text-primary-foreground px-3 py-1.5 rounded-full text-sm font-semibold">
-            {capturedImages.length} photo{capturedImages.length !== 1 ? 's' : ''}
-          </div>
-        )}
-      </div>
-      
-      {/* Hint text and input */}
-      <div className="absolute top-20 left-0 right-0 text-center safe-area-pt px-4">
-        {showHintInput ? (
-          <div className="flex items-center gap-2 max-w-md mx-auto bg-black/70 backdrop-blur-md rounded-xl px-4 py-3 shadow-xl">
-            <MessageSquare className="w-5 h-5 text-primary flex-shrink-0" />
-            <Input
-              value={userHint}
-              onChange={(e) => onHintChange(e.target.value)}
-              placeholder="e.g., iPhone 12 Pro, Samsung Galaxy S21"
-              className="bg-transparent border-none text-white placeholder:text-white/60 text-base h-auto py-0 focus-visible:ring-0 focus-visible:ring-offset-0"
-              maxLength={100}
-              autoFocus
-            />
-            <button 
-              onClick={() => {
-                playClick();
-                setShowHintInput(false);
-              }}
-              className="text-white/70 hover:text-white"
-            >
-              <X className="w-4 h-4" />
-            </button>
-          </div>
-        ) : (
-          <div className="flex flex-col items-center gap-2">
-            <p className="text-white/80 text-sm bg-black/30 backdrop-blur-sm inline-block px-4 py-2 rounded-full">
-              {hasImages 
-                ? 'Take more angles or tap Analyze'
-                : 'Position component within the frame'}
-            </p>
-            <button
-              onClick={() => {
-                playClick();
-                setShowHintInput(true);
-              }}
-              className="text-white text-sm bg-primary/90 hover:bg-primary backdrop-blur-sm px-5 py-3 rounded-lg flex items-center gap-2 transition-all shadow-lg hover:shadow-xl"
-            >
-              <MessageSquare className="w-5 h-5" />
-              <span className="font-medium">
-                {userHint ? `Hint: "${userHint.substring(0, 30)}${userHint.length > 30 ? '...' : ''}"` : 'Add Hint (Optional)'}
-              </span>
-            </button>
-          </div>
-        )}
-      </div>
-
-      {/* Captured images thumbnail strip */}
-      {hasImages && (
-        <div className="absolute left-0 right-0 bottom-36 safe-area-pb px-4">
-          <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
-            {capturedImages.map((img, index) => (
-              <div 
-                key={index} 
-                className="relative flex-shrink-0 w-16 h-16 rounded-xl overflow-hidden border-2 border-white/50 shadow-lg"
-              >
-                <img 
-                  src={img} 
-                  alt={`Capture ${index + 1}`}
-                  className="w-full h-full object-cover"
-                />
-                <button
-                  onClick={() => handleRemoveImage(index)}
-                  className="absolute -top-1 -right-1 w-5 h-5 bg-destructive text-destructive-foreground rounded-full flex items-center justify-center shadow-md"
-                >
-                  <X className="w-3 h-3" />
-                </button>
-                <div className="absolute bottom-0 left-0 right-0 bg-black/60 text-white text-[10px] text-center py-0.5">
-                  {index + 1}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-      
-      {/* Bottom controls */}
-      <div className="absolute bottom-0 left-0 right-0 p-6 safe-area-pb">
-        <div className="flex items-center justify-center gap-6">
-          {/* Gallery button */}
+    <div className="fixed inset-0 bg-black z-50 flex flex-col">
+      {/* Header */}
+      <div className="bg-black/80 backdrop-blur-sm border-b border-white/10 p-4">
+        <div className="flex items-center justify-between">
+          <h2 className="text-white font-semibold text-lg">
+            {realtimeMode ? '⚡ Real-Time Scanner' : '🧠 AI Scanner'}
+          </h2>
           <Button
             variant="ghost"
             size="icon"
-            className="w-14 h-14 text-white bg-black/30 backdrop-blur-sm hover:bg-black/50 rounded-full"
-            onClick={() => {
-              playClick();
-              fileInputRef.current?.click();
-            }}
+            onClick={onClose}
+            className="text-white hover:bg-white/10"
           >
-            <ImagePlus className="w-6 h-6" />
+            <X className="h-6 w-6" />
           </Button>
-          
-          {/* Capture button */}
-          <Button
-            size="icon"
-            className={cn(
-              'w-20 h-20 rounded-full border-4 border-white transition-all',
-              'bg-white/20 hover:bg-white/30 active:scale-95',
-              !isStreaming && 'opacity-50 cursor-not-allowed'
-            )}
-            onClick={triggerCapture}
-            disabled={!isStreaming}
-          >
-            <Camera className="w-8 h-8 text-white" />
-          </Button>
-          
-          {/* Analyze button - shows when images are captured */}
-          {hasImages ? (
-            <Button
-              size="icon"
-              className="w-14 h-14 rounded-full bg-primary text-primary-foreground shadow-premium hover:bg-primary/90 active:scale-95"
-              onClick={handleAnalyze}
-            >
-              <Send className="w-6 h-6" />
-            </Button>
-          ) : (
-            <div className="w-14 h-14" />
-          )}
         </div>
+
+        {/* Mode Toggle */}
+        {onRealtimeModeToggle && (
+          <div className="mt-3 flex gap-2">
+            <Button
+              onClick={onRealtimeModeToggle}
+              size="sm"
+              variant={realtimeMode ? "default" : "outline"}
+              className="flex-1"
+            >
+              <Zap className="h-4 w-4 mr-2" />
+              Real-Time
+              {realtimeMode && <span className="ml-2 text-xs opacity-70">Active</span>}
+            </Button>
+            <Button
+              onClick={onRealtimeModeToggle}
+              size="sm"
+              variant={!realtimeMode ? "default" : "outline"}
+              className="flex-1"
+            >
+              <Brain className="h-4 w-4 mr-2" />
+              Full AI
+              {!realtimeMode && <span className="ml-2 text-xs opacity-70">Active</span>}
+            </Button>
+          </div>
+        )}
+
+        {/* Status */}
+        {realtimeMode && (
+          <div className="mt-2 flex items-center gap-2 text-xs">
+            {isModelLoading ? (
+              <div className="flex items-center gap-2 text-yellow-400">
+                <Loader2 className="h-3 w-3 animate-spin" />
+                <span>Loading AI model...</span>
+              </div>
+            ) : (
+              <div className="flex items-center gap-2 text-green-400">
+                <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
+                <span>
+                  {detections.length > 0 
+                    ? `${detections.length} object${detections.length !== 1 ? 's' : ''} detected` 
+                    : 'Point camera at objects'}
+                </span>
+              </div>
+            )}
+          </div>
+        )}
       </div>
-      
-      {/* Hidden file input - allow multiple */}
-      <input
-        ref={fileInputRef}
-        type="file"
-        accept="image/*"
-        multiple
-        className="hidden"
-        onChange={handleFileChange}
-      />
+
+      {/* Camera Feed */}
+      <div className="flex-1 relative overflow-hidden bg-black">
+        <video
+          ref={videoRef}
+          autoPlay
+          playsInline
+          muted
+          className="absolute inset-0 w-full h-full object-cover"
+        />
+
+        {/* Real-time Detection Overlay */}
+        {realtimeMode && !isModelLoading && videoSize.width > 0 && (
+          <div className="absolute inset-0 flex items-center justify-center">
+            <div className="relative" style={{ width: videoSize.width, height: videoSize.height }}>
+              <RealtimeDetectionOverlay
+                detections={detections}
+                videoWidth={videoSize.width}
+                videoHeight={videoSize.height}
+                onObjectSelect={onObjectSelect}
+              />
+            </div>
+          </div>
+        )}
+
+        {/* Captured Images Preview */}
+        {capturedImages.length > 0 && (
+          <div className="absolute bottom-20 left-0 right-0 p-4">
+            <div className="flex gap-2 overflow-x-auto">
+              {capturedImages.map((img, index) => (
+                <div key={index} className="relative flex-shrink-0">
+                  <img
+                    src={img}
+                    alt={`Captured ${index + 1}`}
+                    className="w-16 h-16 rounded-lg object-cover border-2 border-white/20"
+                  />
+                  <button
+                    onClick={() => onRemoveImage(index)}
+                    className="absolute -top-2 -right-2 bg-red-500 rounded-full p-1"
+                  >
+                    <X className="h-3 w-3 text-white" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Controls */}
+      <div className="bg-black/80 backdrop-blur-sm border-t border-white/10 p-4">
+        {realtimeMode ? (
+          // Real-time mode: Just show instruction
+          <div className="text-center">
+            <p className="text-white/70 text-sm mb-3">
+              {detections.length > 0 
+                ? 'Tap any object to analyze it in detail' 
+                : 'Point your camera at electronic devices'}
+            </p>
+            <Button
+              onClick={onRealtimeModeToggle}
+              variant="outline"
+              size="sm"
+              className="text-white border-white/20"
+            >
+              Switch to Full AI Scan
+            </Button>
+          </div>
+        ) : (
+          // Full AI mode: Capture, Upload, Analyze buttons
+          <div className="flex gap-2">
+            <Button
+              onClick={onCapture}
+              disabled={isCapturing}
+              className="flex-1"
+              size="lg"
+            >
+              <Camera className="h-5 w-5 mr-2" />
+              Capture
+            </Button>
+
+            <label className="flex-1">
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleFileUpload}
+                className="hidden"
+              />
+              <Button
+                as="span"
+                variant="outline"
+                className="w-full"
+                size="lg"
+              >
+                <Upload className="h-5 w-5 mr-2" />
+                Upload
+              </Button>
+            </label>
+
+            {capturedImages.length > 0 && (
+              <Button
+                onClick={onAnalyze}
+                variant="default"
+                className="flex-1"
+                size="lg"
+              >
+                <Brain className="h-5 w-5 mr-2" />
+                Analyze
+              </Button>
+            )}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

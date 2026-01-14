@@ -59,6 +59,10 @@ export default function Scanner() {
   const [performanceTimings, setPerformanceTimings] = useState<any>(null);
   const [showFollowUp, setShowFollowUp] = useState(false);
   const [genericDeviceName, setGenericDeviceName] = useState('');
+  
+  // Real-time detection state
+  const [realtimeMode, setRealtimeMode] = useState(true); // Default to real-time
+  const [analyzingObject, setAnalyzingObject] = useState(false);
 
   // Start camera on mount
   useEffect(() => {
@@ -77,6 +81,36 @@ export default function Scanner() {
   const handleUpload = useCallback(async (file: File) => {
     await addUploadedImage(file);
   }, [addUploadedImage]);
+
+  // Toggle between real-time and full AI mode
+  const handleRealtimeModeToggle = useCallback(() => {
+    setRealtimeMode(prev => !prev);
+    setShowResult(false);
+    setFullResult(null);
+    setScanStage('idle');
+  }, []);
+
+  // Handle object selection from real-time detection
+  const handleObjectSelect = useCallback(async (detection: any) => {
+    if (analyzingObject) return;
+    
+    setAnalyzingObject(true);
+    setUserHint(detection.label); // Use detected label as hint
+    
+    toast({
+      title: 'Analyzing object...',
+      description: `Getting details for: ${detection.label}`,
+    });
+
+    // Capture current frame and analyze it
+    captureImage();
+    
+    // Wait a bit for capture to complete, then analyze
+    setTimeout(() => {
+      handleAnalyze();
+      setAnalyzingObject(false);
+    }, 500);
+  }, [analyzingObject, captureImage]);
 
   // V0.7 Multi-stage analyze
   const handleAnalyze = useCallback(async () => {
@@ -587,15 +621,16 @@ export default function Scanner() {
     <>
       <CameraView
         videoRef={videoRef}
-        isStreaming={isCapturing}
+        isCapturing={isCapturing}
         capturedImages={capturedImages}
-        userHint={userHint}
-        onHintChange={setUserHint}
         onCapture={handleCapture}
         onUpload={handleUpload}
         onRemoveImage={removeImage}
         onAnalyze={handleAnalyze}
         onClose={handleClose}
+        realtimeMode={realtimeMode}
+        onRealtimeModeToggle={handleRealtimeModeToggle}
+        onObjectSelect={handleObjectSelect}
       />
       
       {/* Follow-up prompt for generic device names */}
