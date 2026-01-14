@@ -80,8 +80,13 @@ export function useRealtimeDetection() {
         try {
           const predictions = await model.detect(videoRef.current, 5); // Max 5 detections
           
-          // Filter by confidence (only show confident detections)
-          const filteredPredictions = predictions.filter(pred => pred.score > 0.5);
+          // Filter by confidence (lower threshold for better detection)
+          const filteredPredictions = predictions.filter(pred => pred.score > 0.3);
+          
+          console.log('[RT Detection] Raw predictions:', predictions.length, '| Filtered:', filteredPredictions.length);
+          if (filteredPredictions.length > 0) {
+            console.log('[RT Detection] Detections:', filteredPredictions.map(p => `${p.class} ${(p.score * 100).toFixed(0)}%`));
+          }
           
           // Convert to our format
           const detectedObjects: DetectedObject[] = filteredPredictions.map(pred => ({

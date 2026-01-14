@@ -72,14 +72,24 @@ export function CameraView({
 
     const updateDisplaySize = () => {
       const rect = container.getBoundingClientRect();
-      setDisplaySize({
+      const newSize = {
         width: rect.width,
         height: rect.height
-      });
+      };
+      console.log('[CameraView] Display size updated:', newSize);
+      setDisplaySize(newSize);
     };
 
+    // Initial update
     updateDisplaySize();
+    
+    // Update on resize
     window.addEventListener('resize', updateDisplaySize);
+    
+    // Also try after a short delay to ensure container is rendered
+    setTimeout(updateDisplaySize, 100);
+    setTimeout(updateDisplaySize, 500);
+    
     return () => window.removeEventListener('resize', updateDisplaySize);
   }, []);
 
@@ -190,15 +200,31 @@ export function CameraView({
         />
 
         {/* Real-time Detection Overlay */}
-        {realtimeMode && !isModelLoading && videoSize.width > 0 && displaySize.width > 0 && (
-          <RealtimeDetectionOverlay
-            detections={detections}
-            videoWidth={videoSize.width}
-            videoHeight={videoSize.height}
-            displayWidth={displaySize.width}
-            displayHeight={displaySize.height}
-            onObjectSelect={onObjectSelect}
-          />
+        {realtimeMode && !isModelLoading && videoSize.width > 0 && displaySize.width > 0 ? (
+          <>
+            {console.log('[CameraView] Rendering overlay with:', {
+              detectionsCount: detections.length,
+              videoSize,
+              displaySize,
+              realtimeMode,
+              isModelLoading
+            })}
+            <RealtimeDetectionOverlay
+              detections={detections}
+              videoWidth={videoSize.width}
+              videoHeight={videoSize.height}
+              displayWidth={displaySize.width}
+              displayHeight={displaySize.height}
+              onObjectSelect={onObjectSelect}
+            />
+          </>
+        ) : (
+          console.log('[CameraView] Overlay not rendering:', {
+            realtimeMode,
+            isModelLoading,
+            videoWidth: videoSize.width,
+            displayWidth: displaySize.width
+          })
         )}
 
         {/* Captured Images Preview */}
