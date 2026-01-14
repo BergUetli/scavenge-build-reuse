@@ -486,21 +486,20 @@ export default function Scanner() {
         )}
         
         <ComponentBreakdownV7
-          result={fullResult}
-          imageUrl={capturedImage || undefined}
+          deviceName={deviceName || fullResult.parent_object || 'Unknown Device'}
+          components={fullResult.items.map(item => ({
+            name: item.name || item.component_name,
+            category: item.category,
+            quantity: item.quantity
+          }))}
           onAddComponent={(item) => {
             handleAddComponent(item);
             setShowSuccessSparks(true);
           }}
-          onAddGadget={() => {
-            handleAddGadget();
+          onAddAll={() => {
+            handleAddAll(fullResult.items);
             setShowSuccessSparks(true);
           }}
-          onAddComponents={(components) => {
-            handleAddAll(components);
-            setShowSuccessSparks(true);
-          }}
-          onRescan={handleRescan}
           isLoading={addItem.isPending}
         />
       </div>
