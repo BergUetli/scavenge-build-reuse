@@ -4,8 +4,8 @@
  * Provides image compression and hashing for API cost optimization.
  */
 
-const MAX_DIMENSION = 1024;
-const COMPRESSION_QUALITY = 0.7; // Reduced from 0.8 for faster processing
+const MAX_DIMENSION = 800;  // Reduced from 1024 for mobile (faster upload/AI processing)
+const COMPRESSION_QUALITY = 0.6; // Reduced from 0.7 for mobile (smaller files)
 
 /**
  * Compress and resize an image for API submission
