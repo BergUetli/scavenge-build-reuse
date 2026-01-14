@@ -1,12 +1,8 @@
 /**
- * CAMERA VIEW WITH REAL-TIME DETECTION
- * 
- * Hybrid scanning system:
- * - Real-time mode: Instant object detection with bounding boxes
- * - Full AI mode: Detailed component analysis (current system)
+ * CAMERA VIEW WITH REAL-TIME DETECTION - SIMPLIFIED & ROBUST
  */
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { Camera, Upload, X, Zap, Brain, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useRealtimeDetection, DetectedObject } from '@/hooks/useRealtimeDetection';
@@ -41,7 +37,7 @@ export function CameraView({
 }: CameraViewProps) {
   const [videoSize, setVideoSize] = useState({ width: 0, height: 0 });
   const [displaySize, setDisplaySize] = useState({ width: 0, height: 0 });
-  const containerRef = React.useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
   const { 
     isModelLoading, 
     detections, 
@@ -59,6 +55,7 @@ export function CameraView({
         width: video.videoWidth,
         height: video.videoHeight
       });
+      console.log('[CameraView] Video size:', video.videoWidth, 'x', video.videoHeight);
     };
 
     video.addEventListener('loadedmetadata', updateSize);
@@ -67,29 +64,27 @@ export function CameraView({
 
   // Update display size (actual rendered size on screen)
   useEffect(() => {
-    const container = containerRef.current;
-    if (!container) return;
-
     const updateDisplaySize = () => {
+      const container = containerRef.current;
+      if (!container) {
+        console.log('[CameraView] Container ref not ready');
+        return;
+      }
+
       const rect = container.getBoundingClientRect();
-      const newSize = {
+      setDisplaySize({
         width: rect.width,
         height: rect.height
-      };
-      console.log('[CameraView] Display size updated:', newSize);
-      setDisplaySize(newSize);
+      });
+      console.log('[CameraView] Display size:', rect.width, 'x', rect.height);
     };
 
-    // Initial update
-    updateDisplaySize();
-    
-    // Update on resize
-    window.addEventListener('resize', updateDisplaySize);
-    
-    // Also try after a short delay to ensure container is rendered
+    // Initial update with delays to ensure DOM is ready
     setTimeout(updateDisplaySize, 100);
+    setTimeout(updateDisplaySize, 300);
     setTimeout(updateDisplaySize, 500);
     
+    window.addEventListener('resize', updateDisplaySize);
     return () => window.removeEventListener('resize', updateDisplaySize);
   }, []);
 
@@ -103,9 +98,13 @@ export function CameraView({
 
     // Wait for video to be ready
     if (video.readyState >= 2) {
+      console.log('[CameraView] Starting detection');
       startDetection(video);
     } else {
-      const handleCanPlay = () => startDetection(video);
+      const handleCanPlay = () => {
+        console.log('[CameraView] Video can play, starting detection');
+        startDetection(video);
+      };
       video.addEventListener('canplay', handleCanPlay);
       return () => {
         video.removeEventListener('canplay', handleCanPlay);
@@ -116,12 +115,26 @@ export function CameraView({
     return () => stopDetection();
   }, [realtimeMode, videoRef, startDetection, stopDetection]);
 
+  // Log overlay render conditions
+  useEffect(() => {
+    console.log('[CameraView] Overlay conditions:', {
+      realtimeMode,
+      isModelLoading,
+      videoWidth: videoSize.width,
+      displayWidth: displaySize.width,
+      detectionsCount: detections.length,
+      shouldRender: realtimeMode && !isModelLoading && videoSize.width > 0 && displaySize.width > 0
+    });
+  }, [realtimeMode, isModelLoading, videoSize.width, displaySize.width, detections.length]);
+
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
       onUpload(file);
     }
   };
+
+  const shouldRenderOverlay = realtimeMode && !isModelLoading && videoSize.width > 0 && displaySize.width > 0;
 
   return (
     <div className="fixed inset-0 bg-black z-50 flex flex-col">
@@ -200,36 +213,20 @@ export function CameraView({
         />
 
         {/* Real-time Detection Overlay */}
-        {realtimeMode && !isModelLoading && videoSize.width > 0 && displaySize.width > 0 ? (
-          <>
-            {console.log('[CameraView] Rendering overlay with:', {
-              detectionsCount: detections.length,
-              videoSize,
-              displaySize,
-              realtimeMode,
-              isModelLoading
-            })}
-            <RealtimeDetectionOverlay
-              detections={detections}
-              videoWidth={videoSize.width}
-              videoHeight={videoSize.height}
-              displayWidth={displaySize.width}
-              displayHeight={displaySize.height}
-              onObjectSelect={onObjectSelect}
-            />
-          </>
-        ) : (
-          console.log('[CameraView] Overlay not rendering:', {
-            realtimeMode,
-            isModelLoading,
-            videoWidth: videoSize.width,
-            displayWidth: displaySize.width
-          })
+        {shouldRenderOverlay && (
+          <RealtimeDetectionOverlay
+            detections={detections}
+            videoWidth={videoSize.width}
+            videoHeight={videoSize.height}
+            displayWidth={displaySize.width}
+            displayHeight={displaySize.height}
+            onObjectSelect={onObjectSelect}
+          />
         )}
 
         {/* Captured Images Preview */}
         {capturedImages.length > 0 && (
-          <div className="absolute bottom-20 left-0 right-0 p-4">
+          <div className="absolute bottom-20 left-0 right-0 p-4 z-50">
             <div className="flex gap-2 overflow-x-auto">
               {capturedImages.map((img, index) => (
                 <div key={index} className="relative flex-shrink-0">
