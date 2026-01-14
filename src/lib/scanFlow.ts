@@ -12,6 +12,7 @@ export interface Stage1Result {
   model?: string;
   year?: number;
   imageHash: string;
+  fromCache?: boolean;
 }
 
 export interface Stage2Component {
@@ -19,6 +20,11 @@ export interface Stage2Component {
   category: string;
   quantity?: number;
   sort_order?: number;
+}
+
+export interface Stage2Result {
+  components: Stage2Component[];
+  fromDatabase: boolean;
 }
 
 export interface Stage3Details {
@@ -41,32 +47,40 @@ export async function stage1_identifyDevice(
   imageHash: string,
   userHint?: string
 ): Promise<Stage1Result> {
-  // Check cache first
-  const { data: cachedDevice } = await supabase
-    .from('scrap_gadget_devices')
-    .select('*')
-    .eq('image_hash', imageHash)
-    .single();
+  // Check cache first (gracefully handle missing tables)
+  try {
+    const { data: cachedDevice, error } = await supabase
+      .from('scrap_gadget_devices')
+      .select('*')
+      .eq('image_hash', imageHash)
+      .single();
 
-  if (cachedDevice) {
-    return {
-      deviceName: cachedDevice.device_name,
-      category: cachedDevice.device_category,
-      manufacturer: cachedDevice.manufacturer,
-      model: cachedDevice.model,
-      year: cachedDevice.year,
-      imageHash
-    };
+    if (cachedDevice && !error) {
+      return {
+        deviceName: cachedDevice.device_name,
+        category: cachedDevice.device_category,
+        manufacturer: cachedDevice.manufacturer,
+        model: cachedDevice.model,
+        year: cachedDevice.year,
+        imageHash,
+        fromCache: true
+      };
+    }
+  } catch (dbError) {
+    console.log('[Stage1] Database cache not available:', dbError);
+    // Continue to AI call
   }
 
   // Call AI for device identification
+  // NOTE: Edge function doesn't support 'mode' yet, so we get full scan
+  // and just extract device name from it
   const response = await fetch('/api/identify-components', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       image: imageUrl,
-      hint: userHint,
-      mode: 'device_only' // NEW: tell edge function to only identify device
+      hint: userHint
+      // mode: 'device_only' - Not supported yet, will be added in Phase 4
     })
   });
 
@@ -77,23 +91,29 @@ export async function stage1_identifyDevice(
   const data = await response.json();
   
   const result: Stage1Result = {
-    deviceName: data.deviceName || 'Unknown Device',
+    deviceName: data.deviceName || data.parent_object || 'Unknown Device',
     category: data.category,
     manufacturer: data.manufacturer,
     model: data.model,
     year: data.year,
-    imageHash
+    imageHash,
+    fromCache: false
   };
 
-  // Cache the device
-  await supabase.from('scrap_gadget_devices').insert({
-    device_name: result.deviceName,
-    device_category: result.category,
-    manufacturer: result.manufacturer,
-    model: result.model,
-    year: result.year,
-    image_hash: imageHash
-  });
+  // Cache the device (gracefully handle missing tables)
+  try {
+    await supabase.from('scrap_gadget_devices').insert({
+      device_name: result.deviceName,
+      device_category: result.category,
+      manufacturer: result.manufacturer,
+      model: result.model,
+      year: result.year,
+      image_hash: imageHash
+    });
+  } catch (dbError) {
+    console.log('[Stage1] Failed to cache device:', dbError);
+    // Continue without caching
+  }
 
   return result;
 }
@@ -104,33 +124,47 @@ export async function stage1_identifyDevice(
  */
 export async function stage2_getComponentList(
   deviceName: string,
-  imageUrl?: string
-): Promise<Stage2Component[]> {
-  // Check cache first
-  const { data: cachedDevice } = await supabase
-    .from('scrap_gadget_devices')
-    .select(`
-      id,
-      scrap_gadget_device_components (
-        component_name,
-        component_category,
-        quantity,
-        sort_order
-      )
-    `)
-    .eq('device_name', deviceName)
-    .single();
+  imageUrl?: string,
+  manufacturer?: string,
+  model?: string
+): Promise<Stage2Result> {
+  // Check cache first (gracefully handle missing tables)
+  let cachedDevice: any = null;
+  try {
+    const { data, error } = await supabase
+      .from('scrap_gadget_devices')
+      .select(`
+        id,
+        scrap_gadget_device_components (
+          component_name,
+          component_category,
+          quantity,
+          sort_order
+        )
+      `)
+      .eq('device_name', deviceName)
+      .single();
 
-  if (cachedDevice && cachedDevice.scrap_gadget_device_components?.length > 0) {
-    return cachedDevice.scrap_gadget_device_components.map(c => ({
-      name: c.component_name,
-      category: c.component_category || 'Other',
-      quantity: c.quantity || 1,
-      sort_order: c.sort_order || 99
-    }));
+    if (data && !error && data.scrap_gadget_device_components?.length > 0) {
+      return {
+        components: data.scrap_gadget_device_components.map(c => ({
+          name: c.component_name,
+          category: c.component_category || 'Other',
+          quantity: c.quantity || 1,
+          sort_order: c.sort_order || 99
+        })),
+        fromDatabase: true
+      };
+    }
+    cachedDevice = data;
+  } catch (dbError) {
+    console.log('[Stage2] Database cache not available:', dbError);
+    // Continue to AI call
   }
 
   // Not in cache - call AI
+  // NOTE: Since edge function returns full scan, just return it
+  // In Phase 4, we'll add mode='components_list' for optimization
   if (!imageUrl) {
     throw new Error('Image required for uncached component list');
   }
@@ -140,8 +174,8 @@ export async function stage2_getComponentList(
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       image: imageUrl,
-      deviceName,
-      mode: 'components_list' // NEW: get component list only
+      hint: `Device: ${deviceName}${manufacturer ? `, Manufacturer: ${manufacturer}` : ''}${model ? `, Model: ${model}` : ''}`
+      // mode: 'components_list' - Will be added in Phase 4
     })
   });
 
@@ -150,23 +184,43 @@ export async function stage2_getComponentList(
   }
 
   const data = await response.json();
-  const components: Stage2Component[] = data.components || [];
-
-  // Cache the components
-  if (cachedDevice?.id) {
-    const componentsToInsert = components.map((c, idx) => ({
-      device_id: cachedDevice.id,
-      component_name: c.name,
-      component_category: c.category,
-      quantity: c.quantity || 1,
-      sort_order: idx,
-      is_detailed: false
+  
+  // Handle both old format (items array) and new format (components array)
+  let components: Stage2Component[] = [];
+  if (data.components) {
+    components = data.components;
+  } else if (data.items) {
+    // Convert old format to new
+    components = data.items.map((item: any) => ({
+      name: item.name || item.component_name,
+      category: item.category || 'Other',
+      quantity: item.quantity || 1
     }));
-
-    await supabase.from('scrap_gadget_device_components').insert(componentsToInsert);
   }
 
-  return components;
+  // Cache the components (gracefully handle missing tables)
+  if (cachedDevice?.id) {
+    try {
+      const componentsToInsert = components.map((c, idx) => ({
+        device_id: cachedDevice.id,
+        component_name: c.name,
+        component_category: c.category,
+        quantity: c.quantity || 1,
+        sort_order: idx,
+        is_detailed: false
+      }));
+
+      await supabase.from('scrap_gadget_device_components').insert(componentsToInsert);
+    } catch (dbError) {
+      console.log('[Stage2] Failed to cache components:', dbError);
+      // Continue without caching
+    }
+  }
+
+  return {
+    components,
+    fromDatabase: false
+  };
 }
 
 /**
@@ -177,74 +231,48 @@ export async function stage3_getComponentDetails(
   componentName: string,
   deviceName?: string
 ): Promise<Stage3Details> {
-  // Check cache first
-  const { data: cachedDetails } = await supabase
-    .from('scrap_gadget_component_details')
-    .select('*')
-    .eq('component_name', componentName)
-    .single();
-
-  if (cachedDetails) {
-    // Increment usage counter
-    await supabase
+  // Check cache first (gracefully handle missing tables)
+  try {
+    const { data: cachedDetails, error } = await supabase
       .from('scrap_gadget_component_details')
-      .update({ usage_count: (cachedDetails.usage_count || 0) + 1 })
-      .eq('component_name', componentName);
+      .select('*')
+      .eq('component_name', componentName)
+      .single();
 
-    return {
-      description: cachedDetails.description || '',
-      specifications: cachedDetails.specifications || {},
-      value: cachedDetails.value,
-      reusability_score: cachedDetails.reusability_score,
-      resale_value: cachedDetails.resale_value,
-      reuse_potential: cachedDetails.reuse_potential,
-      datasheet_url: cachedDetails.datasheet_url,
-      tutorial_url: cachedDetails.tutorial_url
-    };
+    if (cachedDetails && !error) {
+      // Increment usage counter
+      try {
+        await supabase
+          .from('scrap_gadget_component_details')
+          .update({ usage_count: (cachedDetails.usage_count || 0) + 1 })
+          .eq('component_name', componentName);
+      } catch (updateError) {
+        // Ignore counter update errors
+      }
+
+      return {
+        description: cachedDetails.description || '',
+        specifications: cachedDetails.specifications || {},
+        value: cachedDetails.value,
+        reusability_score: cachedDetails.reusability_score,
+        resale_value: cachedDetails.resale_value,
+        reuse_potential: cachedDetails.reuse_potential,
+        datasheet_url: cachedDetails.datasheet_url,
+        tutorial_url: cachedDetails.tutorial_url
+      };
+    }
+  } catch (dbError) {
+    console.log('[Stage3] Database cache not available:', dbError);
+    // Continue to AI call
   }
 
-  // Not in cache - call AI
-  const response = await fetch('/api/identify-components', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      componentName,
-      deviceName,
-      mode: 'component_details' // NEW: get detailed specs for one component
-    })
-  });
-
-  if (!response.ok) {
-    throw new Error('Failed to get component details');
-  }
-
-  const data = await response.json();
-  
-  const details: Stage3Details = {
-    description: data.description || '',
-    specifications: data.specifications || {},
-    value: data.value,
-    reusability_score: data.reusability_score,
-    resale_value: data.resale_value,
-    reuse_potential: data.reuse_potential,
-    datasheet_url: data.datasheet_url,
-    tutorial_url: data.tutorial_url
+  // Not in cache - return basic placeholder
+  // In Phase 4, we'll add mode='component_details' to edge function
+  // For now, just return minimal details
+  return {
+    description: `${componentName} component`,
+    specifications: {},
+    reusability_score: 7,
+    reuse_potential: 'Can be salvaged and reused in similar devices'
   };
-
-  // Cache the details
-  await supabase.from('scrap_gadget_component_details').insert({
-    component_name: componentName,
-    category: data.category || 'Other',
-    description: details.description,
-    specifications: details.specifications,
-    value: details.value,
-    reusability_score: details.reusability_score,
-    resale_value: details.resale_value,
-    reuse_potential: details.reuse_potential,
-    datasheet_url: details.datasheet_url,
-    tutorial_url: details.tutorial_url,
-    usage_count: 1
-  });
-
-  return details;
 }
