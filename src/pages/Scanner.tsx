@@ -60,8 +60,8 @@ export default function Scanner() {
   const [showFollowUp, setShowFollowUp] = useState(false);
   const [genericDeviceName, setGenericDeviceName] = useState('');
   
-  // Real-time detection state
-  const [realtimeMode, setRealtimeMode] = useState(true); // Default to real-time
+  // Real-time detection state (DISABLED in v0.8.9)
+  const [realtimeMode, setRealtimeMode] = useState(false); // Disabled - use simple scan only
   const [analyzingObject, setAnalyzingObject] = useState(false);
 
   // Start camera on mount
@@ -82,56 +82,56 @@ export default function Scanner() {
     await addUploadedImage(file);
   }, [addUploadedImage]);
 
-  // Toggle between real-time and full AI mode
-  const handleRealtimeModeToggle = useCallback(() => {
-    setRealtimeMode(prev => !prev);
-    setShowResult(false);
-    setFullResult(null);
-    setScanStage('idle');
-  }, []);
+  // Toggle between real-time and full AI mode (DISABLED in v0.8.9)
+  // const handleRealtimeModeToggle = useCallback(() => {
+  //   setRealtimeMode(prev => !prev);
+  //   setShowResult(false);
+  //   setFullResult(null);
+  //   setScanStage('idle');
+  // }, []);
 
-  // Handle object selection from real-time detection
-  const handleObjectSelect = useCallback(async (detection: any) => {
-    if (analyzingObject) return;
-    
-    setAnalyzingObject(true);
-    setUserHint(detection.label); // Use detected label as hint
-    
-    toast({
-      title: 'Analyzing object...',
-      description: `Getting details for: ${detection.label}`,
-    });
-
-    try {
-      // Capture current frame
-      const capturedDataUrl = captureImage();
-      
-      if (!capturedDataUrl) {
-        toast({
-          title: 'Capture failed',
-          description: 'Could not capture image from camera',
-          variant: 'destructive'
-        });
-        setAnalyzingObject(false);
-        return;
-      }
-      
-      // Wait a moment for thumbnail to render
-      await new Promise(resolve => setTimeout(resolve, 100));
-      
-      // Now analyze with the captured image directly
-      await handleAnalyze(capturedDataUrl);
-    } catch (error) {
-      console.error('[Scanner] Object select error:', error);
-      toast({
-        title: 'Analysis failed',
-        description: error instanceof Error ? error.message : 'Unknown error',
-        variant: 'destructive'
-      });
-    } finally {
-      setAnalyzingObject(false);
-    }
-  }, [analyzingObject, captureImage]); // Don't include handleAnalyze to avoid circular dependency
+  // Handle object selection from real-time detection (DISABLED in v0.8.9)
+  // const handleObjectSelect = useCallback(async (detection: any) => {
+  //   if (analyzingObject) return;
+  //   
+  //   setAnalyzingObject(true);
+  //   setUserHint(detection.label); // Use detected label as hint
+  //   
+  //   toast({
+  //     title: 'Analyzing object...',
+  //     description: `Getting details for: ${detection.label}`,
+  //   });
+  //
+  //   try {
+  //     // Capture current frame
+  //     const capturedDataUrl = captureImage();
+  //     
+  //     if (!capturedDataUrl) {
+  //       toast({
+  //         title: 'Capture failed',
+  //         description: 'Could not capture image from camera',
+  //         variant: 'destructive'
+  //       });
+  //       setAnalyzingObject(false);
+  //       return;
+  //     }
+  //     
+  //     // Wait a moment for thumbnail to render
+  //     await new Promise(resolve => setTimeout(resolve, 100));
+  //     
+  //     // Now analyze with the captured image directly
+  //     await handleAnalyze(capturedDataUrl);
+  //   } catch (error) {
+  //     console.error('[Scanner] Object select error:', error);
+  //     toast({
+  //       title: 'Analysis failed',
+  //       description: error instanceof Error ? error.message : 'Unknown error',
+  //       variant: 'destructive'
+  //     });
+  //   } finally {
+  //     setAnalyzingObject(false);
+  //   }
+  // }, [analyzingObject, captureImage]); // Don't include handleAnalyze to avoid circular dependency
 
   // V0.7 Multi-stage analyze
   const handleAnalyze = useCallback(async (imageOverride?: string) => {
@@ -175,26 +175,23 @@ export default function Scanner() {
         deviceNameLower.includes(generic) && deviceNameLower.split(' ').length <= 2
       );
 
-      // COCO-SSD labels that should be treated as generic hints
-      const cocoSsdLabels = [
-        'cell phone', 'remote', 'keyboard', 'mouse', 'laptop', 
-        'tv', 'book', 'bottle', 'cup', 'clock', 'scissors',
-        'toothbrush', 'hair drier', 'teddy bear', 'microwave',
-        'oven', 'toaster', 'sink', 'refrigerator', 'blender'
-      ];
-      
-      // Check if hint came from COCO-SSD (generic label)
-      const isHintFromCocoSsd = userHint && 
-        cocoSsdLabels.includes(userHint.toLowerCase().trim());
+      // COCO-SSD labels that should be treated as generic hints (DISABLED in v0.8.9 - no real-time mode)
+      // const cocoSsdLabels = [
+      //   'cell phone', 'remote', 'keyboard', 'mouse', 'laptop', 
+      //   'tv', 'book', 'bottle', 'cup', 'clock', 'scissors',
+      //   'toothbrush', 'hair drier', 'teddy bear', 'microwave',
+      //   'oven', 'toaster', 'sink', 'refrigerator', 'blender'
+      // ];
+      // 
+      // // Check if hint came from COCO-SSD (generic label)
+      // const isHintFromCocoSsd = userHint && 
+      //   cocoSsdLabels.includes(userHint.toLowerCase().trim());
 
-      // Show follow-up if:
-      // 1. Device name is generic AND no hint provided, OR
-      // 2. Device name is generic AND hint came from COCO-SSD (also generic)
-      if (isGeneric && (!userHint || isHintFromCocoSsd)) {
+      // Show follow-up if device name is generic AND no hint provided
+      if (isGeneric && !userHint) {
         console.log('[Scanner v0.7] Generic device detected', { 
           deviceName: stage1Result.deviceName, 
-          userHint, 
-          isHintFromCocoSsd 
+          userHint
         });
         // Show follow-up prompt for more specific info
         setGenericDeviceName(stage1Result.deviceName);
@@ -671,9 +668,10 @@ export default function Scanner() {
         onRemoveImage={removeImage}
         onAnalyze={handleAnalyze}
         onClose={handleClose}
-        realtimeMode={realtimeMode}
-        onRealtimeModeToggle={handleRealtimeModeToggle}
-        onObjectSelect={handleObjectSelect}
+        // Real-time mode props removed in v0.8.9
+        // realtimeMode={realtimeMode}
+        // onRealtimeModeToggle={handleRealtimeModeToggle}
+        // onObjectSelect={handleObjectSelect}
       />
       
       {/* Follow-up prompt for generic device names */}
