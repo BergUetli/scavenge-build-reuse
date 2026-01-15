@@ -5,7 +5,7 @@
  * Supports: OpenAI (gpt-4o-mini), Google Gemini, Anthropic Claude
  * 
  * Cost optimizations:
- * - Uses cheaper models by default (gpt-4o-mini, gemini-1.5-flash, claude-3-haiku)
+ * - Uses cheaper models by default (gpt-4o-mini, gemini-2.5-flash, claude-3-haiku)
  * - Caches results by image hash (scan_cache table)
  * - Uses 'low' detail for pre-compressed images
  * - Reduced max_tokens
@@ -53,7 +53,7 @@ function getProviderConfigs(): Record<AIProvider, ProviderConfig> {
     gemini: {
       apiKey: Deno.env.get('SCAVY_GEMINI_KEY') || Deno.env.get('GOOGLE_AI_API_KEY'),
       envVar: 'SCAVY_GEMINI_KEY', 
-      name: 'Google Gemini 1.5 Flash'
+      name: 'Google Gemini 2.5 Flash'
     },
     claude: {
       apiKey: Deno.env.get('ANTHROPIC_API_KEY'),
@@ -133,7 +133,7 @@ async function callOpenAI(apiKey: string, systemPrompt: string, userContent: any
 
 // Call Google Gemini API
 async function callGemini(apiKey: string, systemPrompt: string, userContent: any[]): Promise<AICallResult> {
-  logger.info('Calling Google Gemini 1.5 Flash');
+  logger.info('Calling Google Gemini 2.5 Flash');
   
   // Build Gemini-formatted content
   const parts: any[] = [{ text: systemPrompt + '\n\n' + userContent[0].text }];
@@ -155,7 +155,7 @@ async function callGemini(apiKey: string, systemPrompt: string, userContent: any
   }
 
   const response = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
     {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -185,7 +185,7 @@ async function callGemini(apiKey: string, systemPrompt: string, userContent: any
     content: data.candidates?.[0]?.content?.parts?.[0]?.text || '',
     inputTokens,
     outputTokens,
-    model: 'gemini-1.5-flash'
+    model: 'gemini-2.5-flash'
   };
 }
 
