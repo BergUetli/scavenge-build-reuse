@@ -453,7 +453,13 @@ function extractJsonFromAI(aiResponse: string) {
 /**
  * Attempt to repair truncated JSON by closing open brackets/braces
  */
-function repairTruncatedJson(json: string): string {
+function repairTruncatedJson(json: string, depth: number = 0): string {
+  // Prevent infinite recursion
+  if (depth > 3) {
+    logger.warn('Max recursion depth reached in JSON repair');
+    return json;
+  }
+  
   // Track open brackets and braces
   let openBraces = 0;
   let openBrackets = 0;
@@ -501,8 +507,8 @@ function repairTruncatedJson(json: string): string {
         json = json.substring(0, lastQuote + 1);
       }
     }
-    // Recalculate after truncation
-    return repairTruncatedJson(json);
+    // Recalculate after truncation with depth tracking
+    return repairTruncatedJson(json, depth + 1);
   }
   
   // Remove trailing commas before closing
@@ -513,7 +519,7 @@ function repairTruncatedJson(json: string): string {
   for (let i = 0; i < openBrackets; i++) closing += ']';
   for (let i = 0; i < openBraces; i++) closing += '}';
   
-  logger.debug('JSON repaired', { brackets: openBrackets, braces: openBraces });
+  logger.debug('JSON repaired', { brackets: openBrackets, braces: openBraces, depth });
   return json + closing;
 }
 
