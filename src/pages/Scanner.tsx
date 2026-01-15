@@ -175,7 +175,27 @@ export default function Scanner() {
         deviceNameLower.includes(generic) && deviceNameLower.split(' ').length <= 2
       );
 
-      if (isGeneric && !userHint) {
+      // COCO-SSD labels that should be treated as generic hints
+      const cocoSsdLabels = [
+        'cell phone', 'remote', 'keyboard', 'mouse', 'laptop', 
+        'tv', 'book', 'bottle', 'cup', 'clock', 'scissors',
+        'toothbrush', 'hair drier', 'teddy bear', 'microwave',
+        'oven', 'toaster', 'sink', 'refrigerator', 'blender'
+      ];
+      
+      // Check if hint came from COCO-SSD (generic label)
+      const isHintFromCocoSsd = userHint && 
+        cocoSsdLabels.includes(userHint.toLowerCase().trim());
+
+      // Show follow-up if:
+      // 1. Device name is generic AND no hint provided, OR
+      // 2. Device name is generic AND hint came from COCO-SSD (also generic)
+      if (isGeneric && (!userHint || isHintFromCocoSsd)) {
+        console.log('[Scanner v0.7] Generic device detected', { 
+          deviceName: stage1Result.deviceName, 
+          userHint, 
+          isHintFromCocoSsd 
+        });
         // Show follow-up prompt for more specific info
         setGenericDeviceName(stage1Result.deviceName);
         setShowFollowUp(true);
