@@ -1,12 +1,11 @@
 /**
- * CAMERA VIEW WITH REAL-TIME DETECTION - FIXED INFINITE LOOP
+ * CAMERA VIEW - SIMPLE CAPTURE MODE (v0.8.11)
+ * Real-time detection removed - back to simple capture 1 analyze flow
  */
 
-import React, { useEffect, useState, useRef, useCallback } from 'react';
-import { Camera, Upload, X, Zap, Brain, Loader2 } from 'lucide-react';
+import React, { useEffect, useState, useRef } from 'react';
+import { Camera, Upload, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { useRealtimeDetection, DetectedObject } from '@/hooks/useRealtimeDetection';
-import { RealtimeDetectionOverlay } from './RealtimeDetectionOverlay';
 
 interface CameraViewProps {
   videoRef: React.RefObject<HTMLVideoElement>;
@@ -17,9 +16,6 @@ interface CameraViewProps {
   onRemoveImage: (index: number) => void;
   onAnalyze: () => void;
   onClose: () => void;
-  realtimeMode?: boolean;
-  onRealtimeModeToggle?: () => void;
-  onObjectSelect?: (detection: DetectedObject) => void;
 }
 
 export function CameraView({
@@ -31,21 +27,10 @@ export function CameraView({
   onRemoveImage,
   onAnalyze,
   onClose,
-  realtimeMode = true,
-  onRealtimeModeToggle,
-  onObjectSelect
 }: CameraViewProps) {
   const [videoSize, setVideoSize] = useState({ width: 0, height: 0 });
   const [displaySize, setDisplaySize] = useState({ width: 0, height: 0 });
   const containerRef = useRef<HTMLDivElement>(null);
-  const isDetectionActive = useRef(false);
-  
-  const { 
-    isModelLoading, 
-    detections, 
-    startDetection, 
-    stopDetection 
-  } = useRealtimeDetection();
 
   // Update video size when video loads
   useEffect(() => {
@@ -53,11 +38,7 @@ export function CameraView({
     if (!video) return;
 
     const updateSize = () => {
-      setVideoSize({
-        width: video.videoWidth,
-        height: video.videoHeight
-      });
-      console.log('[CameraView] Video size:', video.videoWidth, 'x', video.videoHeight);
+      setVideoSize({ width: video.videoWidth, height: video.videoHeight });
     };
 
     video.addEventListener('loadedmetadata', updateSize);
@@ -71,148 +52,38 @@ export function CameraView({
       if (!container) return;
 
       const rect = container.getBoundingClientRect();
-      setDisplaySize({
-        width: rect.width,
-        height: rect.height
-      });
-      console.log('[CameraView] Display size:', rect.width, 'x', rect.height);
+      setDisplaySize({ width: rect.width, height: rect.height });
     };
 
     // Initial updates with delays
     setTimeout(updateDisplaySize, 100);
     setTimeout(updateDisplaySize, 300);
     setTimeout(updateDisplaySize, 500);
-    
+
     window.addEventListener('resize', updateDisplaySize);
     return () => window.removeEventListener('resize', updateDisplaySize);
   }, []);
 
-  // Start/stop detection - Wait for BOTH model and video
-  useEffect(() => {
-    const video = videoRef.current;
-    
-    // Stop if mode is off
-    if (!video || !realtimeMode) {
-      if (isDetectionActive.current) {
-        console.log('[CameraView] Stopping detection (mode off)');
-        stopDetection();
-        isDetectionActive.current = false;
-      }
-      return;
-    }
-
-    // Don't start if model is still loading
-    if (isModelLoading) {
-      console.log('[CameraView] Waiting for model to load...');
-      return;
-    }
-
-    // Don't start if already active
-    if (isDetectionActive.current) {
-      return;
-    }
-
-    // Wait for video to be ready
-    const tryStartDetection = () => {
-      if (video.readyState >= 2 && !isDetectionActive.current && !isModelLoading) {
-        console.log('[CameraView] Starting detection (model ready + video ready)');
-        startDetection(video);
-        isDetectionActive.current = true;
-      }
-    };
-
-    if (video.readyState >= 2) {
-      tryStartDetection();
-    } else {
-      console.log('[CameraView] Waiting for video to be ready...');
-      video.addEventListener('canplay', tryStartDetection);
-      return () => {
-        video.removeEventListener('canplay', tryStartDetection);
-      };
-    }
-
-    return () => {
-      if (isDetectionActive.current) {
-        console.log('[CameraView] Cleanup: stopping detection');
-        stopDetection();
-        isDetectionActive.current = false;
-      }
-    };
-  }, [realtimeMode, isModelLoading]); // Depend on BOTH mode and model loading state
-
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (file) {
-      onUpload(file);
-    }
+    if (file) onUpload(file);
   };
 
-  const shouldRenderOverlay = realtimeMode && !isModelLoading && videoSize.width > 0 && displaySize.width > 0;
+  const canAnalyze = capturedImages.length > 0;
 
   return (
     <div className="fixed inset-0 bg-black z-50 flex flex-col">
       {/* Header */}
-      <div className="bg-black/80 backdrop-blur-sm border-b border-white/10 p-4">
-        <div className="flex items-center justify-between">
-          <h2 className="text-white font-semibold text-lg">
-            {realtimeMode ? '⚡ Real-Time Scanner' : '🧠 AI Scanner'}
-          </h2>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={onClose}
-            className="text-white hover:bg-white/10"
-          >
-            <X className="h-6 w-6" />
-          </Button>
+      <div className="bg-black/80 backdrop-blur-sm border-b border-white/10 p-4 flex items-center justify-between">
+        <div className="text-white">
+          <h2 className="text-lg font-semibold">44f7 Scanner</h2>
+          <p className="text-sm text-white/60">
+            Capture a photo, then Analyze with AI
+          </p>
         </div>
-
-        {/* Mode Toggle */}
-        {onRealtimeModeToggle && (
-          <div className="mt-3 flex gap-2">
-            <Button
-              onClick={onRealtimeModeToggle}
-              size="sm"
-              variant={realtimeMode ? "default" : "outline"}
-              className="flex-1"
-            >
-              <Zap className="h-4 w-4 mr-2" />
-              Real-Time
-              {realtimeMode && <span className="ml-2 text-xs opacity-70">Active</span>}
-            </Button>
-            <Button
-              onClick={onRealtimeModeToggle}
-              size="sm"
-              variant={!realtimeMode ? "default" : "outline"}
-              className="flex-1"
-            >
-              <Brain className="h-4 w-4 mr-2" />
-              Full AI
-              {!realtimeMode && <span className="ml-2 text-xs opacity-70">Active</span>}
-            </Button>
-          </div>
-        )}
-
-        {/* Status */}
-        {realtimeMode && (
-          <div className="mt-2 flex items-center gap-2 text-xs">
-            {isModelLoading ? (
-              <div className="flex items-center gap-2 text-yellow-400">
-                <Loader2 className="h-3 w-3 animate-spin" />
-                <span>Loading AI model...</span>
-              </div>
-            ) : (
-              <div className="flex items-center gap-2 text-green-400">
-                <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
-                <span>
-                  {detections.length > 0 
-                    ? `${detections.length} object${detections.length !== 1 ? 's' : ''} detected` 
-                    : 'Point camera at objects'}
-                </span>
-              </div>
-            )}
-          </div>
-        )}
+        <Button variant="ghost" size="icon" onClick={onClose} className="text-white">
+          <X className="h-5 w-5" />
+        </Button>
       </div>
 
       {/* Camera Feed */}
@@ -224,18 +95,6 @@ export function CameraView({
           muted
           className="absolute inset-0 w-full h-full object-cover"
         />
-
-        {/* Real-time Detection Overlay */}
-        {shouldRenderOverlay && (
-          <RealtimeDetectionOverlay
-            detections={detections}
-            videoWidth={videoSize.width}
-            videoHeight={videoSize.height}
-            displayWidth={displaySize.width}
-            displayHeight={displaySize.height}
-            onObjectSelect={onObjectSelect}
-          />
-        )}
 
         {/* Captured Images Preview */}
         {capturedImages.length > 0 && (
@@ -263,65 +122,50 @@ export function CameraView({
 
       {/* Controls */}
       <div className="bg-black/80 backdrop-blur-sm border-t border-white/10 p-4">
-        {realtimeMode ? (
-          // Real-time mode: Just show instruction
-          <div className="text-center">
-            <p className="text-white/70 text-sm mb-3">
-              {detections.length > 0 
-                ? 'Tap any object to analyze it in detail' 
-                : 'Point your camera at electronic devices'}
-            </p>
+        <div className="flex gap-2">
+          <Button
+            onClick={onCapture}
+            disabled={isCapturing}
+            className="flex-1"
+            size="lg"
+          >
+            <Camera className="h-5 w-5 mr-2" />
+            Capture
+          </Button>
+
+          <label className="flex-1">
+            <input
+              type="file"
+              accept="image/*"
+              onChange={handleFileUpload}
+              className="hidden"
+            />
             <Button
-              onClick={onRealtimeModeToggle}
+              as="span"
               variant="outline"
-              size="sm"
-              className="text-white border-white/20"
+              className="w-full"
+              size="lg"
             >
-              Switch to Full AI Scan
+              <Upload className="h-5 w-5 mr-2" />
+              Upload
             </Button>
-          </div>
-        ) : (
-          // Full AI mode: Capture, Upload, Analyze buttons
-          <div className="flex gap-2">
+          </label>
+
+          {canAnalyze && (
             <Button
-              onClick={onCapture}
-              disabled={isCapturing}
+              onClick={onAnalyze}
               className="flex-1"
               size="lg"
             >
-              <Camera className="h-5 w-5 mr-2" />
-              Capture
+              Analyze ({capturedImages.length})
             </Button>
+          )}
+        </div>
 
-            <label className="flex-1">
-              <input
-                type="file"
-                accept="image/*"
-                onChange={handleFileUpload}
-                className="hidden"
-              />
-              <Button
-                as="span"
-                variant="outline"
-                className="w-full"
-                size="lg"
-              >
-                <Upload className="h-5 w-5 mr-2" />
-                Upload
-              </Button>
-            </label>
-
-            {capturedImages.length > 0 && (
-              <Button
-                onClick={onAnalyze}
-                className="flex-1"
-                size="lg"
-              >
-                Analyze ({capturedImages.length})
-              </Button>
-            )}
-          </div>
-        )}
+        {/* Tiny debug line to ensure we still compute sizes */}
+        <div className="mt-2 text-xs text-white/30">
+          video: {videoSize.width}x{videoSize.height}  display: {Math.round(displaySize.width)}x{Math.round(displaySize.height)}
+        </div>
       </div>
     </div>
   );
