@@ -592,6 +592,23 @@ serve(async (req) => {
     logger.timing('Body parsing', Date.now() - parseStart);
     logger.debug('Request body keys', { keys: Object.keys(body) });
     
+    // Check if any AI provider is available FIRST
+    const availableProvider = getAvailableProvider();
+    if (!availableProvider) {
+      logger.error('No AI provider configured');
+      const configs = getProviderConfigs();
+      const missingKeys = Object.entries(configs)
+        .map(([provider, config]) => config.envVar)
+        .join(', ');
+      return new Response(
+        JSON.stringify({ 
+          error: `No AI provider API keys configured. Please set one of: ${missingKeys}` 
+        }),
+        { status: 503, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+    logger.info('AI provider available', { provider: availableProvider.provider });
+    
     // Initialize Supabase client for cache operations
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
