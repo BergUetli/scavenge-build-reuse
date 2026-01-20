@@ -1,5 +1,5 @@
 /**
- * CAMERA VIEW - SIMPLE CAPTURE MODE (v0.8.11)
+ * CAMERA VIEW - SIMPLE CAPTURE MODE (v0.8.12)
  * Real-time detection removed - back to simple capture 1 analyze flow
  */
 
