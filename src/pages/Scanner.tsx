@@ -120,9 +120,13 @@ export default function Scanner() {
     console.log('[Scanner v0.7] handleAnalyze called with:', { 
       imageOverride: imageOverride ? 'provided' : 'none',
       capturedImagesLength: capturedImages.length,
+      capturedImagesType: typeof capturedImages,
+      capturedImagesIsArray: Array.isArray(capturedImages),
+      firstImageType: typeof capturedImages[0],
       imageBase64Type: typeof imageBase64,
-      imageBase64Length: imageBase64?.length,
-      imageBase64Preview: imageBase64?.substring(0, 50)
+      imageBase64IsArray: Array.isArray(imageBase64),
+      imageBase64Length: typeof imageBase64 === 'string' ? imageBase64.length : 'N/A',
+      imageBase64Preview: typeof imageBase64 === 'string' ? imageBase64.substring(0, 50) : String(imageBase64).substring(0, 100)
     });
     
     if (!imageBase64) {
@@ -139,7 +143,7 @@ export default function Scanner() {
       console.error('[Scanner v0.7] imageBase64 is not a string:', typeof imageBase64, imageBase64);
       toast({
         title: 'Invalid image data',
-        description: 'Image data is not in the correct format',
+        description: `Image data is not in the correct format (got ${typeof imageBase64} instead of string)`,
         variant: 'destructive'
       });
       return;
