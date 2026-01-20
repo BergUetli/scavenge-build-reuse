@@ -155,7 +155,7 @@ export function CameraView({
 
           {canAnalyze && (
             <Button
-              onClick={onAnalyze}
+              onClick={() => onAnalyze()}
               className="flex-1"
               size="lg"
             >
