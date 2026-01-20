@@ -189,6 +189,17 @@ export function useScanner() {
     const startTime = performance.now();
     console.log('[Scanner] ⏱️ START - identifyFromImages called with', images.length, 'images', userHint ? `and hint: "${userHint}"` : '');
     
+    // Validate input images array
+    if (!Array.isArray(images)) {
+      console.error('[Scanner] images parameter is not an array:', typeof images);
+      toast({
+        title: 'Invalid input',
+        description: 'Images data is invalid',
+        variant: 'destructive'
+      });
+      return null;
+    }
+    
     if (images.length === 0) {
       toast({
         title: 'No Images',
@@ -196,6 +207,19 @@ export function useScanner() {
         variant: 'destructive'
       });
       return null;
+    }
+    
+    // Validate each image is a string
+    for (let i = 0; i < images.length; i++) {
+      if (typeof images[i] !== 'string' || !images[i]) {
+        console.error(`[Scanner] Image ${i + 1} is not a valid string:`, typeof images[i], images[i]);
+        toast({
+          title: 'Invalid image data',
+          description: `Image ${i + 1} is not in the correct format`,
+          variant: 'destructive'
+        });
+        return null;
+      }
     }
 
     setState(prev => ({ ...prev, isProcessing: true, error: null }));
@@ -208,6 +232,14 @@ export function useScanner() {
       const compressedImages = await Promise.all(images.map(compressImage));
       console.log(`[Scanner] ⏱️ Compression took ${(performance.now() - compressionStart).toFixed(0)}ms`);
       
+      // Validate compressed images
+      for (let i = 0; i < compressedImages.length; i++) {
+        if (typeof compressedImages[i] !== 'string' || !compressedImages[i]) {
+          console.error(`[Scanner] Compressed image ${i + 1} is not a valid string:`, typeof compressedImages[i]);
+          throw new Error(`Image compression failed for image ${i + 1}`);
+        }
+      }
+      
       // Step 2: Generate hash for cache lookup (first image only for simplicity)
       const hashStart = performance.now();
       const imageHash = await hashImage(compressedImages[0]);
@@ -216,10 +248,17 @@ export function useScanner() {
       // Prepare images array with base64 and mime type
       const prepStart = performance.now();
       const imagesData = compressedImages.map((imageDataUrl, index) => {
-        console.log(`[Scanner] Compressed image ${index + 1}, length: ${imageDataUrl.length}`);
+        console.log(`[Scanner] Compressed image ${index + 1}, type: ${typeof imageDataUrl}, length: ${imageDataUrl?.length || 'N/A'}`);
+        
+        // Extra validation before .match()
+        if (typeof imageDataUrl !== 'string') {
+          console.error(`[Scanner] Image ${index + 1} is not a string, it is:`, typeof imageDataUrl, imageDataUrl);
+          throw new Error(`Invalid image data type for image ${index + 1}: expected string, got ${typeof imageDataUrl}`);
+        }
+        
         const base64Match = imageDataUrl.match(/^data:image\/(.*?);base64,(.*)$/);
         if (!base64Match) {
-          console.error(`[Scanner] Image ${index + 1} has invalid format`);
+          console.error(`[Scanner] Image ${index + 1} has invalid format:`, imageDataUrl.substring(0, 100));
           throw new Error('Invalid image format');
         }
         return {
