@@ -66,7 +66,7 @@ export function useScanner() {
    */
   const startCamera = useCallback(async () => {
     try {
-      setState(prev => ({ ...prev, isCapturing: true, error: null }));
+      setState(prev => ({ ...prev, isCapturing: false, error: null }));
       
       const stream = await navigator.mediaDevices.getUserMedia({
         video: { 

@@ -31,6 +31,7 @@ export function CameraView({
   const [videoSize, setVideoSize] = useState({ width: 0, height: 0 });
   const [displaySize, setDisplaySize] = useState({ width: 0, height: 0 });
   const containerRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Update video size when video loads
   useEffect(() => {
@@ -125,7 +126,7 @@ export function CameraView({
         <div className="flex gap-2">
           <Button
             onClick={onCapture}
-            disabled={isCapturing}
+            disabled={false}
             className="flex-1"
             size="lg"
           >
@@ -133,15 +134,16 @@ export function CameraView({
             Capture
           </Button>
 
-          <label className="flex-1">
+          <div className="flex-1">
             <input
+              ref={fileInputRef}
               type="file"
               accept="image/*"
               onChange={handleFileUpload}
               className="hidden"
             />
             <Button
-              as="span"
+              onClick={() => fileInputRef.current?.click()}
               variant="outline"
               className="w-full"
               size="lg"
@@ -149,7 +151,7 @@ export function CameraView({
               <Upload className="h-5 w-5 mr-2" />
               Upload
             </Button>
-          </label>
+          </div>
 
           {canAnalyze && (
             <Button
