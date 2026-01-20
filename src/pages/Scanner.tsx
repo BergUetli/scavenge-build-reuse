@@ -59,6 +59,7 @@ export default function Scanner() {
   const [performanceTimings, setPerformanceTimings] = useState<any>(null);
   const [showFollowUp, setShowFollowUp] = useState(false);
   const [genericDeviceName, setGenericDeviceName] = useState('');
+  const [hintProvided, setHintProvided] = useState(false); // Track if user already gave a hint
   
   // Real-time detection state (DISABLED in v0.8.9)
   const [analyzingObject, setAnalyzingObject] = useState(false);
@@ -170,17 +171,18 @@ export default function Scanner() {
       setManufacturer(stage1Result.manufacturer);
       setModel(stage1Result.model);
 
-      // Check if device name is too generic
+      // Check if device name is too generic (but only if user hasn't provided a hint yet)
       const deviceNameLower = stage1Result.deviceName.toLowerCase();
       const genericNames = ['smartphone', 'phone', 'device', 'gadget', 'tablet', 'laptop', 'computer', 'electronics', 'electronic device'];
       const isGeneric = genericNames.some(generic => 
         deviceNameLower.includes(generic) && deviceNameLower.split(' ').length <= 2
       );
 
-      if (isGeneric && !userHint) {
-        console.log('[Scanner v0.7] Generic device detected', { 
+      if (isGeneric && !userHint && !hintProvided) {
+        console.log('[Scanner v0.7] Generic device detected - asking for hint', { 
           deviceName: stage1Result.deviceName, 
-          userHint
+          userHint,
+          hintProvided
         });
         // Show follow-up prompt for more specific info
         setGenericDeviceName(stage1Result.deviceName);
@@ -283,6 +285,7 @@ export default function Scanner() {
   const handleFollowUpSubmit = useCallback(async (additionalHint: string) => {
     setShowFollowUp(false);
     setUserHint(additionalHint);
+    setHintProvided(true); // Mark that user provided a hint
     // Re-analyze with the new hint
     await handleAnalyze();
   }, [handleAnalyze]);
@@ -290,6 +293,7 @@ export default function Scanner() {
   // Handle follow-up prompt skip
   const handleFollowUpSkip = useCallback(() => {
     setShowFollowUp(false);
+    setHintProvided(true); // Mark that user made a choice (skip = no hint, but don't ask again)
     // Continue with generic device name
     handleAnalyze();
   }, [handleAnalyze]);
@@ -512,6 +516,7 @@ export default function Scanner() {
     setShowResult(false);
     setFullResult(null);
     setUserHint('');
+    setHintProvided(false); // Reset hint flag for new scan
     setDeviceName('');
     setManufacturer(undefined);
     setModel(undefined);
