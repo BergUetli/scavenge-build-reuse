@@ -76,6 +76,11 @@ export async function stage1_identifyDevice(
   // NOTE: Edge function doesn't support 'mode' yet, so we get full scan
   // and just extract device name from it
   
+  // Validate imageUrl is a string
+  if (typeof imageUrl !== 'string' || !imageUrl) {
+    throw new Error('Invalid image data: imageUrl must be a non-empty string');
+  }
+  
   // Strip data URL prefix if present (edge function expects raw base64)
   const base64Data = imageUrl.includes('base64,') 
     ? imageUrl.split('base64,')[1] 

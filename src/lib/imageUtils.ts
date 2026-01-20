@@ -12,6 +12,15 @@ const COMPRESSION_QUALITY = 0.6; // Reduced from 0.7 for mobile (smaller files)
  * Reduces API costs by 50-70% through smaller image sizes
  */
 export async function compressImage(dataUrl: string): Promise<string> {
+  // Validate input
+  if (typeof dataUrl !== 'string' || !dataUrl) {
+    throw new Error('compressImage: dataUrl must be a non-empty string');
+  }
+  
+  if (!dataUrl.startsWith('data:image/')) {
+    throw new Error('compressImage: dataUrl must be a valid data URL starting with data:image/');
+  }
+  
   return new Promise((resolve, reject) => {
     const img = new Image();
     img.onload = () => {
