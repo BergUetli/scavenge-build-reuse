@@ -1,0 +1,69 @@
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to release (e.g., 0.8.12)'
+        required: true
+        default: '0.8.12'
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          ssh-key: ${{ secrets.SCAVY_DEPLOY_KEY }}
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Configure Git
+        run: |
+          git config user.name "Scavy Release Bot"
+          git config user.email "actions@github.com"
+
+      - name: Bump version in package.json
+        run: |
+          npm version ${{ github.event.inputs.version }} --no-git-tag-version
+          git add package.json package-lock.json
+          git commit -m "Release v${{ github.event.inputs.version }}"
+
+      - name: Push changes
+        run: |
+          git push origin main
+
+      - name: Create and push tag
+        run: |
+          git tag v${{ github.event.inputs.version }}
+          git push origin v${{ github.event.inputs.version }}
+
+      - name: Create GitHub Release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: v${{ github.event.inputs.version }}
+          release_name: Release v${{ github.event.inputs.version }}
+          body: |
+            ## Scavy v${{ github.event.inputs.version }}
+            
+            ### Hotfix: Scanner Capture/Upload Reliability
+            
+            **Fixed:**
+            - Upload button now uses direct click trigger (no label forwarding issues)
+            - Capture button remains enabled when camera is active
+            - Improved reliability on mobile devices
+            
+            **Technical:**
+            - Refactored CameraView upload to use inputRef.click()
+            - Fixed isCapturing semantics in useScanner hook
+            
+            Full changelog: https://github.com/BergUetli/scavenge-build-reuse/compare/v0.8.11...v${{ github.event.inputs.version }}
+          draft: false
+          prerelease: false
