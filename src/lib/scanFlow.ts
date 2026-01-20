@@ -143,6 +143,53 @@ export async function stage1_identifyDevice(
       : undefined
   };
 
+  // After AI call, check if this device exists in database (by name/manufacturer/model)
+  // If yes, fetch the cached components instead of using AI components
+  try {
+    const query = supabase
+      .from('scrap_gadget_devices')
+      .select(`
+        id,
+        device_name,
+        device_category,
+        manufacturer,
+        model,
+        year,
+        scrap_gadget_device_components (
+          component_name,
+          component_category,
+          quantity,
+          sort_order
+        )
+      `)
+      .eq('device_name', result.deviceName);
+    
+    if (result.manufacturer) {
+      query.eq('manufacturer', result.manufacturer);
+    }
+    if (result.model) {
+      query.eq('model', result.model);
+    }
+
+    const { data: existingDevice } = await query.maybeSingle();
+
+    if (existingDevice && existingDevice.scrap_gadget_device_components?.length > 0) {
+      console.log('[Stage1] Found existing device in database with', existingDevice.scrap_gadget_device_components.length, 'cached components!');
+      // Use cached components instead of AI components
+      result.components = existingDevice.scrap_gadget_device_components.map((c: any) => ({
+        name: c.component_name,
+        category: c.component_category || 'Other',
+        quantity: c.quantity || 1,
+        sort_order: c.sort_order || 99
+      }));
+      result.fromCache = true; // Mark as from cache!
+      return result; // Skip caching since it already exists
+    }
+  } catch (dbError) {
+    console.log('[Stage1] Failed to check for existing device:', dbError);
+    // Continue with caching
+  }
+
   // Cache the device AND components (gracefully handle missing tables)
   try {
     const { data: insertedDevice, error: insertError } = await supabase

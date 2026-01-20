@@ -202,7 +202,8 @@ export default function Scanner() {
         console.log(`[Scanner v0.7] Stage 2: Using ${stage1Result.components.length} components from Stage 1 (no AI call needed!)`);
         stage2Result = {
           components: stage1Result.components,
-          fromDatabase: false
+          // If Stage 1 was from cache, these components are from database!
+          fromDatabase: stage1Result.fromCache || false
         };
       } else {
         // Stage 1 didn't return components, need to call Stage 2
