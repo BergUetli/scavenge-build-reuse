@@ -117,10 +117,29 @@ export default function Scanner() {
     // Use provided image or fall back to captured images
     const imageBase64 = imageOverride || capturedImages[0];
     
+    console.log('[Scanner v0.7] handleAnalyze called with:', { 
+      imageOverride: imageOverride ? 'provided' : 'none',
+      capturedImagesLength: capturedImages.length,
+      imageBase64Type: typeof imageBase64,
+      imageBase64Length: imageBase64?.length,
+      imageBase64Preview: imageBase64?.substring(0, 50)
+    });
+    
     if (!imageBase64) {
       toast({
         title: 'No image captured',
         description: 'Please capture or upload an image first.',
+        variant: 'destructive'
+      });
+      return;
+    }
+    
+    // Validate imageBase64 is a string
+    if (typeof imageBase64 !== 'string') {
+      console.error('[Scanner v0.7] imageBase64 is not a string:', typeof imageBase64, imageBase64);
+      toast({
+        title: 'Invalid image data',
+        description: 'Image data is not in the correct format',
         variant: 'destructive'
       });
       return;
