@@ -11,6 +11,8 @@
  * - Reduced max_tokens
  * 
  * Supports multiple images for better identification accuracy.
+ * 
+ * Updated: 2026-01-20 - Trigger redeployment for v0.8.17
  */
 
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
