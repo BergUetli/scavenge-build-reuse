@@ -72,7 +72,7 @@ export async function stage1_identifyDevice(
     // Continue to AI call
   }
 
-  // Call AI for device identification
+  // Call AI for device identification with timeout
   // NOTE: Edge function doesn't support 'mode' yet, so we get full scan
   // and just extract device name from it
   
@@ -86,7 +86,18 @@ export async function stage1_identifyDevice(
     ? imageUrl.split('base64,')[1] 
     : imageUrl;
   
-  const { data, error } = await supabase.functions.invoke('identify-component', {
+  console.log('[Stage1] Calling Edge Function with:', {
+    imageHashLength: imageHash.length,
+    base64Length: base64Data.length,
+    hasUserHint: !!userHint
+  });
+  
+  // Add timeout wrapper (45 seconds)
+  const timeoutPromise = new Promise((_, reject) => {
+    setTimeout(() => reject(new Error('Scan timed out after 45 seconds. Please try again.')), 45000);
+  });
+  
+  const scanPromise = supabase.functions.invoke('identify-component', {
     body: {
       imageBase64: base64Data,
       userHint: userHint,
@@ -94,6 +105,8 @@ export async function stage1_identifyDevice(
       imageHash: imageHash
     }
   });
+  
+  const { data, error } = await Promise.race([scanPromise, timeoutPromise]) as any;
 
   console.log('[Stage1] Response:', { data, error, hasData: !!data, hasError: !!error });
 
@@ -105,7 +118,17 @@ export async function stage1_identifyDevice(
       context: error.context,
       details: error
     });
-    throw new Error(`Failed to identify device: ${error.message || 'Edge Function error'}`);
+    
+    // Provide user-friendly error messages
+    if (error.message?.includes('timed out')) {
+      throw new Error('Scan timed out. The image might be too large or the server is busy. Please try again.');
+    } else if (error.message?.includes('500')) {
+      throw new Error('Server error. Please check that the database migration has been run and try again.');
+    } else if (error.message?.includes('404')) {
+      throw new Error('Edge Function not found. Please check deployment status.');
+    } else {
+      throw new Error(`Failed to identify device: ${error.message || 'Edge Function error'}`);
+    }
   }
   
   // Check if edge function returned error in response body

@@ -224,11 +224,11 @@ export default function Scanner() {
       setModel(stage1Result.model);
 
       // Check if device name is too generic (but only if user hasn't provided a hint yet)
+      // ONLY ask for hint if it's literally "Unknown Device" or very generic single word
       const deviceNameLower = stage1Result.deviceName.toLowerCase();
-      const genericNames = ['smartphone', 'phone', 'device', 'gadget', 'tablet', 'laptop', 'computer', 'electronics', 'electronic device'];
-      const isGeneric = genericNames.some(generic => 
-        deviceNameLower.includes(generic) && deviceNameLower.split(' ').length <= 2
-      );
+      const isUnknown = deviceNameLower === 'unknown device' || deviceNameLower === 'unknown';
+      const isSingleGenericWord = ['device', 'gadget', 'electronics'].includes(deviceNameLower);
+      const isGeneric = isUnknown || isSingleGenericWord;
 
       if (isGeneric && !userHint && !hintProvided) {
         console.log('[Scanner v0.7] Generic device detected - asking for hint', { 
