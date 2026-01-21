@@ -4,11 +4,32 @@
  */
 
 import { useNavigate } from 'react-router-dom';
-import { Camera, Package, Wrench, Hammer, Layers, Activity } from 'lucide-react';
+import { Camera, Package, Wrench, Hammer, Layers, Activity, Shield } from 'lucide-react';
 import { AppLayout } from '@/components/layout/AppLayout';
+import { useAuth } from '@/contexts/AuthContext';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 
 export default function Home() {
   const navigate = useNavigate();
+  const { user } = useAuth();
+
+  // Check if user is admin
+  const { data: isAdmin } = useQuery({
+    queryKey: ['is-admin', user?.id],
+    queryFn: async () => {
+      if (!user) return false;
+      const { data, error } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', user.id)
+        .single();
+      
+      if (error) return false;
+      return data?.role === 'admin' || data?.role === 'moderator';
+    },
+    enabled: !!user
+  });
 
   return (
     <AppLayout>
@@ -42,7 +63,7 @@ export default function Home() {
           {/* Logo with Version */}
           <div className="mb-8 flex items-center justify-between">
             <h1 className="text-white text-2xl font-bold tracking-wide">Scavy</h1>
-            <span className="text-[#00D9FF]/40 text-xs font-mono tracking-wider">v0.9.5</span>
+            <span className="text-[#00D9FF]/40 text-xs font-mono tracking-wider">v0.9.6</span>
           </div>
 
           {/* Hero Text with Cyan Glow */}
@@ -264,6 +285,48 @@ export default function Home() {
               </svg>
             </div>
           </button>
+
+          {/* Admin Dashboard Card (only for admins) */}
+          {isAdmin && (
+            <button
+              onClick={() => navigate('/admin/dashboard')}
+              className="w-full mt-4 group relative overflow-hidden rounded-2xl"
+            >
+              {/* Red gradient background for admin */}
+              <div 
+                className="absolute inset-0 bg-gradient-to-br from-[#2D1B1B] via-[#1F1010] to-[#150A0A]"
+                style={{
+                  boxShadow: '0 8px 32px rgba(255, 80, 80, 0.2), inset 0 2px 10px rgba(255, 80, 80, 0.1)',
+                }}
+              />
+              
+              {/* Animated border glow */}
+              <div 
+                className="absolute inset-0 border-2 border-red-500/30 rounded-2xl group-hover:border-red-500/60 transition-colors"
+              />
+              
+              <div className="relative p-5 flex items-center gap-4">
+                {/* Icon */}
+                <div className="w-16 h-16 bg-red-500/10 backdrop-blur-sm rounded-xl border border-red-500/30 flex items-center justify-center flex-shrink-0">
+                  <Shield className="w-8 h-8 text-red-500" strokeWidth={2} />
+                </div>
+                
+                <div className="flex-1 text-left">
+                  <div className="flex items-center gap-2 mb-1">
+                    <h3 className="text-white font-bold text-lg">Admin Dashboard</h3>
+                    <span className="text-xs font-mono px-2 py-0.5 bg-red-500/20 text-red-400 rounded">ADMIN</span>
+                  </div>
+                  <p className="text-red-400/70 text-sm">
+                    System health, alerts, and error monitoring.
+                  </p>
+                </div>
+                
+                <svg className="w-6 h-6 text-red-500 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              </div>
+            </button>
+          )}
 
         </div>
       </div>
