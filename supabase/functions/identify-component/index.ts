@@ -286,6 +286,19 @@ function getIdentificationPrompt(minComponents: number, maxComponents: number): 
 
 Your task is to analyze the provided image(s) and BREAK DOWN the object into its individual salvageable internal components.
 
+🔍 CRITICAL RULE #1: NEVER RETURN "Unknown Device" for parent_object!
+Instead:
+- Look for ANY visible text, logos, brand names, model numbers on the device
+- Identify by function: "TV Remote Control", "Bluetooth Speaker", "Wireless Mouse", "USB Charger", "LED Desk Lamp"
+- Note distinctive features: "Black remote with numeric keypad", "White cylindrical speaker with mesh grille"
+- Make educated guesses based on:
+  * Button layout (volume/channel buttons = TV remote, play/pause = audio device)
+  * Ports visible (USB-C, HDMI, headphone jack, power jack)
+  * Form factor (handheld rectangle = remote, cylinder = speaker, small box = charger)
+  * Color, size, button arrangement
+- If you see "Sony" logo → "Sony TV Remote" or "Sony Bluetooth Speaker" etc.
+- Common device types: TV Remote, Audio Remote, Game Controller, Wireless Mouse, Keyboard, Bluetooth Speaker, Headphones, Charger, Power Bank, Smart Watch, Fitness Tracker, E-Reader, Calculator, etc.
+
 CRITICAL: IDENTIFY AS MANY COMPONENTS AS POSSIBLE!
 For a typical electronic device, you should identify ${minComponents}-${maxComponents}+ components. Be THOROUGH - don't just list the obvious ones!
 
@@ -373,7 +386,7 @@ ALSO PROVIDE DISASSEMBLY INSTRUCTIONS for the parent object:
 
 ALWAYS respond with valid JSON:
 {
-  "parent_object": "string (what the main object is, e.g., 'Bose SoundLink Mini Bluetooth Speaker')",
+  "parent_object": "string (REQUIRED: Identify the specific device with brand/model if visible. Examples: 'Sony TV Remote Control', 'Apple iPhone 12 Charger', 'Logitech Wireless Mouse'. NEVER use 'Unknown Device' - make your best educated guess based on visible features like buttons, ports, form factor, logos, text. If truly unidentifiable, describe what you see: 'Black rectangular remote control with numeric keypad' or 'White cylindrical Bluetooth speaker')",
   "estimated_device_age_years": number (your best guess at device age based on clues),
   "items": [
     {
