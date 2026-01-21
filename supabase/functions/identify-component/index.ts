@@ -110,7 +110,7 @@ async function callOpenAI(apiKey: string, systemPrompt: string, userContent: any
         { role: 'system', content: systemPrompt },
         { role: 'user', content: userContent }
       ],
-      max_tokens: 2000,  // Reduced from 8000 for faster response (component lists don't need 8k tokens)
+      max_tokens: 3000,  // Balanced for speed and completeness (reduced from 8000)
     }),
   });
 
@@ -164,7 +164,7 @@ async function callGemini(apiKey: string, systemPrompt: string, userContent: any
       body: JSON.stringify({
         contents: [{ parts }],
         generationConfig: {
-          maxOutputTokens: 2000,  // Reduced from 6000 for faster response (3-5x speed improvement)
+          maxOutputTokens: 3000,  // Balanced for speed and completeness (reduced from 6000)
           temperature: 0.2
         }
       }),
@@ -228,7 +228,7 @@ async function callClaude(apiKey: string, systemPrompt: string, userContent: any
     },
     body: JSON.stringify({
       model: 'claude-3-haiku-20240307',
-      max_tokens: 2000,  // Reduced from 6000 for faster response
+      max_tokens: 3000,  // Balanced for speed and completeness (reduced from 6000)
       system: systemPrompt,
       messages: [{ role: 'user', content }]
     }),
