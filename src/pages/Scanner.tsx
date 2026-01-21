@@ -203,13 +203,14 @@ export default function Scanner() {
     }
 
     const startTime = performance.now();
+    let imageHash = 'unknown'; // Initialize for error logging
 
     try {
       // STAGE 1: Identify device name only (~1s)
-      console.log('[Scanner v0.7] Stage 1: Identifying device...');
+      console.log('[Scanner v0.9.3] Stage 1: Identifying device...');
       setScanStage('stage1');
       
-      const imageHash = await hashImage(imageBase64);
+      imageHash = await hashImage(imageBase64);
       const stage1Result = await stage1_identifyDevice(
         imageBase64,
         imageHash,
@@ -217,7 +218,7 @@ export default function Scanner() {
       );
 
       const stage1Time = performance.now() - startTime;
-      console.log(`[Scanner v0.7] Stage 1 complete in ${stage1Time.toFixed(0)}ms:`, stage1Result.deviceName);
+      console.log(`[Scanner v0.9.3] Stage 1 complete in ${stage1Time.toFixed(0)}ms:`, stage1Result.deviceName);
       
       setDeviceName(stage1Result.deviceName);
       setManufacturer(stage1Result.manufacturer);
@@ -231,7 +232,7 @@ export default function Scanner() {
       const isGeneric = isUnknown || isSingleGenericWord;
 
       if (isGeneric && !userHint && !hintProvided) {
-        console.log('[Scanner v0.7] Generic device detected - asking for hint', { 
+        console.log('[Scanner v0.9.3] Generic device detected - asking for hint', { 
           deviceName: stage1Result.deviceName, 
           userHint,
           hintProvided
@@ -244,14 +245,14 @@ export default function Scanner() {
       }
 
       // STAGE 2: Get component list (~0-2s)
-      console.log('[Scanner v0.7] Stage 2: Getting component list...');
+      console.log('[Scanner v0.9.3] Stage 2: Getting component list...');
       setScanStage('stage2');
       
       let stage2Result: { components: any[]; fromDatabase: boolean };
       
       // OPTIMIZATION: If Stage 1 already returned components, use them!
       if (stage1Result.components && stage1Result.components.length > 0) {
-        console.log(`[Scanner v0.7] Stage 2: Using ${stage1Result.components.length} components from Stage 1 (no AI call needed!)`);
+        console.log(`[Scanner v0.9.3] Stage 2: Using ${stage1Result.components.length} components from Stage 1 (no AI call needed!)`);
         stage2Result = {
           components: stage1Result.components,
           // If Stage 1 was from cache, these components are from database!
@@ -268,7 +269,7 @@ export default function Scanner() {
       }
 
       const stage2Time = performance.now() - startTime;
-      console.log(`[Scanner v0.7] Stage 2 complete in ${stage2Time.toFixed(0)}ms: ${stage2Result.components.length} components`);
+      console.log(`[Scanner v0.9.3] Stage 2 complete in ${stage2Time.toFixed(0)}ms: ${stage2Result.components.length} components`);
 
       // Build AIIdentificationResponse for display
       const result: AIIdentificationResponse = {
@@ -332,20 +333,25 @@ export default function Scanner() {
       });
 
     } catch (error) {
-      console.error('[Scanner v0.7] Scan failed:', error);
+      console.error('[Scanner v0.9.3] Scan failed:', error);
       
       // Log failed scan to performance dashboard
-      await logScanPerformance({
-        imageHash: imageHash || 'unknown',
-        deviceName: 'Unknown',
-        stage1TimeMs: 0,
-        totalTimeMs: performance.now() - startTime,
-        cacheHit: false,
-        dataSource: 'ai',
-        componentCount: 0,
-        success: false,
-        errorMessage: error instanceof Error ? error.message : 'Unknown error'
-      });
+      try {
+        await logScanPerformance({
+          imageHash: imageHash, // Now safely defined
+          deviceName: 'Unknown',
+          stage1TimeMs: 0,
+          totalTimeMs: performance.now() - startTime,
+          cacheHit: false,
+          dataSource: 'ai',
+          componentCount: 0,
+          success: false,
+          errorMessage: error instanceof Error ? error.message : 'Unknown error'
+        });
+      } catch (logError) {
+        console.error('[Scanner v0.9.3] Failed to log error:', logError);
+        // Don't let logging errors break the UI
+      }
       
       setScanStage('idle');
       toast({
