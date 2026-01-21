@@ -9,6 +9,7 @@ import Scanner from "./pages/Scanner";
 import Inventory from "./pages/Inventory";
 import Projects from "./pages/Projects";
 import ProjectDetail from "./pages/ProjectDetail";
+import Dashboard from "./pages/Dashboard";
 import Profile from "./pages/Profile";
 import Settings from "./pages/Settings";
 import Auth from "./pages/Auth";
@@ -30,6 +31,7 @@ const App = () => (
             <Route path="/" element={<Home />} />
             <Route path="/scan" element={<Scanner />} />
             <Route path="/scanner" element={<Scanner />} />
+            <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/inventory" element={<Inventory />} />
             <Route path="/projects" element={<Projects />} />
             <Route path="/projects/:id" element={<ProjectDetail />} />

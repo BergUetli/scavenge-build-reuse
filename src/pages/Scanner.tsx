@@ -24,8 +24,60 @@ import { toast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { stage1_identifyDevice, stage2_getComponentList } from '@/lib/scanFlow';
 import { hashImage } from '@/lib/imageUtils';
+import { supabase } from '@/integrations/supabase/client';
 
 type ScanStage = 'idle' | 'stage1' | 'stage2' | 'complete';
+
+// Helper function to log scan performance
+async function logScanPerformance(data: {
+  imageHash: string;
+  deviceName: string;
+  manufacturer?: string;
+  model?: string;
+  stage1TimeMs: number;
+  stage2TimeMs?: number;
+  totalTimeMs: number;
+  cacheHit: boolean;
+  dataSource: 'cache' | 'database' | 'ai';
+  aiProvider?: string;
+  aiModel?: string;
+  inputTokens?: number;
+  outputTokens?: number;
+  costUsd?: number;
+  componentCount: number;
+  success: boolean;
+  errorMessage?: string;
+}) {
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    await supabase.from('scan_logs').insert({
+      user_id: user?.id,
+      image_hash: data.imageHash,
+      device_name: data.deviceName,
+      manufacturer: data.manufacturer,
+      model: data.model,
+      stage1_time_ms: data.stage1TimeMs,
+      stage2_time_ms: data.stage2TimeMs,
+      total_time_ms: data.totalTimeMs,
+      cache_hit: data.cacheHit,
+      data_source: data.dataSource,
+      ai_provider: data.aiProvider,
+      ai_model: data.aiModel,
+      input_tokens: data.inputTokens,
+      output_tokens: data.outputTokens,
+      cost_usd: data.costUsd,
+      component_count: data.componentCount,
+      success: data.success,
+      error_message: data.errorMessage
+    });
+    
+    console.log('[Performance] Scan logged to dashboard');
+  } catch (error) {
+    console.error('[Performance] Failed to log scan:', error);
+    // Don't throw - logging failures shouldn't break the scan
+  }
+}
 
 export default function Scanner() {
   const navigate = useNavigate();
@@ -259,6 +311,21 @@ export default function Scanner() {
       setScanStage('complete');
       setShowResult(true);
 
+      // Log scan to performance dashboard
+      await logScanPerformance({
+        imageHash,
+        deviceName: stage1Result.deviceName,
+        manufacturer: stage1Result.manufacturer,
+        model: stage1Result.model,
+        stage1TimeMs: stage1Time,
+        stage2TimeMs: stage2Time - stage1Time,
+        totalTimeMs: totalTime,
+        cacheHit: stage1Result.fromCache || false,
+        dataSource: stage2Result.fromDatabase ? 'database' : stage1Result.fromCache ? 'cache' : 'ai',
+        componentCount: result.items.length,
+        success: true
+      });
+
       toast({
         title: 'Scan complete!',
         description: `Found ${result.items.length} components in ${(totalTime / 1000).toFixed(1)}s`,
@@ -266,6 +333,20 @@ export default function Scanner() {
 
     } catch (error) {
       console.error('[Scanner v0.7] Scan failed:', error);
+      
+      // Log failed scan to performance dashboard
+      await logScanPerformance({
+        imageHash: imageHash || 'unknown',
+        deviceName: 'Unknown',
+        stage1TimeMs: 0,
+        totalTimeMs: performance.now() - startTime,
+        cacheHit: false,
+        dataSource: 'ai',
+        componentCount: 0,
+        success: false,
+        errorMessage: error instanceof Error ? error.message : 'Unknown error'
+      });
+      
       setScanStage('idle');
       toast({
         title: 'Scan failed',

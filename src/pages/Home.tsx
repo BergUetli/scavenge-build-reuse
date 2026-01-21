@@ -4,7 +4,7 @@
  */
 
 import { useNavigate } from 'react-router-dom';
-import { Camera, Package, Wrench, Hammer, Layers } from 'lucide-react';
+import { Camera, Package, Wrench, Hammer, Layers, Activity } from 'lucide-react';
 import { AppLayout } from '@/components/layout/AppLayout';
 
 export default function Home() {
@@ -42,7 +42,7 @@ export default function Home() {
           {/* Logo with Version */}
           <div className="mb-8 flex items-center justify-between">
             <h1 className="text-white text-2xl font-bold tracking-wide">Scavy</h1>
-            <span className="text-[#00D9FF]/40 text-xs font-mono tracking-wider">v0.9.1</span>
+            <span className="text-[#00D9FF]/40 text-xs font-mono tracking-wider">v0.9.2</span>
           </div>
 
           {/* Hero Text with Cyan Glow */}
@@ -223,6 +223,43 @@ export default function Home() {
               </div>
               
               <svg className="w-6 h-6 text-white group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
+            </div>
+          </button>
+
+          {/* Performance Dashboard Card */}
+          <button
+            onClick={() => navigate('/dashboard')}
+            className="w-full mt-4 group relative overflow-hidden rounded-2xl"
+          >
+            {/* Dark gradient background */}
+            <div 
+              className="absolute inset-0 bg-gradient-to-br from-[#1A2635] via-[#0F1820] to-[#0A1520]"
+              style={{
+                boxShadow: '0 8px 32px rgba(0, 217, 255, 0.2), inset 0 2px 10px rgba(0, 217, 255, 0.1)',
+              }}
+            />
+            
+            {/* Animated border glow */}
+            <div 
+              className="absolute inset-0 border-2 border-[#00D9FF]/30 rounded-2xl group-hover:border-[#00D9FF]/60 transition-colors"
+            />
+            
+            <div className="relative p-5 flex items-center gap-4">
+              {/* Icon */}
+              <div className="w-16 h-16 bg-[#00D9FF]/10 backdrop-blur-sm rounded-xl border border-[#00D9FF]/30 flex items-center justify-center flex-shrink-0">
+                <Activity className="w-8 h-8 text-[#00D9FF]" strokeWidth={2} />
+              </div>
+              
+              <div className="flex-1 text-left">
+                <h3 className="text-white font-bold text-lg mb-1">Performance Dashboard</h3>
+                <p className="text-[#00D9FF]/70 text-sm">
+                  View scan metrics, speed, and AI costs.
+                </p>
+              </div>
+              
+              <svg className="w-6 h-6 text-[#00D9FF] group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
               </svg>
             </div>
