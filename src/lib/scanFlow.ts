@@ -48,29 +48,32 @@ export async function stage1_identifyDevice(
   imageHash: string,
   userHint?: string
 ): Promise<Stage1Result> {
-  // Check cache first (gracefully handle missing tables)
-  try {
-    const { data: cachedDevice, error } = await supabase
-      .from('scrap_gadget_devices')
-      .select('*')
-      .eq('image_hash', imageHash)
-      .single();
-
-    if (cachedDevice && !error) {
-      return {
-        deviceName: cachedDevice.device_name,
-        category: cachedDevice.device_category,
-        manufacturer: cachedDevice.manufacturer,
-        model: cachedDevice.model,
-        year: cachedDevice.year,
-        imageHash,
-        fromCache: true
-      };
-    }
-  } catch (dbError) {
-    console.log('[Stage1] Database cache not available:', dbError);
-    // Continue to AI call
-  }
+  // TEMPORARY: Skip cache lookup to debug Edge Function
+  console.log('[Stage1] Skipping cache lookup - testing Edge Function directly');
+  
+  // TODO: Re-enable cache after fixing 406 error
+  // try {
+  //   const { data: cachedDevice, error } = await supabase
+  //     .from('scrap_gadget_devices')
+  //     .select('*')
+  //     .eq('image_hash', imageHash)
+  //     .single();
+  //
+  //   if (cachedDevice && !error) {
+  //     return {
+  //       deviceName: cachedDevice.device_name,
+  //       category: cachedDevice.device_category,
+  //       manufacturer: cachedDevice.manufacturer,
+  //       model: cachedDevice.model,
+  //       year: cachedDevice.year,
+  //       imageHash,
+  //       fromCache: true
+  //     };
+  //   }
+  // } catch (dbError) {
+  //   console.log('[Stage1] Database cache not available:', dbError);
+  //   // Continue to AI call
+  // }
 
   // Call AI for device identification with timeout
   // NOTE: Edge function doesn't support 'mode' yet, so we get full scan
